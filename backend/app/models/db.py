@@ -5,7 +5,7 @@ API contract, these are storage. Analyses hold repo_map / findings / scores as
 JSON blobs so the pipeline can evolve without migrations during the hackathon.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import JSON, DateTime, Float, ForeignKey, Integer, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
@@ -28,7 +28,7 @@ class User(Base):
     github_login: Mapped[str] = mapped_column(String(128), unique=True, index=True)
     github_token: Mapped[str | None] = mapped_column(Text, default=None)
     email: Mapped[str | None] = mapped_column(String(256), default=None)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
 
 
 class Repo(Base):
@@ -53,7 +53,7 @@ class Analysis(Base):
     repo_map: Mapped[dict | None] = mapped_column(JSON, default=None)
     findings: Mapped[list | None] = mapped_column(JSON, default=None)
     scores: Mapped[dict | None] = mapped_column(JSON, default=None)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
 
 
 class QuestionRow(Base):
