@@ -63,14 +63,20 @@ def build_context(root: Path, repo_map: RepoMap, target: FunctionNode) -> str:
     return "\n\n".join(sections)[:MAX_CONTEXT_CHARS]
 
 
-def generate(settings: Settings, root: Path, repo_map: RepoMap, targets: list[FunctionNode]) -> list[Question]:
+def generate(
+    settings: Settings,
+    root: Path,
+    repo_map: RepoMap,
+    targets: list[FunctionNode],
+    question_types: list[QuestionType] | None = None,
+) -> list[Question]:
     payload = yaml.safe_load(
         (settings.knowledge_data_dir / "questions.yaml").read_text(encoding="utf-8")
     )["question_types"]
     taxonomy = get_taxonomy(settings)
     language_skill = taxonomy.normalise(repo_map.language)
     questions: list[Question] = []
-    for question_type, target in zip(QUESTION_ORDER, targets[:5]):
+    for question_type, target in zip(question_types or QUESTION_ORDER, targets[:5]):
         context = build_context(root, repo_map, target)
         prompt = payload[question_type.value]["template"].format(
             function_name=target.name,
