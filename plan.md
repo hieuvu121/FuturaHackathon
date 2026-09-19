@@ -150,6 +150,11 @@ Debug/extend submissions are test-graded; open answers are rubric-graded. A live
 OpenAI transfer grade returned a typed passing result and a `python` promotion.
 Answer results and touched-to-verified evidence are persisted transactionally.
 
+**Roadmap-promotion checkpoint (2026-09-20):** the real roadmap endpoint builds
+from persisted per-repository skill tiers. A passing transfer answer updates the
+same skill from Revise to Deepen immediately; failed or unverified skills remain
+in Revise, while Learn New retains its demand provenance and nullable frequency.
+
 ---
 
 ### Phase 4 — Demo prep & buffer · ~3h
