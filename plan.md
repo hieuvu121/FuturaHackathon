@@ -111,7 +111,10 @@ with `LLM_PROVIDER=openai` / `SCANNER_MODEL=gpt-5`, and returned 10 typed findin
 All 10 cited real file ranges and passed `validator.py`; none were dropped. The
 real `RepoMap` assembly is also wired and verified against that repository (42
 kept Python files and 106 definitions). Phase 2's persistence exit criterion now
-depends on the analysis orchestration and storage/API branches.
+depends on the storage/API branch. The non-persistent orchestration was verified
+live with a one-file scan: 14 findings from `indexer/tasks.py` passed validation,
+none were dropped, and the scorer returned six dimensions and seven touched
+skills.
 
 ---
 

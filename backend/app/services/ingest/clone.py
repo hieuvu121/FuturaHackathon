@@ -33,6 +33,11 @@ def _cache_path(settings: Settings, user: str, repo: str) -> Path:
     return destination
 
 
+def cache_path(settings: Settings, user: str, repo_full_name: str) -> Path:
+    """Return the validated cache location for an ``owner/repository`` name."""
+    return _cache_path(settings, user, _repo_name(repo_full_name))
+
+
 def _size_bytes(root: Path) -> int:
     return sum(path.stat().st_size for path in root.rglob("*") if path.is_file())
 
@@ -40,7 +45,7 @@ def _size_bytes(root: Path) -> int:
 def clone(settings: Settings, user: str, repo_full_name: str, token: str) -> Path:
     """Shallow-clones with depth and size limits. Re-clones if already present."""
     repo_name = _repo_name(repo_full_name)
-    destination = _cache_path(settings, user, repo_name)
+    destination = cache_path(settings, user, repo_full_name)
     cleanup(settings, user, repo_name)
     destination.parent.mkdir(parents=True, exist_ok=True)
 
