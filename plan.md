@@ -1,24 +1,25 @@
 # PLAN
 
-Execution plan for the architecture in [OVERALL.md](./OVERALL.md).
-Four people, five phases, conflict-free parallel branches.
+Backend execution plan for the architecture in [OVERALL.md](./OVERALL.md).
+Three backend tracks, five phases, conflict-free parallel branches.
+
+> **Current scope:** backend only. The frontend is being developed independently.
+> Treat `frontend/` as read-only and do not include UI work in these phases.
 
 ---
 
 ## 0. Read this first
 
-**The one rule that makes parallel work possible:** Phase 0 created *every file in
-the OVERALL.md tree* as a working stub. Nobody ever creates a shared file, and
+**The one rule that makes parallel work possible:** Phase 0 created every backend
+file in the OVERALL.md tree as a working stub. Nobody creates a shared file, and
 nobody edits `main.py`. You only fill in bodies of files your track owns.
 
 Three things are already true in this repo:
 
-- `backend/app/schemas/` is **fully written**. It is the contract between all four
+- `backend/app/schemas/` is **fully written**. It is the contract between all three
   tracks. Treat it as frozen — see [§6 Changing a contract](#6-changing-a-contract).
 - `MOCK_MODE=true` makes every endpoint serve `backend/mock/*.json`. The whole app
   runs end to end, today, with no GitHub token and no API key.
-- `frontend/lib/data.ts` is the single mock↔live switch. No component knows which
-  is in use, and it must stay that way.
 
 Run it:
 
@@ -26,17 +27,12 @@ Run it:
 # backend
 cd backend && cp .env.example .env
 ./.venv/bin/uvicorn app.main:app --reload        # http://localhost:8000/docs
-
-# frontend (new terminal)
-cd frontend && cp .env.local.example .env.local
-npm run dev                                       # http://localhost:3000
 ```
 
-Verify before you start working:
+Verify before starting work:
 
 ```bash
-cd backend && ./.venv/bin/python -m pytest tests/ -q   # 17 passed
-cd frontend && npx tsc --noEmit && npx next build
+cd backend && ./.venv/bin/python -m pytest tests/ -q
 ```
 
 ---
@@ -50,7 +46,6 @@ else's path, ask them — do not edit it. This is what keeps merges clean.
 |---|---|---|---|
 | **A — Ingest & Platform** | Dev 1 | `services/ingest/*`, `routers/{auth,repos,code}.py`, `models/db.py`, `deps.py` | `services/analyze`, `frontend/` |
 | **B — Analyze & Recall** | Dev 2 | `services/analyze/*`, `services/recall/*`, `routers/{analysis,recall}.py` | `services/ingest`, `frontend/` |
-| **C — Frontend** | Dev 3 | all of `frontend/` | everything in `backend/` except reading `/docs` |
 | **D — Knowledge & Roadmap** | Dev 4 | `services/knowledge/*`, `services/roadmap/*`, `knowledge_data/*.yaml`, `backend/mock/*`, `data/`, `routers/roadmap.py`, `mock_store.py` | `services/ingest`, `services/analyze` |
 
 **Shared, frozen, changed only by the process in §6:** `app/schemas/*`, `app/main.py`,
@@ -67,30 +62,29 @@ Timings assume a ~2-day hackathon. Compress or stretch proportionally.
 
 ### Phase 0 — Foundation & contracts ✅ DONE
 
-Already committed. Scaffolded tree, complete `schemas/`, all six routers mounted
-and serving mock JSON, service stubs with typed signatures, SQLAlchemy models,
-three YAML knowledge files, seven mock fixtures, Next.js frontend with `data.ts`
-switch, 17 passing tests.
+Already committed. Scaffolded backend tree, complete `schemas/`, all six routers
+mounted and serving mock JSON, service stubs with typed signatures, SQLAlchemy
+models, three YAML knowledge files, seven mock fixtures, and 17 passing tests.
 
-**Exit criteria (met):** `pytest` green, `tsc --noEmit` clean, `/health` returns
-`mock_mode: true`, every page renders off mock JSON.
+**Exit criteria (met):** `pytest` green, `/health` returns `mock_mode: true`, and
+every backend journey endpoint serves schema-valid mock JSON.
 
 ---
 
-### Phase 1 — Mock-complete vertical slice · ~4h · all four in parallel
+### Phase 1 — Mock-complete backend slice · ~4h · three tracks in parallel
 
-**Goal: a demo-able product by end of day one.** Everything runs on mock data.
-If Phases 2–3 slip, you still have something to present.
+**Goal: a demo-able backend API by end of day one.** Everything runs on mock
+data. If Phases 2-3 slip, the API remains coherent and presentable through
+`/docs`.
 
 | Track | Deliverable |
 |---|---|
 | **A** | Real GitHub OAuth round trip + real repo listing. `clone.py` shallow-clones to `cache/<user>/<repo>/`. `filter.py` returns kept + excluded lists. `code.py` reads real slices — **write the `_safe_path` traversal test first.** |
 | **B** | `validator.py` complete **with tests** — this is the credibility gate, build it before the scanner. Then `ranker.py` (pure metrics, no LLM). |
-| **C** | All five pages rendering real mock data: connect → profile → recall → roadmap → share. `CodeViewer` with line highlighting; `EvidenceLink` jumping into it from every `DimensionCard`. |
 | **D** | Fill `skills.yaml` to 80–120 skills. Finish `dimensions.yaml` thresholds. Implement `taxonomy/seeded.py` and `demand/seeded.py` against the protocols. |
 
-**Exit criteria:** a person can click through the entire product on mock data and
-understand what it claims. `pytest` still green.
+**Exit criteria:** all backend mock endpoints describe the complete journey,
+contracts validate, real Phase 1 services have focused tests, and `pytest` is green.
 
 ---
 
@@ -103,7 +97,6 @@ tracks that are still on mock keep working.
 |---|---|
 | **A** | `parser.py` (tree-sitter → `FunctionNode`), `metrics.py` (complexity, nesting, call graph, test mapping, smell flags), `gitlog.py` (churn, `times_modified`, `last_modified`, `created_commit`), `blame.py` (optional, defaults 1.0). `ingest/__init__.py` assembles a validated `RepoMap`. |
 | **B** | `scanner.py` against Claude with the fixed prompt → raw findings → through `validator.py`. `scorer.py` combines metrics + findings + `dimensions.yaml` → levels with `metric_basis` populated. |
-| **C** | `npm run gen:types` against the live OpenAPI schema, replacing the placeholder block in `lib/types.ts`. Loading and error states. Status polling on connect. |
 | **D** | `roadmap/matcher.py` + `buckets.py`, including the **`frequency is None` path**. Implement whichever demand sources are ready — the chain (§10) means you do not need the final answer to ship this. Collect job ads into `data/jobs_raw/` in parallel. |
 
 **Exit criteria:** `MOCK_MODE=false` produces a real `repo_map.json` and real
@@ -117,11 +110,10 @@ validated `findings.json` for one live GitHub repository.
 |---|---|
 | **A** | Pipeline wired as a BackgroundTask with real stage/progress in the `analyses` table. Clone cleanup and size limits enforced. |
 | **B** | `selector.py` (the five-condition filter), `generator.py` (five question types, ~3k-token context), `injector.py` (**bug injection verified by actually running the test suite**), `grader.py` (unit tests for debug/extend, rubric for open answers, touched→verified promotion). |
-| **C** | Recall page against live questions. Share page filtered to the verified tier — **check this explicitly, it is a privacy property, not a display choice.** |
-| **D** | Roadmap against real `SkillStatus` from the grader. Provenance rendered on every market figure via `SourceBadge`. |
+| **D** | Roadmap against real `SkillStatus` from the grader. Every market figure returned by the API retains its `Provenance`. |
 
-**Exit criteria:** connect a real repo → get scores → answer five questions → see a
-skill promoted to verified → see it move buckets on the roadmap.
+**Exit criteria:** API calls connect a real repo → return scores → accept five
+answers → promote a skill to verified → return it in a new roadmap bucket.
 
 ---
 
@@ -131,8 +123,8 @@ Not optional. Reserve it.
 
 - Pick and pre-warm **one** demo repository. Cache its analysis. Never demo a cold clone.
 - `MOCK_MODE=true` as the fallback path, rehearsed. If the API key dies mid-demo, flip one env var.
-- Seed one fully-verified profile so the share page has content.
-- Cross-track bug bash. Everyone runs everyone else's flow.
+- Seed one fully-verified profile so public API responses have realistic content.
+- Cross-track backend bug bash. Everyone runs the complete API flow.
 - README with setup steps.
 
 ---
@@ -156,12 +148,6 @@ main                          always green, always demo-able
  ├─ feat/b4-scorer            Track B, Phase 2
  ├─ feat/b5-selector-generator Track B, Phase 3
  ├─ feat/b6-injector-grader   Track B, Phase 3
- │
- ├─ feat/c1-connect-profile   Track C, Phase 1
- ├─ feat/c2-codeviewer        Track C, Phase 1
- ├─ feat/c3-recall-roadmap    Track C, Phase 1
- ├─ feat/c4-live-types        Track C, Phase 2
- ├─ feat/c5-share-verified    Track C, Phase 3
  │
  ├─ feat/d1-skills-yaml       Track D, Phase 1
  ├─ feat/d2-knowledge-seeded  Track D, Phase 1
@@ -208,7 +194,6 @@ Track A clone          ──► Track B scanner       (needs files on disk to s
 Track D skills.yaml    ──► Track B scorer        (needs skill ids to emit)
 Track D dimensions.yaml──► Track B scorer        (needs the rubric)
 Track B scorer         ──► Track D buckets       (needs real SkillStatus)
-Backend OpenAPI live   ──► Track C gen:types
 ```
 
 **Nobody is ever actually blocked**, because the mock fixtures satisfy every one of
@@ -234,18 +219,17 @@ From OVERALL.md §1. If a PR violates one, it does not merge.
 5. The roadmap **must still produce output** when market demand is `None`. There is
    a null frequency in `mock/market.json` specifically to keep you honest.
 6. Every `Finding` carries `Evidence` that resolves. `validator.py` drops the rest,
-   and dropped findings never reach storage or UI.
-7. The share page exports the **verified tier only**.
-8. The recall page is **revision, never an exam**. No failing grade, no ranking.
-9. `frontend/lib/data.ts` is the only file that knows whether data is mock or live.
-10. `schemas/` and `models/db.py` do **not** share classes. API contract and storage
+   and dropped findings never reach storage or API responses.
+7. Any public profile/export API returns the **verified tier only**.
+8. Recall API feedback is **revision, never an exam**. No failing grade, no ranking.
+9. `schemas/` and `models/db.py` do **not** share classes. API contract and storage
     are separate on purpose.
 
 ---
 
 ## 6. Changing a contract
 
-`schemas/` is frozen because four tracks read it. When it genuinely must change:
+`schemas/` is frozen because three backend tracks read it. When it genuinely must change:
 
 1. Say so in the team channel **before** editing. Name the field and why.
 2. Make the change on a branch named `contract/<what>`.
@@ -281,9 +265,8 @@ expensive. Prefer additive.
 4. `injector.py` and the `debug` type — keep the three rubric-graded types.
 5. Multi-repo analysis — demo one repository well.
 
-**Never cut:** `validator.py`, evidence links, or the verified-tier restriction on
-the share page. Those three are the product's entire claim to being different from
-a résumé generator.
+**Never cut:** `validator.py`, evidence-bearing response contracts, or verified-tier
+filtering on any public export. Those are the product's credibility boundary.
 
 ---
 
@@ -295,8 +278,6 @@ Small, deliberate, listed here so nobody thinks they are accidents.
 |---|---|
 | `backend/app/mock_store.py` | All six routers needed the same three-line JSON loader. Owned by Track D with the fixtures. |
 | `backend/mock/{repos,questions,roadmap}.json` | OVERALL.md names four fixtures; the routers need three more to serve the full journey in mock mode. |
-| `frontend/public/mock/` | The browser cannot read `backend/mock/`. `npm run sync:mock` copies them. |
-| `frontend/lib/types.ts` placeholder block | Spec says generated from OpenAPI, which needs a running backend. The block is marked and deleted on the first `npm run gen:types`. |
 | `backend/tests/test_contracts.py` | Guards the fixtures against schema drift, which is the main way mock mode rots. |
 | `demand/llm.py`, `demand/chained.py`, `SourceKind.ESTIMATED` | OVERALL.md offers seeded-or-scraped only. The demand decision is still open, so a third provider and a fallback chain keep it open without blocking anyone. See §10. |
 
@@ -325,7 +306,8 @@ For each skill, the chain takes the first source that answers. So a scraped
 figure is used where the ads cover that skill; an LLM estimate fills gaps; the
 seeded table is the floor. **Every row keeps the provenance of whichever source
 actually answered**, so a mixed roadmap still shows the user, per item, which
-numbers were measured and which were guessed. `SourceBadge` renders that difference.
+numbers were measured and which were guessed. The API preserves that difference
+in each row's `Provenance`.
 
 Why this is safe to leave open:
 
