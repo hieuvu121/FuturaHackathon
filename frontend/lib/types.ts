@@ -87,7 +87,7 @@ export interface MarketSkill {
 export type QuestionType =
   | "recall" | "justify" | "transfer" | "debug" | "extend"
   // Seeded drills from the adaptive loop. These carry no code target.
-  | "concept" | "coding";
+  | "concept" | "coding" | "explain";
 
 export interface Question {
   id: string;
@@ -103,6 +103,24 @@ export interface Question {
   starter: string;
   /** Options for a multiple-choice concept drill; the submission is the chosen text. Empty otherwise. */
   choices: string[];
+}
+
+/** A topic in the practice section, with how many questions of each kind it has. */
+export interface PracticeTopic {
+  skill_id: string;
+  name: string;
+  summary: string;
+  counts: Record<string, number>;
+}
+
+/** The result of one practice question. Practice never changes the roadmap. */
+export interface PracticeGrade {
+  question_id: string;
+  passed: boolean;
+  score: number;
+  feedback: string;
+  missing: string[];
+  model_answer: string;
 }
 
 export interface NextQuestion {

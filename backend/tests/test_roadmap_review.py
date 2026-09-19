@@ -170,7 +170,8 @@ def test_a_session_mixes_coding_tasks_with_multiple_choice(db):
         _answer_current(db, right=True)
 
     assert kinds[0] == "coding"
-    assert kinds.count("coding") >= 2
+    # All three kinds turn up in one session: write it, pick it, explain it.
+    assert set(kinds) == {"coding", "concept", "explain"}
     assert kinds.count("concept") >= 2
-    # Theory is always multiple choice, and a coding task never is.
+    # Theory is always multiple choice; coding and explain answers are always written.
     assert all((count == 4) == (kind == "concept") for kind, count in zip(kinds, choices))

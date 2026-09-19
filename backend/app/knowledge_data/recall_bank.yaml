@@ -532,3 +532,103 @@ questions:
     type: concept
     prompt: "A `useEffect` that fetches data runs in an endless loop. What is the usual cause?"
     key_points: [dependency recreated each render, object or function in deps, setState inside without guard, memoise or narrow deps]
+
+  # --- Explain this code ------------------------------------------------------
+  # Reading is a different skill from writing. `code` is shown with the prompt;
+  # the answer is graded on whether it names the key points, and `solution` is
+  # the model explanation shown afterwards.
+  - id: python_l2_explain_enumerate
+    skill_id: python
+    level: 2
+    type: explain
+    prompt: "Explain what this function returns, and why it uses `enumerate` and a dict rather than `list.index`."
+    code: |
+      def positions(words):
+          first_seen = {}
+          for index, word in enumerate(words):
+              first_seen.setdefault(word, index)
+          return first_seen
+    key_points: [maps each word to its first position, setdefault keeps the first index, single pass, list.index would rescan and be quadratic]
+    solution: |
+      It returns a dict mapping each distinct word to the index where it first
+      appears. `setdefault` only writes a key that is not there yet, so later
+      repeats do not overwrite the first position. It is one pass over the list;
+      calling `words.index(word)` for every word would rescan from the start each
+      time, which is quadratic.
+
+  - id: clean_code_l2_explain_flags
+    skill_id: clean_code
+    level: 2
+    type: explain
+    prompt: "Explain what is hard to maintain about this function, and how you would reshape it."
+    code: |
+      def export(rows, csv=False, compress=False, header=True):
+          if csv:
+              data = to_csv(rows, header)
+          else:
+              data = to_json(rows)
+          if compress:
+              data = gzip(data)
+          return data
+    key_points: [boolean flags select behaviour, caller cannot read export(rows True False), header only applies to csv, split into named functions or pass a format]
+    solution: |
+      Three boolean flags pick between behaviours, so a call such as
+      `export(rows, True, False)` says nothing to a reader, and `header` silently
+      does nothing unless `csv` is set. Splitting it into `export_csv` and
+      `export_json`, with compression as a separate step, makes each call say
+      what it does and removes the invalid combinations.
+
+  - id: testing_unit_l2_explain_mock
+    skill_id: testing_unit
+    level: 2
+    type: explain
+    prompt: "Explain what this test actually proves, and what it would miss."
+    code: |
+      def test_send_welcome(monkeypatch):
+          sent = []
+          monkeypatch.setattr(mailer, "send", lambda to, body: sent.append(to))
+          register("ana@example.com")
+          assert sent == ["ana@example.com"]
+    key_points: [replaces the real mailer with a fake, proves register calls send with the address, does not check the body, would not catch a broken real mailer, fast and isolated]
+    solution: |
+      It swaps the real `mailer.send` for a fake that records the recipient, so it
+      proves `register` asks for a mail to the right address, quickly and without
+      a mail server. It says nothing about the body of the message, and it cannot
+      notice that the real mailer is broken -- that needs an integration test.
+
+  - id: sql_l2_explain_left_join
+    skill_id: sql
+    level: 2
+    type: explain
+    prompt: "Explain what this query returns, and which users would disappear if LEFT JOIN became INNER JOIN."
+    code: |
+      SELECT u.name, COUNT(o.id) AS orders
+      FROM users u
+      LEFT JOIN orders o ON o.user_id = u.id
+      GROUP BY u.id, u.name;
+    key_points: [one row per user with their order count, left join keeps users with no orders, count of o.id gives zero for them, inner join would drop users without orders]
+    solution: |
+      One row per user with how many orders they have. The LEFT JOIN keeps users
+      who have no orders; for them `o.id` is NULL, and `COUNT(o.id)` ignores NULLs,
+      so they show 0. With an INNER JOIN those users would vanish from the result
+      altogether.
+
+  - id: debugging_l2_explain_swallow
+    skill_id: debugging
+    level: 2
+    type: explain
+    prompt: "Explain why a failure in this code would be hard to track down, and what you would change."
+    code: |
+      def load_settings(path):
+          try:
+              return json.load(open(path))
+          except Exception:
+              return {}
+    key_points: [catches every exception, returns an empty dict silently, a missing or malformed file looks like valid empty settings, the failure surfaces later and elsewhere, catch specific errors and log or raise]
+    solution: |
+      Any failure -- a missing file, bad JSON, a permissions error -- is caught and
+      turned into `{}`, which looks exactly like a valid empty configuration. The
+      program carries on and breaks later, far from the cause, with no trace of
+      what went wrong. Catch only the errors you can handle, log them, and let the
+      rest raise. (The file is also never closed; use `with`.)
+

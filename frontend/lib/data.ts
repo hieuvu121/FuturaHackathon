@@ -12,7 +12,7 @@ import roadmapMock from "../../backend/mock/roadmap.json";
 import scoresMock from "../../backend/mock/scores.json";
 
 import type {
-  AdaptiveGrade, AnalysisStatus, Answer, Buckets, CapstoneState, CodeSlice, CurrentUser, Evidence, Finding, GradeResult, NextQuestion, PortfolioProfile, PortfolioSelection, Question, Repo, RepoMap, RoadmapGraph, RoadmapReview, Scores,
+  AdaptiveGrade, AnalysisStatus, Answer, Buckets, CapstoneState, CodeSlice, CurrentUser, Evidence, Finding, GradeResult, NextQuestion, PortfolioProfile, PortfolioSelection, PracticeGrade, PracticeTopic, Question, QuestionType, Repo, RepoMap, RoadmapGraph, RoadmapReview, Scores,
 } from "./types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -180,6 +180,23 @@ export async function submitCapstone(repoUrl: string, notes: string): Promise<Ca
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ repo_url: repoUrl, notes }),
+  });
+}
+
+export async function getPracticeTopics(): Promise<PracticeTopic[]> {
+  return request<PracticeTopic[]>("/recall/practice/topics");
+}
+
+export async function getPracticeQuestions(skillId: string, kind?: QuestionType): Promise<Question[]> {
+  const query = kind ? `?kind=${encodeURIComponent(kind)}` : "";
+  return request<Question[]>(`/recall/practice/${encodeURIComponent(skillId)}/questions${query}`);
+}
+
+export async function answerPractice(answer: Answer): Promise<PracticeGrade> {
+  return request<PracticeGrade>("/recall/practice/answer", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(answer),
   });
 }
 

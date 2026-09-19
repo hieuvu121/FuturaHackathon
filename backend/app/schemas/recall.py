@@ -18,6 +18,9 @@ class QuestionType(str, Enum):
     # user's code, so they carry no target.
     CONCEPT = "concept"
     CODING = "coding"
+    # Read a piece of code and say what it does and why. The code rides in
+    # `code_context`; there is no target, because it is not the user's code.
+    EXPLAIN = "explain"
 
 
 # The five derived from the user's own code, in the order a session walks them.
@@ -30,7 +33,11 @@ GENERATED_TYPES: tuple[QuestionType, ...] = (
     QuestionType.DEBUG,
     QuestionType.EXTEND,
 )
-SEEDED_TYPES: tuple[QuestionType, ...] = (QuestionType.CONCEPT, QuestionType.CODING)
+SEEDED_TYPES: tuple[QuestionType, ...] = (
+    QuestionType.CONCEPT,
+    QuestionType.CODING,
+    QuestionType.EXPLAIN,
+)
 
 
 class Question(BaseModel):
@@ -85,6 +92,17 @@ class NextQuestion(BaseModel):
     session_length: int = Field(5, description="How many questions one recall session asks.")
     remaining_skills: int = 0
     reason: str = Field("", description="Why this question was chosen, shown to the user.")
+
+
+class PracticeGrade(BaseModel):
+    """The result of one practice question. Practice never changes a tier or the roadmap."""
+
+    question_id: str
+    passed: bool
+    score: float = Field(ge=0.0, le=1.0)
+    feedback: str
+    missing: list[str] = Field(default_factory=list, description="Key points the answer did not make.")
+    model_answer: str = ""
 
 
 class AdaptiveGrade(GradeResult):

@@ -89,6 +89,8 @@ def _load(path: str) -> tuple[BankEntry, ...]:
                     id=row["id"],
                     type=QuestionType(row["type"]),
                     prompt=row["prompt"],
+                    # An explain drill carries the code it asks about.
+                    code_context=(row.get("code") or "").rstrip(),
                     skill_ids=[row["skill_id"]],
                     level=int(row["level"]),
                     starter=row.get("starter", ""),

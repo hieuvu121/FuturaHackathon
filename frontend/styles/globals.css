@@ -408,7 +408,8 @@ h1, h2, h3, h4 { font-family: var(--font-heading), sans-serif; letter-spacing: -
 .flow-nodes > li:first-child::after, .flow-nodes > li:first-child > .flow-item::after { top: 50%; }
 .flow-nodes > li:last-child::after, .flow-nodes > li:last-child > .flow-item::after { bottom: 50%; }
 .flow-nodes > li:only-child::after, .flow-nodes > li:only-child > .flow-item::after { display: none; }
-.flow-start .flow-nodes > li::before, .flow-end .flow-item::before { display: none; }
+.flow-start .flow-nodes > li::before { display: none; }
+.flow-col:last-child .flow-item::before, .flow-col:last-child .flow-item::after { display: none; }
 
 .flow-node { position: relative; z-index: 1; width: 100%; min-width: 0; }
 .flow-nodes .concept-node { padding: 11px 12px 10px; gap: 6px; border-radius: 15px; }
@@ -489,6 +490,27 @@ h1, h2, h3, h4 { font-family: var(--font-heading), sans-serif; letter-spacing: -
 .review-actions { flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 9px; }
 .review-actions .primary-button { min-height: 42px; padding: 0 18px; border-radius: 13px; font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
 .review-actions button:disabled { opacity: .55; cursor: default; }
+
+/* Recall's two sections, and the practice pickers. */
+.section-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; max-width: 760px; margin: 0 0 22px; }
+.section-tab { display: grid; gap: 3px; padding: 12px 16px; text-align: left; border: 1.5px solid var(--hairline); border-radius: 16px; color: var(--ink); background: rgba(255,255,255,.62); font: inherit; cursor: pointer; transition: border-color .18s var(--ease-fluid), background .18s var(--ease-fluid); }
+.section-tab strong { font-size: 15px; }
+.section-tab span { color: var(--text-secondary); font-size: 12px; line-height: 1.4; }
+.section-tab:hover { border-color: rgba(47,116,232,.5); }
+.section-tab[aria-selected="true"] { border-color: transparent; color: #fff; background: linear-gradient(120deg, var(--primary-a), var(--primary-b)); box-shadow: 0 18px 34px -24px rgba(29,95,214,.9); }
+.section-tab[aria-selected="true"] span { color: rgba(255,255,255,.86); }
+.section-tab:focus-visible { outline: 2px solid var(--decorative-a); outline-offset: 2px; }
+.practice { display: grid; gap: 16px; }
+.practice-pickers { display: grid; gap: 10px; }
+.practice-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.practice-picker-label { min-width: 84px; color: var(--text-muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.practice-picker .topic-chip { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; font-size: 13px; }
+.practice-picker .topic-chip small { padding: 0 6px; border-radius: 99px; background: rgba(47,116,232,.14); font-size: 10.5px; font-weight: 800; }
+.practice-picker .topic-chip[aria-pressed="true"] { border-color: transparent; color: #fff; background: var(--primary-a); }
+.practice-picker .topic-chip[aria-pressed="true"] small { background: rgba(255,255,255,.24); }
+.practice-summary { max-width: 74ch; margin: 0; color: var(--text-secondary); font-size: 14px; line-height: 1.55; }
+.kind-explain { color: #5b2a86; background: #efe2fb; }
+@media (max-width: 600px) { .section-tabs { grid-template-columns: minmax(0, 1fr); } }
 
 /* The pop-up that ends a recall session. */
 .modal-backdrop { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 20px; background: rgba(16,36,58,.42); backdrop-filter: blur(5px); }

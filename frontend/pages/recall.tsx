@@ -1,9 +1,10 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import PageSkeleton from "@/components/PageSkeleton";
+import PracticePanel from "@/components/PracticePanel";
 import { ApiError, answerDrill, getNextDrill, getRoadmapGraph, redoRecall } from "@/lib/data";
 import type { AdaptiveGrade, NextQuestion } from "@/lib/types";
 
@@ -138,7 +139,59 @@ function CheckMark() {
   );
 }
 
+type Section = "evaluation" | "practice";
+
+/** The two halves of recall: be measured, then get better. */
+function SectionTabs({ section, onChange }: { section: Section; onChange: (next: Section) => void }) {
+  const tabs: { id: Section; label: string; note: string }[] = [
+    { id: "evaluation", label: "Evaluation", note: "Five questions that place your level and build the roadmap" },
+    { id: "practice", label: "Practice", note: "Recall a topic by multiple choice, writing code, or explaining code" },
+  ];
+  return (
+    <div className="section-tabs" role="tablist" aria-label="Recall sections">
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          role="tab"
+          id={`tab-${tab.id}`}
+          data-testid={`tab-${tab.id}`}
+          aria-selected={section === tab.id}
+          className="section-tab"
+          onClick={() => onChange(tab.id)}
+        >
+          <strong>{tab.label}</strong>
+          <span>{tab.note}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function RecallPage() {
+  const [section, setSection] = useState<Section>("evaluation");
+  const tabs = <SectionTabs section={section} onChange={setSection} />;
+
+  if (section === "practice") {
+    return (
+      <main className="page recall-page">
+        <header className="page-header">
+          <p className="eyebrow">Recall</p>
+          <h1 className="page-title">Practise what you are learning</h1>
+          <p className="page-copy">
+            Pick a topic and work on it three ways: choose the right answer, write the code, or
+            explain code someone else wrote. Nothing here changes your roadmap — retry as often as you like.
+          </p>
+        </header>
+        {tabs}
+        <PracticePanel />
+      </main>
+    );
+  }
+  return <Evaluation tabs={tabs} />;
+}
+
+function Evaluation({ tabs }: { tabs: ReactNode }) {
   const reduceMotion = useReducedMotion();
   const router = useRouter();
   const [generating, setGenerating] = useState(false);
@@ -228,14 +281,15 @@ export default function RecallPage() {
   }
 
   if (generating) return <GeneratingRoadmap onDone={() => void router.push("/roadmap")} />;
-  if (loadError) return <main className="page"><div className="error-state" role="alert">{loadError}</div></main>;
+  if (loadError) return <main className="page recall-page">{tabs}<div className="error-state" role="alert">{loadError}</div></main>;
   if (!loaded) return <PageSkeleton label="Preparing a revision session" />;
 
   const question = step?.question ?? null;
 
   if (!question) {
     return (
-      <main className="page">
+      <main className="page recall-page">
+        {tabs}
         <section className="empty-state surface">
           <p className="eyebrow">Recall</p>
           <h1>{(step?.asked ?? 0) > 0 ? "Session complete" : "Nothing to revise yet"}</h1>
@@ -265,7 +319,10 @@ export default function RecallPage() {
 
   const coding = question.type === "coding";
   // Drills written against the user's own repository carry the code they are about.
-  const fromRepo = Boolean(question.code_context);
+  const explain = question.type === "explain";
+  // Only a drill written against the user's repository has a target. An explain
+  // drill shows code too, but it is sample code, not theirs.
+  const fromRepo = Boolean(question.target);
   const choices = question.choices ?? [];
   const multipleChoice = choices.length > 0;
 
@@ -284,6 +341,8 @@ export default function RecallPage() {
           gets easier. This is how the gaps get found — there is no score to protect.
         </p>
       </header>
+
+      {tabs}
 
       <div className="drill-progress" role="status">
         <span data-testid="drill-count">
@@ -309,7 +368,7 @@ export default function RecallPage() {
         >
           <div className="drill-meta">
             <span className={`drill-kind kind-${question.type}`}>
-              {fromRepo ? "Your code" : coding ? "Coding task" : "Concept"}
+              {fromRepo ? "Your code" : coding ? "Coding task" : explain ? "Explain the code" : "Concept"}
             </span>
             <span className="drill-skill">{question.skill_ids.join(", ").replace(/_/g, " ")}</span>
             <span className="drill-level">
@@ -322,10 +381,10 @@ export default function RecallPage() {
 
           <h2 data-testid="drill-prompt">{question.prompt}</h2>
 
-          {fromRepo && (
+          {question.code_context && (
             <figure className="drill-context" data-testid="drill-context">
               <figcaption>
-                {question.target_name}
+                {fromRepo ? question.target_name : "Read this code"}
                 {question.target && ` · lines ${question.target.lines[0]}–${question.target.lines[1]}`}
               </figcaption>
               <pre>{question.code_context}</pre>
@@ -370,7 +429,13 @@ export default function RecallPage() {
                 spellCheck={!coding}
                 onChange={(event) => setSubmission(event.target.value)}
                 className={coding ? "code-answer" : undefined}
-                placeholder={coding ? "Write the implementation" : "A sentence or two is enough"}
+                placeholder={
+                  coding
+                    ? "Write the implementation"
+                    : explain
+                      ? "Say what the code does, and why it is written this way"
+                      : "A sentence or two is enough"
+                }
                 disabled={Boolean(grade)}
               />
             </>

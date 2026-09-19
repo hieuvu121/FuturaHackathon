@@ -2,7 +2,6 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import CapstonePanel from "@/components/CapstonePanel";
 import EvidenceLink from "@/components/EvidenceLink";
 import { CheckIcon, ExternalIcon, InfoIcon } from "@/components/Icons";
 import SourceBadge from "@/components/SourceBadge";
@@ -29,11 +28,10 @@ const STATUS_LABEL: Record<NodeStatus, string> = {
   new: "New",
 };
 
-/** What is selected in the tree: a concept branch, one skill leaf on it, or the final project. */
+/** What is selected in the diagram: a concept, or one topic inside it. */
 type Selection =
   | { kind: "concept"; conceptId: string }
   | { kind: "skill"; conceptId: string; skillId: string }
-  | { kind: "capstone" }
   | null;
 
 function StatusMark({ status }: { status: NodeStatus }) {
@@ -407,7 +405,7 @@ export default function RoadmapPage() {
   const shownSkills = (concept: RoadmapConcept) =>
     tailoring ? concept.skills : concept.skills.filter((skill) => !isHidden(skill));
 
-  const openConceptId = selection && selection.kind !== "capstone" ? selection.conceptId : null;
+  const openConceptId = selection?.conceptId ?? null;
   const openConcept = graph?.concepts.find((concept) => concept.concept_id === openConceptId) ?? null;
   const openSkill =
     selection?.kind === "skill" ? openConcept?.skills.find((skill) => skill.skill_id === selection.skillId) ?? null : null;
@@ -446,7 +444,7 @@ export default function RoadmapPage() {
           <h1 className="page-title">Where your work goes next</h1>
           <p className="roadmap-lede">
             Read it left to right. Each column is a step: what to learn first, what to pick up in
-            parallel, what builds on that, and the project at the end. Select any node for a short
+            parallel, and what builds on that. Select any node for a short
             description, its topics, what is missing, and where to study it.
           </p>
         </div>
@@ -498,7 +496,7 @@ export default function RoadmapPage() {
           <div
             className="roadmap-flow"
             data-testid="roadmap-diagram"
-            style={{ gridTemplateColumns: `minmax(124px, .8fr) repeat(${stages.length}, minmax(0, 1fr)) minmax(116px, .8fr)` }}
+            style={{ gridTemplateColumns: `minmax(124px, .8fr) repeat(${stages.length}, minmax(0, 1fr))` }}
           >
             <div className="flow-col flow-start">
               <span className="flow-label">Start</span>
@@ -550,46 +548,22 @@ export default function RoadmapPage() {
                 </ul>
               </div>
             ))}
-
-            <div className="flow-col flow-end">
-              <span className="flow-label"><b>★</b>Apply it</span>
-              <ul className="flow-nodes">
-                <li>
-                  <div className="flow-item">
-                    <button
-                      type="button"
-                      className="flow-node concept-node capstone-node"
-                      data-testid="capstone-node"
-                      data-open={selection?.kind === "capstone"}
-                      aria-expanded={selection?.kind === "capstone"}
-                      aria-controls="roadmap-detail"
-                      onClick={() => select({ kind: "capstone" })}
-                    >
-                      <h3>Final project</h3>
-                      <p className="capstone-tagline">Build one project and have it reviewed.</p>
-                    </button>
-                  </div>
-                </li>
-              </ul>
-            </div>
           </div>
 
           <AnimatePresence mode="wait" initial={false}>
             {selection && (
               <motion.section
                 ref={detailRef}
-                className={`concept-detail${selection.kind === "capstone" ? " wide" : ""}`}
+                className="concept-detail"
                 id="roadmap-detail"
-                key={selection.kind === "skill" ? selection.skillId : selection.kind === "concept" ? selection.conceptId : "capstone"}
+                key={selection.kind === "skill" ? selection.skillId : selection.conceptId}
                 aria-live="polite"
                 initial={reduceMotion ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
                 transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.2, 0.8, 0.2, 1] }}
               >
-                {selection.kind === "capstone" ? (
-                  <CapstonePanel />
-                ) : openSkill && openConcept ? (
+                {openSkill && openConcept ? (
                   <>
                     <button
                       type="button"

@@ -132,12 +132,13 @@ def test_repository_drill_replaces_the_seeded_question_at_its_level(tmp_path, mo
         SETTINGS, [Attempt("python", 2, False, grounded.question.id)], order, entries
     )
 
-    assert not seeded.question.code_context
+    # A seeded drill may show code (an explain drill does), but never the user's own.
+    assert seeded.question.target is None
     assert grounded.question.id == entries[0].question.id
     assert harder.question.id == entries[1].question.id
     # Level 1 has no repository drill, so the loop falls back to the seeded bank.
     assert easier.question.level == 1
-    assert not easier.question.code_context
+    assert easier.question.target is None
 
 
 def test_malformed_tasks_are_dropped(tmp_path, monkeypatch):

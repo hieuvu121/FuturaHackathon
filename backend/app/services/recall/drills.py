@@ -196,7 +196,8 @@ def grade_drill(settings: Settings, entry: BankEntry, answer: Answer) -> DrillVe
 
 def model_answer(entry: BankEntry) -> str:
     """What to show after grading, so a miss still teaches something."""
-    if entry.question.type is QuestionType.CODING and entry.solution:
+    # A coding drill shows its reference solution, an explain drill its model explanation.
+    if entry.question.type in (QuestionType.CODING, QuestionType.EXPLAIN) and entry.solution:
         return entry.solution
     if entry.answer:
         return entry.answer

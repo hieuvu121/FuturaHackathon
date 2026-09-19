@@ -161,3 +161,37 @@ def test_analyze_endpoint_rejects_duplicate_active_run(session_factory, monkeypa
         repos_router.analyze(str(repo_id), FakeTasks(), "developer", db)
 
     assert error.value.status_code == 409
+
+
+
+def test_interrupted_analyses_are_closed_so_they_can_be_run_again():
+    """A run killed by a restart must not report 'running', or block a rerun, for ever."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    from app.models.db import Analysis, Base, Repo, User
+    from app.services.storage import INTERRUPTED, fail_interrupted_analyses
+
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    with Session(engine) as db:
+        db.add(User(id=1, github_login="dev"))
+        db.add(Repo(id=10, user_id=1, full_name="dev/project"))
+        db.add_all(
+            [
+                Analysis(id=1, repo_id=10, stage="done", progress=100),
+                Analysis(id=2, repo_id=10, stage="failed", progress=20, error="clone failed"),
+                Analysis(id=3, repo_id=10, stage="scanning", progress=51),
+                Analysis(id=4, repo_id=10, stage="queued", progress=0),
+            ]
+        )
+        db.commit()
+
+        assert fail_interrupted_analyses(db) == 2
+        assert fail_interrupted_analyses(db) == 0
+
+        stages = {row.id: (row.stage, row.error) for row in db.query(Analysis).all()}
+        assert stages[1] == ("done", None)
+        assert stages[2] == ("failed", "clone failed")
+        assert stages[3] == ("failed", INTERRUPTED)
+        assert stages[4] == ("failed", INTERRUPTED)

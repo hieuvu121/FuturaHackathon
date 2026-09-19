@@ -13,12 +13,20 @@ from sqlalchemy import select
 from ..config import get_settings
 from ..deps import CurrentUser, DbDep
 from ..models.db import RecallAttemptRow, SkillStatusRow, User
-from ..schemas.recall import AdaptiveGrade, Answer, NextQuestion, QuestionType
+from ..schemas.recall import (
+    AdaptiveGrade,
+    Answer,
+    NextQuestion,
+    PracticeGrade,
+    Question,
+    QuestionType,
+)
 from ..schemas.roadmap import NodeStatus
 from ..schemas.scores import Tier
 from ..services.knowledge import get_demand, get_taxonomy
 from ..services.portfolio import build_profile, owned_selected_repos
 from ..services.recall.adaptive import Attempt, BankEntry, entry_for, next_question
+from ..services.recall import practice
 from ..services.recall.drills import PASS_MARK, grade_drill, model_answer
 from ..services.recall.repo_drills import ensure_repo_drills, load_repo_entries, repo_entry_for
 from ..services.roadmap import review as roadmap_review
@@ -72,9 +80,9 @@ def _attempts(db: DbDep, user: User) -> list[Attempt]:
 SESSION_MIX: tuple[QuestionType, ...] = (
     QuestionType.CODING,
     QuestionType.CONCEPT,
+    QuestionType.EXPLAIN,
+    QuestionType.CONCEPT,
     QuestionType.CODING,
-    QuestionType.CONCEPT,
-    QuestionType.CONCEPT,
 )
 
 
@@ -201,3 +209,43 @@ def answer_drill(answer: Answer, user: CurrentUser, db: DbDep) -> AdaptiveGrade:
         model_answer=model_answer(entry),
         next=upcoming,
     )
+
+
+# --- Practice ---------------------------------------------------------------------
+# The second half of recall. The evaluation above finds the user's level and
+# feeds the roadmap; practice is where they go afterwards to work on a topic.
+# It records nothing and promotes nothing, so there is no session to finish.
+
+
+@router.get("/practice/topics", response_model=list[practice.PracticeTopic])
+def practice_topics(user: CurrentUser) -> list[practice.PracticeTopic]:
+    return practice.topics(get_settings())
+
+
+@router.get("/practice/{skill_id}/questions", response_model=list[Question])
+def practice_questions(
+    skill_id: str, user: CurrentUser, kind: QuestionType | None = None
+) -> list[Question]:
+    """A topic's questions, optionally of one kind: concept, coding or explain."""
+    found = practice.questions(get_settings(), skill_id, kind)
+    if found is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No practice questions for this topic")
+    return found
+
+
+@router.post("/practice/answer", response_model=PracticeGrade)
+def practice_answer(answer: Answer, user: CurrentUser) -> PracticeGrade:
+    settings = get_settings()
+    entry = practice.entry_for(settings, answer.question_id)
+    if entry is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Question not found")
+    verdict = grade_drill(settings, entry, answer)
+    return PracticeGrade(
+        question_id=entry.question.id,
+        passed=verdict.score >= PASS_MARK,
+        score=round(verdict.score, 4),
+        feedback=verdict.feedback,
+        missing=verdict.missing,
+        model_answer=model_answer(entry),
+    )
+
