@@ -1,14 +1,16 @@
 """Repository listing, selection, and pipeline kick-off. Owner: Track A."""
 
 from fastapi import APIRouter, BackgroundTasks
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status as http_status
 from sqlalchemy import select
 
 from ..config import get_settings
 from ..deps import CurrentUser, DbDep
 from ..mock_store import load
 from ..models.db import Repo, User, init_db
+from ..schemas.repo_map import RepoMap
 from ..services.ingest.github import list_repos as list_github_repos
+from ..services.storage import get_owned_repo, latest_analysis
 
 router = APIRouter(prefix="/repos", tags=["repos"])
 
@@ -22,7 +24,7 @@ def list_repos(user: CurrentUser, db: DbDep) -> list[dict]:
     init_db()
     owner = db.scalar(select(User).where(User.github_login == user))
     if owner is None or not owner.github_token:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "GitHub account is not connected")
+        raise HTTPException(http_status.HTTP_401_UNAUTHORIZED, "GitHub account is not connected")
 
     github_repos = list_github_repos(owner.github_token)
     for payload in github_repos:
@@ -48,15 +50,30 @@ def analyze(repo_id: str, tasks: BackgroundTasks, user: CurrentUser, db: DbDep) 
 
 
 @router.get("/{repo_id}/status")
-def status(repo_id: str, user: CurrentUser) -> dict[str, str | int]:
+def status(repo_id: str, user: CurrentUser, db: DbDep) -> dict[str, str | int | None]:
     """Polled by the frontend while the pipeline runs."""
     if get_settings().mock_mode:
         return {"repo_id": repo_id, "stage": "done", "progress": 100}
-    raise NotImplementedError("Track A: read the analyses table")
+    repo = get_owned_repo(db, repo_id, user)
+    if repo is None:
+        raise HTTPException(http_status.HTTP_404_NOT_FOUND, "Repository not found")
+    analysis = latest_analysis(db, repo.id)
+    if analysis is None:
+        return {"repo_id": repo_id, "stage": "not_started", "progress": 0, "error": None}
+    return {
+        "repo_id": repo_id,
+        "stage": analysis.stage,
+        "progress": analysis.progress,
+        "error": analysis.error,
+    }
 
 
-@router.get("/{repo_id}/repo_map")
-def repo_map(repo_id: str, user: CurrentUser) -> dict:
+@router.get("/{repo_id}/repo_map", response_model=RepoMap)
+def repo_map(repo_id: str, user: CurrentUser, db: DbDep) -> dict:
     if get_settings().mock_mode:
         return load("repo_map")
-    raise NotImplementedError("Track A: read the persisted RepoMap")
+    repo = get_owned_repo(db, repo_id, user)
+    analysis = latest_analysis(db, repo.id) if repo is not None else None
+    if analysis is None or analysis.repo_map is None:
+        raise HTTPException(http_status.HTTP_404_NOT_FOUND, "Repository analysis not found")
+    return analysis.repo_map

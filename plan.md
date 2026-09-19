@@ -114,7 +114,10 @@ kept Python files and 106 definitions). Phase 2's persistence exit criterion now
 depends on the storage/API branch. The non-persistent orchestration was verified
 live with a one-file scan: 14 findings from `indexer/tasks.py` passed validation,
 none were dropped, and the scorer returned six dimensions and seven touched
-skills.
+skills. The complete Phase 2 flow was then verified with another live scan and
+an isolated database: stage `done`, progress 100, 106 functions, eight validated
+findings, six dimensions, and seven persisted skill statuses. The HTTP analyze
+trigger remains in Phase 3 because it runs this work as a background task.
 
 ---
 
