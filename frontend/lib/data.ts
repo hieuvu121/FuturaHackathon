@@ -27,6 +27,8 @@ import type {
   RepoMap,
   RoadmapGraph,
   Scores,
+  AdaptiveGrade,
+  NextQuestion,
 } from "./types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -131,7 +133,8 @@ export async function getQuestions(repoId: string): Promise<Question[]> {
 
 export async function getPortfolioQuestions(): Promise<Question[]> {
   if (USE_MOCK) return clone(questionsMock as Question[]).map((question) => ({
-    ...question, target: withMockRepo(question.target),
+    // Seeded drills carry no target; only code-derived questions have one.
+    ...question, target: question.target ? withMockRepo(question.target) : null,
   }));
   return request<Question[]>("/repos/portfolio/questions");
 }
@@ -156,6 +159,18 @@ export async function getRoadmapGraph(role = "software_engineer", region = "AU")
   // has its own mock mode, so this still works with no database behind it.
   const query = new URLSearchParams({ role, region });
   return request<RoadmapGraph>(`/repos/portfolio/roadmap/graph?${query}`);
+}
+
+export async function getNextDrill(): Promise<NextQuestion> {
+  return request<NextQuestion>("/recall/next");
+}
+
+export async function answerDrill(answer: Answer): Promise<AdaptiveGrade> {
+  return request<AdaptiveGrade>("/recall/answer", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(answer),
+  });
 }
 
 export async function getCode(repoId: string, file: string, start: number, end: number): Promise<CodeSlice> {

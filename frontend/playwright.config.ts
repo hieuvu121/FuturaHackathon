@@ -26,9 +26,19 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
-      command: "../backend/.venv/bin/python -m uvicorn app.main:app --port 8000",
+      // A throwaway database per run, so the recall attempt log starts empty and
+      // a session cannot be exhausted by yesterday's run. Blank API keys force
+      // the drill grader onto its deterministic key-point path: offline, free
+      // and identical every time.
+      command:
+        "rm -f cache/e2e.db && ../backend/.venv/bin/python -m uvicorn app.main:app --port 8000",
       cwd: "../backend",
-      env: { MOCK_MODE: "true" },
+      env: {
+        MOCK_MODE: "true",
+        DATABASE_URL: "sqlite:///./cache/e2e.db",
+        OPENAI_API_KEY: "",
+        ANTHROPIC_API_KEY: "",
+      },
       url: "http://localhost:8000/health",
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,

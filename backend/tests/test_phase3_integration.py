@@ -12,7 +12,7 @@ from app.routers import recall as recall_router
 from app.routers import repos as repos_router
 from app.routers import roadmap as roadmap_router
 from app.schemas.findings import Finding
-from app.schemas.recall import Answer, GradeResult, Question, QuestionType
+from app.schemas.recall import GENERATED_TYPES, Answer, GradeResult, Question, QuestionType
 from app.schemas.repo_map import FunctionNode, RepoMap
 from app.schemas.scores import Scores, SkillStatus, Tier
 from app.services.analyze import AnalysisArtifacts
@@ -79,7 +79,7 @@ def test_five_answer_flow_promotes_verified_skills_into_deepen(tmp_path, monkeyp
         complete_analysis(db, start_analysis(db, repo), repo, artifacts)
 
         questions = []
-        for index, question_type in enumerate(QuestionType):
+        for index, question_type in enumerate(GENERATED_TYPES):
             question = Question.model_validate(
                 {
                     "id": f"q-{index}",

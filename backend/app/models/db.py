@@ -87,6 +87,25 @@ class AnswerRow(Base):
     feedback: Mapped[str | None] = mapped_column(Text, default=None)
 
 
+class RecallAttemptRow(Base):
+    """One graded answer in the adaptive drill, in the order it happened.
+
+    The loop's state is derived from this log rather than stored separately, so
+    there is no session row to go stale or to reset by hand.
+    """
+
+    __tablename__ = "recall_attempts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    question_id: Mapped[str] = mapped_column(String(128))
+    skill_id: Mapped[str] = mapped_column(String(64), index=True)
+    level: Mapped[int] = mapped_column(default=2)
+    passed: Mapped[bool] = mapped_column(default=False)
+    score: Mapped[float] = mapped_column(Float, default=0.0)
+    submission: Mapped[str] = mapped_column(Text, default="")
+
+
 class SkillStatusRow(Base):
     __tablename__ = "skill_status"
 

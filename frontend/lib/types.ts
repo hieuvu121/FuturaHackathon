@@ -84,16 +84,37 @@ export interface MarketSkill {
   provenance: Provenance;
 }
 
-export type QuestionType = "recall" | "justify" | "transfer" | "debug" | "extend";
+export type QuestionType =
+  | "recall" | "justify" | "transfer" | "debug" | "extend"
+  // Seeded drills from the adaptive loop. These carry no code target.
+  | "concept" | "coding";
 
 export interface Question {
   id: string;
   type: QuestionType;
-  target: Evidence;
+  target: Evidence | null;
   target_name: string;
   prompt: string;
   code_context: string;
   skill_ids: string[];
+  /** 1 name it, 2 explain it, 3 reason about it, 4 design with it. */
+  level: number;
+  /** Opening lines for a coding task. */
+  starter: string;
+}
+
+export interface NextQuestion {
+  question: Question | null;
+  asked: number;
+  remaining_skills: number;
+  reason: string;
+}
+
+export interface AdaptiveGrade extends GradeResult {
+  level: number;
+  next_level: number | null;
+  model_answer: string;
+  next: NextQuestion | null;
 }
 
 export interface Answer {

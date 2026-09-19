@@ -12,7 +12,7 @@ from ..mock_store import load
 from ..models.db import AnswerRow, QuestionRow, Repo, SkillStatusRow, User
 from ..schemas.findings import Finding
 from ..schemas.recall import Answer, GradeResult, Question
-from ..schemas.recall import QuestionType
+from ..schemas.recall import GENERATED_TYPES, QuestionType
 from ..schemas.repo_map import RepoMap
 from ..services.portfolio import build_profile, owned_selected_repos
 from ..services.recall.generator import generate, personalize_for_portfolio
@@ -85,7 +85,7 @@ def portfolio_questions(user: CurrentUser, db: DbDep) -> list[Question]:
         (cached_rows_for_portfolio[0].reference or {}).get("_portfolio_question_ids", [])
     ) if cached_rows_for_portfolio else set()
     if cached and expected_ids == {question.id for question in cached}:
-        order = {question_type: index for index, question_type in enumerate(QuestionType)}
+        order = {question_type: index for index, question_type in enumerate(GENERATED_TYPES)}
         return sorted(cached, key=lambda question: order[question.type])
 
     contexts: list[tuple[Repo, Path, RepoMap, list[Finding]]] = []

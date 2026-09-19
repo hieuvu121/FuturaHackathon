@@ -16,12 +16,12 @@ import yaml
 
 from ...config import Settings
 from ...schemas.recall import Question
-from ...schemas.recall import QuestionType
+from ...schemas.recall import GENERATED_TYPES, QuestionType
 from ...schemas.repo_map import FunctionNode, RepoMap
 from ..ingest.gitlog import GitHistoryError, _git
 from ..knowledge import get_taxonomy
 
-QUESTION_ORDER = list(QuestionType)
+QUESTION_ORDER = list(GENERATED_TYPES)
 MAX_CONTEXT_CHARS = 12_000
 
 
