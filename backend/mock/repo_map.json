@@ -1,17 +1,15 @@
 {
-  "repo": "demo-user/invoice-engine",
-  "language": "python",
-  "analyzed_at": "2026-09-19T10:00:00Z",
-  "total_files": 48,
-  "excluded_files": ["venv/lib/python3.12/site-packages/requests/api.py", "static/vendor/bootstrap.min.css", "poetry.lock", "migrations/0001_initial.py"],
-  "functions": [
-    {"name": "process_invoice", "file": "app/billing/invoice.py", "lines": [41, 132], "complexity": 19, "nesting_depth": 5, "loc": 92, "has_test": false, "calls": ["validate_line_items", "apply_tax", "persist_invoice"], "times_modified": 14, "last_modified": "2026-07-14T09:20:00Z", "created_commit": "a1b2c3d4", "author_ratio": 0.94},
-    {"name": "apply_tax", "file": "app/billing/tax.py", "lines": [12, 58], "complexity": 11, "nesting_depth": 4, "loc": 47, "has_test": false, "calls": ["lookup_rate"], "times_modified": 9, "last_modified": "2026-06-30T14:02:00Z", "created_commit": "e5f6a7b8", "author_ratio": 1.0},
-    {"name": "validate_line_items", "file": "app/billing/invoice.py", "lines": [12, 39], "complexity": 7, "nesting_depth": 3, "loc": 28, "has_test": true, "calls": [], "times_modified": 4, "last_modified": "2026-05-11T08:15:00Z", "created_commit": "c9d0e1f2", "author_ratio": 1.0},
-    {"name": "lookup_rate", "file": "app/billing/tax.py", "lines": [60, 74], "complexity": 3, "nesting_depth": 2, "loc": 15, "has_test": true, "calls": [], "times_modified": 2, "last_modified": "2026-04-22T19:33:00Z", "created_commit": "33445566", "author_ratio": 1.0},
-    {"name": "persist_invoice", "file": "app/storage/repository.py", "lines": [88, 141], "complexity": 13, "nesting_depth": 4, "loc": 54, "has_test": false, "calls": ["get_connection"], "times_modified": 11, "last_modified": "2026-07-02T12:48:00Z", "created_commit": "778899aa", "author_ratio": 0.71},
-    {"name": "get_connection", "file": "app/storage/repository.py", "lines": [20, 45], "complexity": 6, "nesting_depth": 3, "loc": 26, "has_test": false, "calls": [], "times_modified": 6, "last_modified": "2026-03-18T07:10:00Z", "created_commit": "bbccddee", "author_ratio": 1.0},
-    {"name": "handle_webhook", "file": "app/api/routes.py", "lines": [55, 148], "complexity": 22, "nesting_depth": 6, "loc": 94, "has_test": false, "calls": ["process_invoice", "notify"], "times_modified": 17, "last_modified": "2026-06-25T16:27:00Z", "created_commit": "ff001122", "author_ratio": 0.88},
-    {"name": "notify", "file": "app/notifications/send.py", "lines": [9, 37], "complexity": 8, "nesting_depth": 4, "loc": 29, "has_test": false, "calls": [], "times_modified": 5, "last_modified": "2026-07-08T13:55:00Z", "created_commit": "22334455", "author_ratio": 1.0}
+  "repo":"orders-api",
+  "language":"python",
+  "analyzed_at":"2026-09-18T10:00:00Z",
+  "total_files":84,
+  "excluded_files":[".venv/lib/site-packages/httpx/api.py","vendor/stripe/client.py","orders/migrations/0001_initial.py","orders/migrations/0002_status.py","static/admin.min.js","static/admin.min.css","dist/openapi.json","build/generated_models.py","poetry.lock","node_modules/swagger-ui/index.js","coverage/index.html","orders/api/__pycache__/views.pyc"],
+  "functions":[
+    {"name":"apply_discounts","file":"orders/services/pricing.py","lines":[41,58],"complexity":14,"nesting_depth":4,"loc":18,"has_test":false,"calls":["get_promo"],"times_modified":9,"last_modified":"2026-08-02T08:20:00Z","created_commit":"a41c9e2","author_ratio":0.86},
+    {"name":"checkout","file":"orders/api/views.py","lines":[88,101],"complexity":11,"nesting_depth":3,"loc":14,"has_test":true,"calls":["apply_discounts","reserve_stock"],"times_modified":7,"last_modified":"2026-08-12T13:10:00Z","created_commit":"7cd201a","author_ratio":0.78},
+    {"name":"deliver_with_retry","file":"notify/worker.py","lines":[23,34],"complexity":9,"nesting_depth":3,"loc":12,"has_test":false,"calls":["send_notification"],"times_modified":6,"last_modified":"2026-07-28T17:45:00Z","created_commit":"be390d1","author_ratio":0.92},
+    {"name":"reserve_stock","file":"orders/services/inventory.py","lines":[17,42],"complexity":6,"nesting_depth":2,"loc":26,"has_test":true,"calls":[],"times_modified":4,"last_modified":"2026-08-09T10:15:00Z","created_commit":"78df102","author_ratio":0.81},
+    {"name":"build_order","file":"orders/domain/models.py","lines":[62,91],"complexity":4,"nesting_depth":2,"loc":30,"has_test":true,"calls":[],"times_modified":3,"last_modified":"2026-07-14T12:03:00Z","created_commit":"c613ab4","author_ratio":0.95},
+    {"name":"commit_order","file":"orders/repositories/orders.py","lines":[51,74],"complexity":5,"nesting_depth":2,"loc":24,"has_test":true,"calls":[],"times_modified":5,"last_modified":"2026-08-18T09:40:00Z","created_commit":"b1f8c21","author_ratio":0.73}
   ]
 }

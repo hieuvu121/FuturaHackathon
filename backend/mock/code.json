@@ -1,0 +1,70 @@
+[
+  {
+    "repo_id":"orders-api",
+    "file":"orders/services/pricing.py",
+    "start":41,
+    "commit":"a41c9e2",
+    "lines":[
+      "def apply_discounts(order, user, codes):",
+      "    total = order.subtotal",
+      "    applied = []",
+      "    for code in codes:",
+      "        promo = PROMOS.get(code)",
+      "        if promo and promo.active:",
+      "            if promo.kind == \"percent\":",
+      "                if user.tier == \"gold\" or total > 200:",
+      "                    total -= total * promo.value / 100",
+      "                    applied.append(code)",
+      "            elif promo.kind == \"fixed\":",
+      "                if total - promo.value > 0:",
+      "                    total -= promo.value",
+      "                    applied.append(code)",
+      "    if user.tier == \"gold\" and not applied:",
+      "        total *= 0.95",
+      "    order.total = round(total, 2)",
+      "    return order, applied"
+    ]
+  },
+  {
+    "repo_id":"orders-api",
+    "file":"orders/api/views.py",
+    "start":88,
+    "commit":"7cd201a",
+    "lines":[
+      "@router.post(\"/checkout\")",
+      "async def checkout(payload: CheckoutRequest, user=Depends(current_user)):",
+      "    order = Order(user_id=user.id, items=payload.items)",
+      "    for item in payload.items:",
+      "        if not inventory.available(item.sku, item.quantity):",
+      "            raise HTTPException(409, \"Insufficient stock\")",
+      "    order, applied = apply_discounts(order, user, payload.codes)",
+      "    await inventory.reserve(payload.items)",
+      "    await orders.commit(order)",
+      "    await notifications.enqueue_receipt(order.id)",
+      "    return CheckoutResponse(",
+      "        order_id=order.id, total=order.total, promotions=applied",
+      "    )",
+      ""
+    ]
+  },
+  {
+    "repo_id":"orders-api",
+    "file":"notify/worker.py",
+    "start":23,
+    "commit":"be390d1",
+    "lines":[
+      "def deliver_with_retry(job, attempts=3):",
+      "    for attempt in range(attempts):",
+      "        try:",
+      "            send_notification(job)",
+      "            job.mark_delivered()",
+      "            return True",
+      "        except Exception:",
+      "            pass",
+      "    job.mark_failed()",
+      "    return False",
+      "",
+      ""
+    ]
+  }
+]

@@ -1,7 +1,47 @@
 [
-  {"id": "q-001", "type": "recall", "target": {"file": "app/billing/invoice.py", "lines": [41, 132], "commit": "a1b2c3d4"}, "target_name": "process_invoice", "prompt": "You wrote `process_invoice` in `app/billing/invoice.py` two months ago. Without reading it closely: what does it do, and what inputs and outputs did you design it around?", "code_context": "def process_invoice(payload, customer, *, dry_run=False):\n    items = validate_line_items(payload['items'])\n    subtotal = sum(i['amount'] for i in items)\n    tax = apply_tax(subtotal, customer.jurisdiction)\n    ...", "skill_ids": ["python", "rest_api_design"]},
-  {"id": "q-002", "type": "justify", "target": {"file": "app/billing/tax.py", "lines": [12, 58], "commit": "e5f6a7b8"}, "target_name": "apply_tax", "prompt": "`apply_tax` branches on the jurisdiction string in five separate places. What were you trading off against a table- or strategy-driven approach, and what would have broken with the simpler version?", "code_context": "def apply_tax(subtotal, jurisdiction):\n    if jurisdiction == 'AU':\n        ...\n    elif jurisdiction == 'NZ':\n        ...", "skill_ids": ["python"]},
-  {"id": "q-003", "type": "transfer", "target": {"file": "app/storage/repository.py", "lines": [88, 141], "commit": "778899aa"}, "target_name": "persist_invoice", "prompt": "Suppose `persist_invoice` had to run concurrently across ten workers against the same database. What breaks first, and what would you change?", "code_context": "def persist_invoice(invoice):\n    conn = get_connection()\n    try:\n        ...\n    except Exception:\n        return None", "skill_ids": ["sql", "async_programming"]},
-  {"id": "q-004", "type": "debug", "target": {"file": "app/billing/invoice.py", "lines": [12, 39], "commit": "c9d0e1f2"}, "target_name": "validate_line_items", "prompt": "A bug has been introduced into `validate_line_items`. One test in the suite now fails. Find it and fix it.", "code_context": "def validate_line_items(items):\n    valid = []\n    for item in items:\n        if item['amount'] > 0:\n            valid.append(item)\n    return valid", "skill_ids": ["python", "testing_unit"]},
-  {"id": "q-005", "type": "extend", "target": {"file": "app/billing/tax.py", "lines": [60, 74], "commit": "33445566"}, "target_name": "lookup_rate", "prompt": "Add support for a date-effective rate to `lookup_rate` -- the same jurisdiction can have different rates before and after a cutover date -- without breaking the existing tests.", "code_context": "def lookup_rate(jurisdiction):\n    return RATES[jurisdiction]", "skill_ids": ["python", "testing_unit"]}
+  {
+    "id":"q-recall",
+    "type":"recall",
+    "target":{"file":"orders/services/pricing.py","lines":[41,58],"commit":"a41c9e2"},
+    "target_name":"apply_discounts",
+    "prompt":"Without rereading the code: what happens to a gold-tier user who passes no valid codes?",
+    "code_context":"",
+    "skill_ids":["Refactoring conditionals"]
+  },
+  {
+    "id":"q-justify",
+    "type":"justify",
+    "target":{"file":"orders/services/pricing.py","lines":[41,58],"commit":"a41c9e2"},
+    "target_name":"apply_discounts",
+    "prompt":"Why did you keep fixed and percentage promotions in one function? What trade-off did that make at the time?",
+    "code_context":"",
+    "skill_ids":["Domain modelling"]
+  },
+  {
+    "id":"q-transfer",
+    "type":"transfer",
+    "target":{"file":"orders/services/pricing.py","lines":[41,58],"commit":"a41c9e2"},
+    "target_name":"apply_discounts",
+    "prompt":"If promotions became stackable and time-limited, how would you reshape this logic without changing checkout callers?",
+    "code_context":"",
+    "skill_ids":["Architecture and layering"]
+  },
+  {
+    "id":"q-debug",
+    "type":"debug",
+    "target":{"file":"orders/services/pricing.py","lines":[41,58],"commit":"a41c9e2"},
+    "target_name":"apply_discounts",
+    "prompt":"A realistic bug was introduced on one of these lines and a grading test now fails. Find the line and write the fix.",
+    "code_context":"def apply_discounts(order, user, codes):\n    total = order.subtotal\n    applied = []\n    for code in codes:\n        promo = PROMOS.get(code)\n        if promo and promo.active:\n            if promo.kind == \"percent\":\n                if user.tier == \"gold\" or total > 200:\n                    total -= total * promo.value / 100\n                    applied.append(code)\n            elif promo.kind == \"fixed\":\n                if total - promo.value < 0:\n                    total -= promo.value\n                    applied.append(code)\n    if user.tier == \"gold\" and not applied:\n        total *= 0.95\n    order.total = round(total, 2)\n    return order, applied",
+    "skill_ids":["Refactoring conditionals","Unit testing with pytest"]
+  },
+  {
+    "id":"q-extend",
+    "type":"extend",
+    "target":{"file":"orders/services/pricing.py","lines":[41,58],"commit":"a41c9e2"},
+    "target_name":"apply_discounts",
+    "prompt":"Add an expiry check for promotions while keeping the current return value and gold-tier fallback intact.",
+    "code_context":"",
+    "skill_ids":["Python","Unit testing with pytest"]
+  }
 ]
