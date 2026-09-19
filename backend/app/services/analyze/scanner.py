@@ -13,7 +13,8 @@ from pathlib import Path
 import re
 
 import anthropic
-from pydantic import ValidationError
+from openai import OpenAI
+from pydantic import BaseModel, Field, ValidationError
 
 from ...config import Settings
 from ...schemas.findings import Finding
@@ -39,6 +40,29 @@ JSON_FENCE = re.compile(r"^```(?:json)?\s*(.*?)\s*```$", re.DOTALL | re.IGNORECA
 
 class ScannerError(RuntimeError):
     """Raised when a model response cannot become typed finding candidates."""
+
+
+class EvidenceOutput(BaseModel):
+    """OpenAI-compatible evidence DTO; converted to the tuple-based contract."""
+
+    file: str
+    lines: list[int] = Field(min_length=2, max_length=2)
+    commit: str | None
+
+
+class FindingOutput(BaseModel):
+    id: str
+    dimension: str
+    severity: str
+    observation: str
+    evidence: EvidenceOutput
+    confidence: float = Field(ge=0.0, le=1.0)
+
+
+class FindingBatch(BaseModel):
+    """Object wrapper required by OpenAI structured outputs."""
+
+    findings: list[FindingOutput]
 
 
 def _source_path(root: Path, rel_path: str) -> Path:
@@ -77,11 +101,42 @@ def _parse_findings(response_text: str) -> list[Finding]:
         raise ScannerError("Model response contained an invalid finding") from exc
 
 
+def _scan_anthropic(settings: Settings, user_prompt: str) -> list[Finding]:
+    if not settings.anthropic_api_key:
+        raise RuntimeError("ANTHROPIC_API_KEY is required when LLM_PROVIDER=anthropic")
+    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+    response = client.messages.create(
+        model=settings.scanner_model,
+        max_tokens=2_000,
+        temperature=0,
+        system=SCAN_PROMPT,
+        messages=[{"role": "user", "content": user_prompt}],
+    )
+    return _parse_findings(_response_text(response))
+
+
+def _scan_openai(settings: Settings, user_prompt: str) -> list[Finding]:
+    if not settings.openai_api_key:
+        raise RuntimeError("OPENAI_API_KEY is required when LLM_PROVIDER=openai")
+    client = OpenAI(api_key=settings.openai_api_key)
+    response = client.responses.parse(
+        model=settings.scanner_model,
+        input=[
+            {"role": "system", "content": SCAN_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        text_format=FindingBatch,
+    )
+    if response.output_parsed is None:
+        raise ScannerError("OpenAI response did not contain parsed findings")
+    try:
+        return [Finding.model_validate(item.model_dump()) for item in response.output_parsed.findings]
+    except ValidationError as exc:
+        raise ScannerError("OpenAI response contained an invalid finding") from exc
+
+
 def scan_file(settings: Settings, root: Path, rel_path: str) -> list[Finding]:
     """Return typed, raw candidates; validator.py must gate them before storage."""
-    if not settings.anthropic_api_key:
-        raise RuntimeError("ANTHROPIC_API_KEY is required when MOCK_MODE=false")
-
     source_path = _source_path(root, rel_path)
     source = source_path.read_text(encoding="utf-8", errors="replace")
     normalised_path = source_path.relative_to(root.resolve()).as_posix()
@@ -92,12 +147,6 @@ def scan_file(settings: Settings, root: Path, rel_path: str) -> list[Finding]:
         "</source>"
     )
 
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-    response = client.messages.create(
-        model=settings.scanner_model,
-        max_tokens=2_000,
-        temperature=0,
-        system=SCAN_PROMPT,
-        messages=[{"role": "user", "content": user_prompt}],
-    )
-    return _parse_findings(_response_text(response))
+    if settings.llm_provider == "openai":
+        return _scan_openai(settings, user_prompt)
+    return _scan_anthropic(settings, user_prompt)

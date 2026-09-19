@@ -96,11 +96,18 @@ tracks that are still on mock keep working.
 | Track | Deliverable |
 |---|---|
 | **A** | `parser.py` (tree-sitter → `FunctionNode`), `metrics.py` (complexity, nesting, call graph, test mapping, smell flags), `gitlog.py` (churn, `times_modified`, `last_modified`, `created_commit`), `blame.py` (optional, defaults 1.0). `ingest/__init__.py` assembles a validated `RepoMap`. |
-| **B** | `scanner.py` against Claude with the fixed prompt → raw findings → through `validator.py`. `scorer.py` combines metrics + findings + `dimensions.yaml` → levels with `metric_basis` populated. |
+| **B** | `scanner.py` uses the provider selected by `LLM_PROVIDER` (`openai` default, `anthropic` fallback). OpenAI uses typed Structured Outputs; both providers produce raw `Finding` candidates that must pass through `validator.py`. `scorer.py` combines metrics + validated findings + `dimensions.yaml` → levels with `metric_basis` populated. |
 | **D** | `roadmap/matcher.py` + `buckets.py`, including the **`frequency is None` path**. Implement whichever demand sources are ready — the chain (§10) means you do not need the final answer to ship this. Collect job ads into `data/jobs_raw/` in parallel. |
 
 **Exit criteria:** `MOCK_MODE=false` produces a real `repo_map.json` and real
 validated `findings.json` for one live GitHub repository.
+
+**Verified provider checkpoint (2026-09-20):** the authenticated live flow cloned
+`hieuvu121/ragPullRequest`, ranked its Python files, scanned `indexer/tasks.py`
+with `LLM_PROVIDER=openai` / `SCANNER_MODEL=gpt-5`, and returned 10 typed findings.
+All 10 cited real file ranges and passed `validator.py`; none were dropped. This
+verifies the provider boundary, not the Phase 2 persistence exit criterion, which
+still depends on wiring `ingest/__init__.py` and the analysis storage pipeline.
 
 ---
 
@@ -123,6 +130,8 @@ Not optional. Reserve it.
 
 - Pick and pre-warm **one** demo repository. Cache its analysis. Never demo a cold clone.
 - `MOCK_MODE=true` as the fallback path, rehearsed. If the API key dies mid-demo, flip one env var.
+- Keep both provider paths configured where possible. `LLM_PROVIDER=openai` is the
+  verified default; `LLM_PROVIDER=anthropic` remains a code-compatible fallback.
 - Seed one fully-verified profile so public API responses have realistic content.
 - Cross-track backend bug bash. Everyone runs the complete API flow.
 - README with setup steps.
@@ -146,6 +155,7 @@ main                          always green, always demo-able
  ├─ feat/b2-ranker            Track B, Phase 1
  ├─ feat/b3-scanner           Track B, Phase 2
  ├─ feat/b4-scorer            Track B, Phase 2
+ ├─ feat/openai-scanner-provider  Track B, Phase 2, provider selection
  ├─ feat/b5-selector-generator Track B, Phase 3
  ├─ feat/b6-injector-grader   Track B, Phase 3
  │
@@ -252,7 +262,7 @@ expensive. Prefer additive.
 | tree-sitter query complexity eats a day | Medium | Python only for the MVP (`TARGET_LANGUAGE=python`). Do not add a second language before Phase 4. |
 | Market data never materialises | Medium | The demand chain (§10) falls back scraped → llm → seeded. Frequency is nullable by design; the roadmap degrades instead of crashing. |
 | Demand source-of-truth decision drags on | **High** | It is already deferred safely — `DEMAND_SOURCE=chained` is the default and nothing blocks on it. Forcing date in §10. |
-| API key exhausted or rate-limited mid-demo | Low | `MOCK_MODE=true` fallback, rehearsed in Phase 4. |
+| Selected LLM provider is exhausted or rate-limited mid-demo | Low | Switch `LLM_PROVIDER` when the alternate provider is funded; otherwise use the rehearsed `MOCK_MODE=true` fallback. |
 | Merge conflicts stall the team | Low | Exclusive path ownership (§1) plus everything pre-created in Phase 0. |
 
 ---
@@ -273,6 +283,13 @@ filtering on any public export. Those are the product's credibility boundary.
 ## 9. Deviations from OVERALL.md
 
 Small, deliberate, listed here so nobody thinks they are accidents.
+
+- The scanner is no longer coupled only to Claude. `LLM_PROVIDER=openai` is the
+  default because the live OpenAI Structured Outputs flow is verified; Anthropic
+  remains selectable without changing the `scan_file` or `Finding` contracts.
+- Provider response schemas are adapters, not public contracts. OpenAI emits a
+  JSON-compatible two-item line list, which is converted back to the frozen
+  `Evidence.lines: tuple[int, int]` contract before `validator.py` runs.
 
 | Addition | Why |
 |---|---|
