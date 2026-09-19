@@ -13,5 +13,8 @@ class ExternalLadder:
     def dimensions(self) -> list[str]:
         raise NotImplementedError
 
+    def metric_thresholds(self, dimension: str) -> dict[str, dict[int, str]]:
+        raise NotImplementedError("Post-hackathon: bind to SFIA")
+
     def target_level(self, dimension: str, role: str, seniority: str) -> int:
         raise NotImplementedError
