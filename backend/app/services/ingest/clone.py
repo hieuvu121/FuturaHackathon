@@ -80,3 +80,8 @@ def cleanup(settings: Settings, user: str, repo_id: str) -> None:
     destination = _cache_path(settings, user, repo_id)
     if destination.exists():
         shutil.rmtree(destination)
+
+
+def cleanup_repo(settings: Settings, user: str, repo_full_name: str) -> None:
+    """Remove the validated cache location for an ``owner/repository`` name."""
+    cleanup(settings, user, _repo_name(repo_full_name))

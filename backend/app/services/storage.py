@@ -38,6 +38,20 @@ def start_analysis(db: Session, repo: Repo) -> Analysis:
     return analysis
 
 
+def update_analysis_progress(
+    db: Session,
+    analysis: Analysis,
+    stage: str,
+    progress: int,
+) -> None:
+    if not 0 <= progress < 100:
+        raise ValueError("In-progress percentage must be between 0 and 99")
+    analysis.stage = stage
+    analysis.progress = progress
+    analysis.error = None
+    db.commit()
+
+
 def _merge_evidence(existing: list | None, incoming: list[dict]) -> list[dict]:
     merged: list[dict] = []
     seen: set[tuple[str, tuple[int, ...], str | None]] = set()

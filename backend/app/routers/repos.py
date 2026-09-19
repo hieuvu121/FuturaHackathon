@@ -10,7 +10,8 @@ from ..mock_store import load
 from ..models.db import Repo, User, init_db
 from ..schemas.repo_map import RepoMap
 from ..services.ingest.github import list_repos as list_github_repos
-from ..services.storage import get_owned_repo, latest_analysis
+from ..services.pipeline import run_analysis_task
+from ..services.storage import get_owned_repo, latest_analysis, start_analysis
 
 router = APIRouter(prefix="/repos", tags=["repos"])
 
@@ -42,11 +43,26 @@ def list_repos(user: CurrentUser, db: DbDep) -> list[dict]:
 
 
 @router.post("/{repo_id}/analyze", status_code=202)
-def analyze(repo_id: str, tasks: BackgroundTasks, user: CurrentUser, db: DbDep) -> dict[str, str]:
+def analyze(
+    repo_id: str,
+    tasks: BackgroundTasks,
+    user: CurrentUser,
+    db: DbDep,
+) -> dict[str, str | int]:
     """Queues INGEST -> ANALYZE as a BackgroundTask and returns immediately."""
-    if get_settings().mock_mode:
+    settings = get_settings()
+    if settings.mock_mode:
         return {"repo_id": repo_id, "status": "queued"}
-    raise NotImplementedError("Track A: tasks.add_task(run_pipeline, repo_id, user)")
+    repo = get_owned_repo(db, repo_id, user)
+    if repo is None:
+        raise HTTPException(http_status.HTTP_404_NOT_FOUND, "Repository not found")
+    current = latest_analysis(db, repo.id)
+    if current is not None and current.stage not in {"done", "failed"}:
+        raise HTTPException(http_status.HTTP_409_CONFLICT, "Repository analysis is already running")
+
+    analysis = start_analysis(db, repo)
+    tasks.add_task(run_analysis_task, settings, analysis.id)
+    return {"repo_id": repo_id, "analysis_id": analysis.id, "status": "queued"}
 
 
 @router.get("/{repo_id}/status")
