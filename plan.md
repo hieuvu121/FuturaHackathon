@@ -132,6 +132,12 @@ trigger remains in Phase 3 because it runs this work as a background task.
 **Exit criteria:** API calls connect a real repo → return scores → accept five
 answers → promote a skill to verified → return it in a new roadmap bucket.
 
+**Background-analysis checkpoint (2026-09-20):** the real worker completed an
+isolated run against `hieuvu121/ragPullRequest` with stage `done`, progress 100,
+106 functions, 11 validated findings, no stored error, and the successful clone
+retained for code slices and recall. Unit coverage also verifies progress stages,
+duplicate-run rejection, failure persistence, and failed-clone cleanup.
+
 ---
 
 ### Phase 4 — Demo prep & buffer · ~3h

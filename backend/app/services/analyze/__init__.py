@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 from ...config import Settings
 from ...schemas.findings import Finding
@@ -45,8 +46,11 @@ def analyze_repository(
     *,
     is_fork: bool = False,
     author_email: str | None = None,
+    progress: Callable[[str, int], None] | None = None,
 ) -> AnalysisArtifacts:
     """Run INGEST -> rank -> scan -> validate -> score for one repository."""
+    notify = progress or (lambda _stage, _percent: None)
+    notify("ingesting", 5)
     repo_map = build_repo_map(
         settings,
         user,
@@ -59,10 +63,14 @@ def analyze_repository(
     kept_files, _ = filter_files(root, settings.target_language, is_fork)
 
     candidates: list[Finding] = []
-    for rel_path in rank_files(repo_map, settings.scan_file_limit):
+    ranked_files = rank_files(repo_map, settings.scan_file_limit)
+    notify("scanning", 35)
+    for index, rel_path in enumerate(ranked_files, 1):
         candidates.extend(scan_file(settings, root, rel_path))
+        notify("scanning", 35 + round(40 * index / len(ranked_files)))
     findings, dropped_findings = validate(root, candidates)
 
+    notify("scoring", 80)
     repository_metrics = _repository_metrics(root, kept_files)
     scores = score(
         repo_map,
@@ -71,6 +79,7 @@ def analyze_repository(
         get_taxonomy(settings),
         repository_metrics,
     )
+    notify("persisting", 95)
     return AnalysisArtifacts(
         repo_map=repo_map,
         findings=findings,

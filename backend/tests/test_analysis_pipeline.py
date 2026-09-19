@@ -85,15 +85,24 @@ def test_analysis_pipeline_ranks_scans_validates_and_scores(tmp_path: Path, monk
         ]
 
     monkeypatch.setattr(analyze, "scan_file", fake_scan)
+    progress: list[tuple[str, int]] = []
 
     result = analyze.analyze_repository(
         settings,
         "developer",
         "owner/project",
         "github-token",
+        progress=lambda stage, percent: progress.append((stage, percent)),
     )
 
     assert scanned == ["complex.py"]
+    assert progress == [
+        ("ingesting", 5),
+        ("scanning", 35),
+        ("scanning", 75),
+        ("scoring", 80),
+        ("persisting", 95),
+    ]
     assert [finding.id for finding in result.findings] == ["grounded"]
     assert [finding.id for finding in result.dropped_findings] == ["past-eof"]
     assert result.repository_metrics["empty_catch_count"] == 1
