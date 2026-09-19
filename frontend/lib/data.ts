@@ -12,23 +12,7 @@ import roadmapMock from "../../backend/mock/roadmap.json";
 import scoresMock from "../../backend/mock/scores.json";
 
 import type {
-  AnalysisStatus,
-  Answer,
-  Buckets,
-  CodeSlice,
-  Finding,
-  GradeResult,
-  CurrentUser,
-  Evidence,
-  PortfolioProfile,
-  PortfolioSelection,
-  Question,
-  Repo,
-  RepoMap,
-  RoadmapGraph,
-  Scores,
-  AdaptiveGrade,
-  NextQuestion,
+  AdaptiveGrade, AnalysisStatus, Answer, Buckets, CapstoneState, CodeSlice, CurrentUser, Evidence, Finding, GradeResult, NextQuestion, PortfolioProfile, PortfolioSelection, Question, Repo, RepoMap, RoadmapGraph, RoadmapReview, Scores,
 } from "./types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -153,12 +137,50 @@ export async function getPortfolioRoadmap(role = "backend", region = "AU"): Prom
   return request<Buckets>(`/repos/portfolio/roadmap?role=${encodeURIComponent(role)}&region=${encodeURIComponent(region)}`);
 }
 
-export async function getRoadmapGraph(role = "software_engineer", region = "AU"): Promise<RoadmapGraph> {
+export async function getRoadmapReview(): Promise<RoadmapReview> {
+  return request<RoadmapReview>("/repos/portfolio/roadmap/review");
+}
+
+export async function acceptRoadmap(): Promise<RoadmapReview> {
+  return request<RoadmapReview>("/repos/portfolio/roadmap/review/accept", { method: "POST" });
+}
+
+/** Dispute by retesting: starts a fresh five-question recall session. */
+export async function redoRecall(): Promise<RoadmapReview> {
+  return request<RoadmapReview>("/repos/portfolio/roadmap/review/redo", { method: "POST" });
+}
+
+/** Dispute by editing: replaces the set of skills removed from the roadmap. */
+export async function tailorRoadmap(hiddenSkills: string[]): Promise<RoadmapReview> {
+  return request<RoadmapReview>("/repos/portfolio/roadmap/review/tailor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ hidden_skills: hiddenSkills }),
+  });
+}
+
+export async function getRoadmapGraph(
+  role = "software_engineer",
+  region = "AU",
+  includeHidden = false,
+): Promise<RoadmapGraph> {
   // Always served by the API, in both modes. Grouping skills into concepts needs
   // the taxonomy in skills.yaml, which only the backend has -- and the backend
   // has its own mock mode, so this still works with no database behind it.
-  const query = new URLSearchParams({ role, region });
+  const query = new URLSearchParams({ role, region, include_hidden: String(includeHidden) });
   return request<RoadmapGraph>(`/repos/portfolio/roadmap/graph?${query}`);
+}
+
+export async function getCapstone(): Promise<CapstoneState> {
+  return request<CapstoneState>("/repos/portfolio/capstone");
+}
+
+export async function submitCapstone(repoUrl: string, notes: string): Promise<CapstoneState> {
+  return request<CapstoneState>("/repos/portfolio/capstone/submit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ repo_url: repoUrl, notes }),
+  });
 }
 
 export async function getNextDrill(): Promise<NextQuestion> {

@@ -45,6 +45,14 @@ class NodeStatus(str, Enum):
     NEW = "new"
 
 
+class LearningResource(BaseModel):
+    """Somewhere outside the product to go and learn the skill."""
+
+    title: str
+    url: str
+    kind: str = Field("guide", description="docs | guide | course | practice | reference")
+
+
 class ConceptSkill(BaseModel):
     """A leaf node hanging off a concept box."""
 
@@ -53,7 +61,26 @@ class ConceptSkill(BaseModel):
     status: NodeStatus
     focus: str = Field(description="Short next step, grounded in a real finding where one exists.")
     mastery: float = Field(
-        0.0, ge=0.0, le=1.0, description="new 0.0, familiar 0.5, verified 1.0"
+        0.0,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Untested: new 0.0, familiar 0.5, verified 1.0. "
+            "Once recall has tested the skill: hardest drill level passed / 4."
+        ),
+    )
+    missing: str = Field(
+        "",
+        description=(
+            "Two or three sentences on what stands between the user and this skill, "
+            "built from their repository evidence, scanner findings and recall results."
+        ),
+    )
+    resources: list[LearningResource] = Field(
+        default_factory=list, description="External study material for this skill."
+    )
+    hidden: bool = Field(
+        False, description="The user tailored this skill out. Only ever true when hidden skills were asked for."
     )
     gap_evidence: Evidence | None = Field(
         None, description="The line the finding behind `focus` points at, when there is one."
@@ -79,7 +106,35 @@ class RoadmapConcept(BaseModel):
     familiar_count: int = 0
     new_count: int = 0
     priority: float = 0.0
+    stage: int = Field(1, ge=1, description="Which step of the learning order this concept belongs to.")
     skills: list[ConceptSkill] = Field(default_factory=list)
+
+
+class RoadmapStage(BaseModel):
+    """One step of the learning order. Concepts in the same stage are learnt side by side."""
+
+    index: int = Field(ge=1)
+    title: str
+    note: str
+    concept_ids: list[str] = Field(default_factory=list)
+
+
+class ReviewStatus(str, Enum):
+    PENDING = "pending"    # shown to the user, not yet agreed
+    ACCEPTED = "accepted"
+
+
+class RoadmapReview(BaseModel):
+    """Whether the user has agreed that this roadmap describes them."""
+
+    status: ReviewStatus = ReviewStatus.PENDING
+    hidden_skills: list[str] = Field(default_factory=list)
+    recall_answered: int = Field(0, description="Answers in the current recall session.")
+    recall_session_length: int = 5
+
+
+class TailorRequest(BaseModel):
+    hidden_skills: list[str] = Field(default_factory=list, max_length=200)
 
 
 class RoadmapGraph(BaseModel):
@@ -88,3 +143,7 @@ class RoadmapGraph(BaseModel):
     role: str
     region: str
     concepts: list[RoadmapConcept] = Field(default_factory=list)
+    stages: list[RoadmapStage] = Field(
+        default_factory=list,
+        description="The order to learn the concepts in. Every concept appears in exactly one stage.",
+    )

@@ -101,11 +101,15 @@ export interface Question {
   level: number;
   /** Opening lines for a coding task. */
   starter: string;
+  /** Options for a multiple-choice concept drill; the submission is the chosen text. Empty otherwise. */
+  choices: string[];
 }
 
 export interface NextQuestion {
   question: Question | null;
   asked: number;
+  /** How many questions one recall session asks. */
+  session_length: number;
   remaining_skills: number;
   reason: string;
 }
@@ -211,14 +215,27 @@ export interface AnalysisStatus {
 
 export type NodeStatus = "verified" | "familiar" | "new";
 
+export interface LearningResource {
+  title: string;
+  url: string;
+  /** docs | guide | course | practice | reference */
+  kind: string;
+}
+
 export interface ConceptSkill {
   skill_id: string;
   skill_name: string;
   status: NodeStatus;
   /** Short next step, grounded in a real finding where one exists. */
   focus: string;
-  /** new 0, familiar 0.5, verified 1 -- drives the node's bar. */
+  /** Untested: new 0, familiar 0.5, verified 1. Once recall has tested it: hardest level passed / 4. */
   mastery: number;
+  /** What stands between the user and this skill, from their evidence, findings and recall results. */
+  missing: string;
+  /** External study material for this skill. */
+  resources: LearningResource[];
+  /** The user tailored this skill out. Only ever true when hidden skills were asked for. */
+  hidden: boolean;
   /** The line the finding behind `focus` points at, when there is one. */
   gap_evidence: Evidence | null;
   related_to: string[];
@@ -234,6 +251,8 @@ export interface RoadmapConcept {
   summary: string;
   /** Mean mastery of this concept's skills. */
   mastery: number;
+  /** Which step of the learning order this concept belongs to. */
+  stage: number;
   verified_count: number;
   familiar_count: number;
   new_count: number;
@@ -241,8 +260,83 @@ export interface RoadmapConcept {
   skills: ConceptSkill[];
 }
 
+/** One step of the learning order. Concepts in the same stage are learnt side by side. */
+export interface RoadmapStage {
+  index: number;
+  title: string;
+  note: string;
+  concept_ids: string[];
+}
+
 export interface RoadmapGraph {
   role: string;
   region: string;
   concepts: RoadmapConcept[];
+  /** The order to learn the concepts in. Every concept appears in exactly one stage. */
+  stages: RoadmapStage[];
+}
+
+/** Whether the user has agreed that this roadmap describes them. */
+export interface RoadmapReview {
+  status: "pending" | "accepted";
+  hidden_skills: string[];
+  recall_answered: number;
+  recall_session_length: number;
+}
+
+/* --- The roadmap's final stage: one project, submitted and reviewed ------- */
+
+export interface CapstoneRequirement {
+  id: string;
+  /** null for the baseline every project must meet. */
+  skill_id: string | null;
+  skill_name: string;
+  text: string;
+}
+
+export interface CapstoneBrief {
+  title: string;
+  summary: string;
+  target_skills: string[];
+  requirements: CapstoneRequirement[];
+  deliverables: string[];
+  ready: boolean;
+  readiness_note: string;
+}
+
+export type RequirementVerdict = "met" | "partial" | "missing";
+
+export interface RequirementReview {
+  requirement_id: string;
+  verdict: RequirementVerdict;
+  comment: string;
+  /** Files in the submission that back the verdict. */
+  files: string[];
+}
+
+export interface CapstoneReview {
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+  requirements: RequirementReview[];
+  /** Counted from the verdicts by the server, never asked of the model. */
+  score: number;
+  files_reviewed: number;
+  /** True for the canned review served in mock mode. */
+  sample: boolean;
+}
+
+export interface CapstoneSubmission {
+  id: number;
+  repo_url: string;
+  notes: string;
+  status: "reviewing" | "reviewed" | "failed";
+  error: string | null;
+  review: CapstoneReview | null;
+  submitted_at: string | null;
+}
+
+export interface CapstoneState {
+  brief: CapstoneBrief;
+  submission: CapstoneSubmission | null;
 }

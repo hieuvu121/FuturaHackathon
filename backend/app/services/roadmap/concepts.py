@@ -21,7 +21,11 @@ Market frequency never enters the prose: it has its own bar and chip. Keeping
 it out is what holds these lines short.
 """
 
+import functools
+from pathlib import Path
 import re
+
+import yaml
 
 from ...schemas.common import Evidence
 from ...schemas.findings import Finding
@@ -29,10 +33,12 @@ from ...schemas.market import MarketSkill
 from ...schemas.roadmap import (
     Buckets,
     ConceptSkill,
+    LearningResource,
     NodeStatus,
     RoadmapConcept,
     RoadmapGraph,
     RoadmapItem,
+    RoadmapStage,
 )
 from ...schemas.scores import SkillStatus
 from ..knowledge.base import SkillTaxonomy
@@ -41,6 +47,30 @@ from .buckets import build
 UNGROUPED = "general"
 
 MASTERY = {NodeStatus.VERIFIED: 1.0, NodeStatus.FAMILIAR: 0.5, NodeStatus.NEW: 0.0}
+
+# Recall levels run 1-4, so the hardest drill passed is a quarter-step measure.
+RECALL_LEVELS = 4
+# Tried and missed every level: not nothing, since the code exists, but close to it.
+MISSED_EVERYTHING = 0.1
+# Verification takes a level 3 pass, so a verified skill never reads below that.
+VERIFIED_FLOOR = 0.75
+
+
+def recall_mastery(status: NodeStatus, passed: set[int], failed: set[int]) -> float:
+    """How far along a skill is, once recall has actually tested it.
+
+    Status alone is a guess: "familiar" means the user wrote the code, not that
+    they understand it. A graded drill is evidence, so where one exists it
+    replaces the guess -- upwards or downwards. Untested skills keep the
+    status default.
+    """
+    if not passed and not failed:
+        return MASTERY[status]
+    if passed:
+        earned = max(passed) / RECALL_LEVELS
+    else:
+        earned = 0.0 if status is NodeStatus.NEW else MISSED_EVERYTHING
+    return max(earned, VERIFIED_FLOOR) if status is NodeStatus.VERIFIED else earned
 
 MAX_PROBLEM_CHARS = 62
 
@@ -202,6 +232,119 @@ def _problem(observation: str) -> str:
     return f"{head.rsplit(' ', 1)[0]}..."
 
 
+RECALL_LEVEL_NAMES = {1: "name it", 2: "explain it", 3: "reason about it", 4: "design with it"}
+MAX_RESOURCES = 3
+RESOURCES_FILE = Path(__file__).resolve().parents[2] / "knowledge_data" / "learning_resources.yaml"
+
+
+def _sentence(observation: str) -> str:
+    """The scanner's first sentence, whole. The detail view has room `focus` does not."""
+    return re.split(r"(?<=[.!?])\s", observation.strip())[0].rstrip(".")
+
+
+def _missing(
+    item: RoadmapItem,
+    status: NodeStatus,
+    related: list[str],
+    gap: Finding | None,
+    passed: set[int],
+    failed: set[int],
+) -> str:
+    """What stands between the user and this skill, in plain sentences.
+
+    Assembled from what is actually known -- whether they have written code
+    with it, what the scanner found in that code, and how recall went -- so it
+    never claims a weakness there is no evidence for. No model is called.
+    """
+    name = item.skill_name
+    parts: list[str] = []
+
+    if status is NodeStatus.NEW:
+        parts.append(
+            f"None of your analysed repositories use {name}, so there is nothing yet "
+            "to show you can work with it."
+        )
+        if related:
+            parts.append(
+                f"It sits close to {_join(related)}, which you already use, "
+                "so you are not starting from zero."
+            )
+    elif status is NodeStatus.FAMILIAR:
+        parts.append(
+            f"Your code uses {name}, but nothing has yet checked that you understand it "
+            "rather than having got it working."
+        )
+    else:
+        parts.append(f"You have shown you understand {name}.")
+
+    if gap is not None:
+        opener = (
+            "A problem in your own code points here"
+            if status is NodeStatus.NEW
+            else "The scanner found a weak spot"
+        )
+        parts.append(f"{opener}: {_sentence(gap.observation)} ({_reference(gap.evidence)}).")
+
+    if passed and failed:
+        parts.append(
+            f"In recall you could {RECALL_LEVEL_NAMES[max(passed)]} but not yet "
+            f"{RECALL_LEVEL_NAMES[min(failed)]}, so that step is the gap to close."
+        )
+    elif failed:
+        parts.append(
+            f"In recall you could not yet {RECALL_LEVEL_NAMES[min(failed)]}, "
+            "so start from the fundamentals below."
+        )
+    elif passed and max(passed) < RECALL_LEVELS:
+        parts.append(
+            f"In recall you could {RECALL_LEVEL_NAMES[max(passed)]}; the next step is to "
+            f"{RECALL_LEVEL_NAMES[max(passed) + 1]}."
+        )
+    elif passed:
+        parts.append(
+            "You cleared the hardest recall level, so what is left is depth through harder projects."
+        )
+    elif status is not NodeStatus.NEW:
+        parts.append("Answer its recall questions to find out exactly where your understanding stops.")
+    return " ".join(parts)
+
+
+@functools.lru_cache(maxsize=1)
+def _resource_table() -> dict[str, list[LearningResource]]:
+    if not RESOURCES_FILE.is_file():
+        return {}
+    payload = yaml.safe_load(RESOURCES_FILE.read_text(encoding="utf-8")) or {}
+    return {
+        skill_id: [LearningResource.model_validate(row) for row in rows]
+        for skill_id, rows in (payload.get("resources") or {}).items()
+    }
+
+
+def _resources(skill_id: str, taxonomy: SkillTaxonomy | None) -> list[LearningResource]:
+    """The skill's own links, else its nearest ancestors', so nothing is left empty."""
+    table = _resource_table()
+    found: list[LearningResource] = []
+    seen: set[str] = set()
+    frontier, visited = [skill_id], {skill_id}
+    while frontier and not found:
+        parents: list[str] = []
+        for current in frontier:
+            for resource in table.get(current, []):
+                if resource.url not in seen and len(found) < MAX_RESOURCES:
+                    seen.add(resource.url)
+                    found.append(resource)
+            if taxonomy is not None:
+                try:
+                    parents.extend(p for p in taxonomy.parents(current) if p not in visited)
+                except KeyError:
+                    pass
+        visited.update(parents)
+        # The loop stops climbing once a level has links: a Python learner does
+        # not need the generic "programming languages" list as well.
+        frontier = parents
+    return found
+
+
 def _severity_rank(finding: Finding) -> tuple[int, float]:
     order = {"high": 0, "medium": 1, "low": 2}
     return (order.get(finding.severity.value, 3), -finding.confidence)
@@ -274,15 +417,19 @@ def _to_node(
     known: dict[str, str],
     taxonomy: SkillTaxonomy | None,
     gaps: dict[str, Finding],
+    recall: dict[str, tuple[set[int], set[int]]],
 ) -> ConceptSkill:
     related = _related_names(item.skill_id, known, taxonomy) if status is NodeStatus.NEW else []
     gap = gaps.get(item.skill_id)
+    passed, failed = recall.get(item.skill_id, (set(), set()))
     return ConceptSkill(
         skill_id=item.skill_id,
         skill_name=item.skill_name,
         status=status,
         focus=_focus(item, status, related, gap),
-        mastery=MASTERY[status],
+        mastery=recall_mastery(status, passed, failed),
+        missing=_missing(item, status, related, gap, passed, failed),
+        resources=_resources(item.skill_id, taxonomy),
         gap_evidence=gap.evidence if gap is not None else None,
         related_to=related,
         evidence=item.evidence,
@@ -296,11 +443,16 @@ def graph_from_buckets(
     buckets: Buckets,
     taxonomy: SkillTaxonomy | None = None,
     findings: list[Finding] | None = None,
+    recall: dict[str, tuple[set[int], set[int]]] | None = None,
 ) -> RoadmapGraph:
     """Regroup an already-built roadmap. `revise` is reframed, never replayed.
 
     The diagram is forward-looking, so a touched-but-unverified skill appears as
     FAMILIAR with a next step, rather than as a backlog item to go back and fix.
+
+    `recall` maps skill_id -> (levels passed, levels failed) from the drill log.
+    It moves the mastery bars only; which bucket a skill sits in stays decided
+    by repository and verification evidence.
     """
     present = [
         item.skill_id
@@ -319,7 +471,7 @@ def graph_from_buckets(
 
     grouped: dict[str, list[ConceptSkill]] = {}
     for item, status in staged:
-        node = _to_node(item, status, known, taxonomy, gaps)
+        node = _to_node(item, status, known, taxonomy, gaps, recall or {})
         grouped.setdefault(_concept_of(item.skill_id, taxonomy), []).append(node)
 
     concepts: list[RoadmapConcept] = []
@@ -350,7 +502,98 @@ def graph_from_buckets(
             concept.concept_name,
         )
     )
-    return RoadmapGraph(role=buckets.role, region=buckets.region, concepts=concepts)
+    concepts, stages = _staged(concepts)
+    return RoadmapGraph(role=buckets.role, region=buckets.region, concepts=concepts, stages=stages)
+
+
+# The order concepts are best learnt in. A tier holds what can be studied side by
+# side; a later tier leans on the ones before it. This is a judgement about
+# dependencies, written down once -- foundations, then the things you build,
+# then the things that harden and ship them -- not something a model guesses.
+LEARNING_TIERS: list[tuple[str, str, tuple[str, ...]]] = [
+    (
+        "Learn first",
+        "The foundations everything else leans on.",
+        ("programming_languages", "programming_concepts", "version_control"),
+    ),
+    (
+        "Then, in parallel",
+        "Pick these up side by side; none of them blocks another.",
+        ("backend", "frontend", "mobile", "data", "api_design"),
+    ),
+    (
+        "Make it solid",
+        "What turns working code into code you can trust and share.",
+        ("testing", "security", "collaboration"),
+    ),
+    (
+        "Ship and scale",
+        "Running it for real, once there is something worth running.",
+        ("devops", "cloud"),
+    ),
+]
+LAST_TIER = ("Go further", "Skills that do not sit under one concept.")
+
+
+def _staged(concepts: list[RoadmapConcept]) -> tuple[list[RoadmapConcept], list[RoadmapStage]]:
+    """Number the concepts by learning tier, skipping tiers this roadmap has nothing in.
+
+    Within a stage the concepts keep the order they arrived in, which is by
+    priority, so the most useful of several parallel options is listed first.
+    """
+    tier_of = {cid: index for index, (_, _, ids) in enumerate(LEARNING_TIERS) for cid in ids}
+    by_tier: dict[int, list[RoadmapConcept]] = {}
+    for concept in concepts:
+        by_tier.setdefault(tier_of.get(concept.concept_id, len(LEARNING_TIERS)), []).append(concept)
+
+    staged: list[RoadmapConcept] = []
+    stages: list[RoadmapStage] = []
+    for number, tier in enumerate(sorted(by_tier), start=1):
+        title, note = LEARNING_TIERS[tier][:2] if tier < len(LEARNING_TIERS) else LAST_TIER
+        members = [concept.model_copy(update={"stage": number}) for concept in by_tier[tier]]
+        staged.extend(members)
+        stages.append(
+            RoadmapStage(
+                index=number,
+                # Whatever comes first IS what to learn first, whichever tier it came from.
+                title="Learn first" if number == 1 else title,
+                note=note,
+                concept_ids=[concept.concept_id for concept in members],
+            )
+        )
+    return staged, stages
+
+
+def tailor(graph: RoadmapGraph, hidden: set[str], keep_hidden: bool = False) -> RoadmapGraph:
+    """Apply the user's own edits: skills they removed leave the roadmap.
+
+    With `keep_hidden` they stay in the list, flagged, so the tailoring view can
+    offer them back. Either way a concept's numbers describe only what is
+    visible, and a concept with nothing visible left is dropped.
+    """
+    if not hidden:
+        return graph
+    concepts: list[RoadmapConcept] = []
+    for concept in graph.concepts:
+        skills = [
+            skill.model_copy(update={"hidden": skill.skill_id in hidden}) for skill in concept.skills
+        ]
+        visible = [skill for skill in skills if not skill.hidden]
+        if not visible and not keep_hidden:
+            continue
+        concepts.append(
+            concept.model_copy(
+                update={
+                    "skills": skills if keep_hidden else visible,
+                    "mastery": round(sum(s.mastery for s in visible) / len(visible), 4) if visible else 0.0,
+                    "verified_count": sum(1 for s in visible if s.status is NodeStatus.VERIFIED),
+                    "familiar_count": sum(1 for s in visible if s.status is NodeStatus.FAMILIAR),
+                    "new_count": sum(1 for s in visible if s.status is NodeStatus.NEW),
+                }
+            )
+        )
+    concepts, stages = _staged(concepts)
+    return graph.model_copy(update={"concepts": concepts, "stages": stages})
 
 
 def build_graph(

@@ -22,6 +22,8 @@ a demo never waits on a model.
 
 from dataclasses import dataclass
 import functools
+import hashlib
+from pathlib import Path
 
 import yaml
 
@@ -48,13 +50,39 @@ class BankEntry:
     question: Question
     key_points: list[str]
     solution: str
+    # The correct option of a multiple-choice drill. Kept here, beside the key
+    # points, because like them it must never reach the browser.
+    answer: str = ""
+
+
+def _shuffled(question_id: str, options: list[str]) -> list[str]:
+    """A fixed order per question: stable across refreshes, unrelated to the file's order."""
+    return sorted(
+        options, key=lambda option: hashlib.sha1(f"{question_id}|{option}".encode()).hexdigest()
+    )
+
+
+def _load_choices(bank_path: str) -> dict[str, list[str]]:
+    """question id -> options, correct one first. See knowledge_data/recall_choices.yaml."""
+    path = Path(bank_path).with_name("recall_choices.yaml")
+    if not path.is_file():
+        return {}
+    payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    return {
+        question_id: [str(option) for option in options]
+        for question_id, options in (payload.get("choices") or {}).items()
+        if isinstance(options, list) and len(set(options)) >= 2
+    }
 
 
 @functools.lru_cache(maxsize=4)
 def _load(path: str) -> tuple[BankEntry, ...]:
     payload = yaml.safe_load(open(path, encoding="utf-8").read()) or {}
+    choices = _load_choices(path)
     entries: list[BankEntry] = []
     for row in payload.get("questions", []):
+        # Only theory questions become multiple choice; a coding task is written, not picked.
+        options = choices.get(row["id"], []) if row["type"] == QuestionType.CONCEPT.value else []
         entries.append(
             BankEntry(
                 question=Question(
@@ -64,9 +92,11 @@ def _load(path: str) -> tuple[BankEntry, ...]:
                     skill_ids=[row["skill_id"]],
                     level=int(row["level"]),
                     starter=row.get("starter", ""),
+                    choices=_shuffled(row["id"], options),
                 ),
                 key_points=[str(point) for point in row.get("key_points", [])],
                 solution=(row.get("solution") or "").strip(),
+                answer=options[0] if options else "",
             )
         )
     return tuple(entries)
@@ -84,8 +114,37 @@ def _skill_of(entry: BankEntry) -> str:
     return entry.question.skill_ids[0]
 
 
-def _levels_available(bank: tuple[BankEntry, ...], skill_id: str) -> dict[int, BankEntry]:
-    return {e.question.level: e for e in bank if _skill_of(e) == skill_id}
+def _levels_available(
+    bank: tuple[BankEntry, ...], skill_id: str, prefer: QuestionType | None = None
+) -> dict[int, BankEntry]:
+    """One drill per level for this skill.
+
+    Later entries win a level, which is how a repository drill displaces a
+    seeded one. When the session wants a particular kind of question next, a
+    drill of that kind holds its level against a later one of another kind.
+    """
+    chosen: dict[int, BankEntry] = {}
+    for entry in bank:
+        if _skill_of(entry) != skill_id:
+            continue
+        held = chosen.get(entry.question.level)
+        if held is None or prefer is None or entry.question.type is prefer or held.question.type is not prefer:
+            chosen[entry.question.level] = entry
+    return chosen
+
+
+def _of_kind(
+    available: dict[int, BankEntry], level: int, prefer: QuestionType | None, asked_ids: set[str]
+) -> int:
+    """The level to ask at. If the wanted level has the wrong kind of question,
+    one step either side is close enough to keep the mix the session promised."""
+    if prefer is None or available[level].question.type is prefer:
+        return level
+    for nearby in (level + 1, level - 1):
+        entry = available.get(nearby)
+        if entry is not None and entry.question.type is prefer and entry.question.id not in asked_ids:
+            return nearby
+    return level
 
 
 def is_bracketed(attempts: list[Attempt], skill_id: str, available: dict[int, BankEntry]) -> bool:
@@ -150,19 +209,29 @@ def next_question(
     settings: Settings,
     attempts: list[Attempt],
     skill_order: list[tuple[str, str]],
+    extra: tuple[BankEntry, ...] = (),
+    prefer: QuestionType | None = None,
 ) -> NextQuestion:
     """Pick the next drill.
 
     `skill_order` is (skill_id, display name) in the priority the roadmap gives
     them. Skills with no seeded questions are skipped rather than reported as
     finished, so the bank can grow without changing this code.
+
+    `extra` holds drills written against the user's own repository
+    (repo_drills.py). They take the place of the seeded question at the same
+    skill and level, so the loop probes real code wherever it has some.
+
+    `prefer` is the kind of question the session would like next -- a coding
+    task or a multiple-choice one. It is honoured where the bank allows and
+    ignored where it does not: the level search always comes first.
     """
-    bank = load_bank(settings)
+    bank = (*load_bank(settings), *extra)
     asked_ids = {a.question_id for a in attempts}
 
     open_skills: list[tuple[str, str, dict[int, BankEntry]]] = []
     for skill_id, skill_name in skill_order:
-        available = _levels_available(bank, skill_id)
+        available = _levels_available(bank, skill_id, prefer)
         if not available or is_bracketed(attempts, skill_id, available):
             continue
         open_skills.append((skill_id, skill_name, available))
@@ -183,6 +252,23 @@ def next_question(
             return NextQuestion(question=None, asked=len(attempts), remaining_skills=0)
         skill_id, skill_name, available = open_skills[0]
         level = _next_level(attempts, skill_id, available)
+
+    level = _of_kind(available, level, prefer, asked_ids)
+    if prefer is not None and available[level].question.type is not prefer:
+        # This skill cannot supply the kind of question the session wants next.
+        # Another open skill may: the loop's state is read from the attempt log,
+        # so stepping away and coming back later loses nothing.
+        for other_id, other_name, other_available in open_skills:
+            if other_id == skill_id:
+                continue
+            other_level = _next_level(attempts, other_id, other_available)
+            if other_level is None:
+                continue
+            other_level = _of_kind(other_available, other_level, prefer, asked_ids)
+            entry = other_available[other_level]
+            if entry.question.type is prefer and entry.question.id not in asked_ids:
+                skill_id, skill_name, available, level = other_id, other_name, other_available, other_level
+                break
 
     return NextQuestion(
         question=available[level].question,

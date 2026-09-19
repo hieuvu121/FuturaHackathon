@@ -6,12 +6,13 @@ from sqlalchemy import select
 from ..config import get_settings
 from ..deps import CurrentUser, DbDep
 from ..mock_store import load
-from ..models.db import SkillStatusRow
+from ..models.db import SkillStatusRow, User
 from ..schemas.scores import SkillStatus
 from ..schemas.roadmap import Buckets, RoadmapGraph
 from ..services.knowledge import get_demand, get_taxonomy
 from ..services.roadmap.buckets import build
-from ..services.roadmap.concepts import graph_from_buckets
+from ..services.roadmap import review as roadmap_review
+from ..services.roadmap.concepts import graph_from_buckets, tailor
 from ..services.roadmap.matcher import match
 from ..services.portfolio import build_profile
 from ..services.storage import get_owned_repo
@@ -45,22 +46,37 @@ def portfolio_roadmap(
     return build(skills, demand, role, region, taxonomy)
 
 
+def _owner_id(db: DbDep | None, login: str) -> int | None:
+    """None when there is nobody to look up, which is simply a roadmap with no history."""
+    if db is None:
+        return None
+    return db.scalar(select(User.id).where(User.github_login == login))
+
+
 @router.get("/portfolio/roadmap/graph", response_model=RoadmapGraph)
 def portfolio_roadmap_graph(
     user: CurrentUser,
     db: DbDep,
     role: str = "software_engineer",
     region: str = "AU",
+    include_hidden: bool = False,
 ) -> RoadmapGraph:
     """The same roadmap, regrouped into concepts for the diagram view.
 
     Grouping needs the taxonomy, which only exists here, so the frontend asks
     for concepts rather than reassembling them from a flat bucket list.
+
+    Skills the user tailored out are left off, unless `include_hidden` asks for
+    them back (flagged), which is what the tailoring view does.
     """
     settings = get_settings()
     taxonomy = get_taxonomy(settings)
+    owner_id = _owner_id(db, user)
+    recall = roadmap_review.recall_levels(db, owner_id) if owner_id else {}
+    hidden = set(roadmap_review.review_row(db, owner_id).hidden_skills or []) if owner_id else set()
     if settings.mock_mode:
-        return graph_from_buckets(Buckets.model_validate(_fixture_for(role)), taxonomy, [])
+        graph = graph_from_buckets(Buckets.model_validate(_fixture_for(role)), taxonomy, [], recall)
+        return tailor(graph, hidden, keep_hidden=include_hidden)
     try:
         profile = build_profile(db, user)
     except LookupError as exc:
@@ -70,7 +86,10 @@ def portfolio_roadmap_graph(
     buckets = build(skills, demand, role, region, taxonomy)
     # The scanner's findings are what let a next step name a real problem in
     # this user's code instead of offering a syllabus.
-    return graph_from_buckets(buckets, taxonomy, profile.findings)
+    # Drill results move the mastery bars, so the diagram reflects what recall
+    # found rather than only what the repository suggested.
+    graph = graph_from_buckets(buckets, taxonomy, profile.findings, recall)
+    return tailor(graph, hidden, keep_hidden=include_hidden)
 
 
 @router.get("/{repo_id}/roadmap", response_model=Buckets)
@@ -103,3 +122,12 @@ def roadmap(
     taxonomy = get_taxonomy(settings)
     demand = match(skills, taxonomy, get_demand(settings), role, region)
     return build(skills, demand, role, region, taxonomy)
+
+
+# The final stage of the roadmap lives in its own module and is mounted here, so
+# main.py -- which no feature branch edits -- never has to learn about it.
+from .capstone import router as capstone_router  # noqa: E402
+from .roadmap_review import router as review_router  # noqa: E402
+
+router.include_router(capstone_router)
+router.include_router(review_router)

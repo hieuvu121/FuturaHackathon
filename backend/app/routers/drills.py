@@ -13,13 +13,15 @@ from sqlalchemy import select
 from ..config import get_settings
 from ..deps import CurrentUser, DbDep
 from ..models.db import RecallAttemptRow, SkillStatusRow, User
-from ..schemas.recall import AdaptiveGrade, Answer, NextQuestion
+from ..schemas.recall import AdaptiveGrade, Answer, NextQuestion, QuestionType
 from ..schemas.roadmap import NodeStatus
 from ..schemas.scores import Tier
 from ..services.knowledge import get_demand, get_taxonomy
-from ..services.portfolio import build_profile
-from ..services.recall.adaptive import Attempt, entry_for, next_question
+from ..services.portfolio import build_profile, owned_selected_repos
+from ..services.recall.adaptive import Attempt, BankEntry, entry_for, next_question
 from ..services.recall.drills import PASS_MARK, grade_drill, model_answer
+from ..services.recall.repo_drills import ensure_repo_drills, load_repo_entries, repo_entry_for
+from ..services.roadmap import review as roadmap_review
 from ..services.roadmap.buckets import build
 from ..services.roadmap.concepts import graph_from_buckets
 from ..services.roadmap.matcher import match
@@ -59,29 +61,55 @@ def _user(db: DbDep, login: str) -> User:
 
 
 def _attempts(db: DbDep, user: User) -> list[Attempt]:
-    rows = db.scalars(
-        select(RecallAttemptRow)
-        .where(RecallAttemptRow.user_id == user.id)
-        .order_by(RecallAttemptRow.id)
-    ).all()
+    """This session's answers. A restarted test leaves the older ones behind."""
+    rows = roadmap_review.session_attempts(db, user.id)
     return [Attempt(r.skill_id, r.level, r.passed, r.question_id) for r in rows]
 
 
-def _skill_order(db: DbDep, login: str) -> list[tuple[str, str]]:
-    """Skills to probe, in the roadmap's own priority.
+# What kind of question each of the five slots would like to be. It opens with
+# a coding task -- on the user's own code when one has been written for them --
+# and alternates, so a session is never all theory or all typing.
+SESSION_MIX: tuple[QuestionType, ...] = (
+    QuestionType.CODING,
+    QuestionType.CONCEPT,
+    QuestionType.CODING,
+    QuestionType.CONCEPT,
+    QuestionType.CONCEPT,
+)
+
+
+def _step(settings, attempts: list[Attempt], order, repo_drills) -> NextQuestion:
+    """The next question, or the end of the session once five have been answered.
+
+    Five is enough to place the two or three skills the roadmap cares most
+    about, and short enough that people finish. The roadmap is drawn from
+    whatever those five found.
+    """
+    if len(attempts) >= roadmap_review.SESSION_LENGTH:
+        return NextQuestion(question=None, asked=len(attempts), remaining_skills=0)
+    return next_question(settings, attempts, order, repo_drills, SESSION_MIX[len(attempts)])
+
+
+def _session(
+    db: DbDep, login: str, generate: bool = False
+) -> tuple[list[tuple[str, str]], tuple[BankEntry, ...]]:
+    """Skills to probe, in the roadmap's own priority, plus the user's repository drills.
 
     What the user has written but never had checked comes first: that is where
     an unfounded belief is most likely hiding, which is what recall is for.
     New skills follow, so a session can still teach something once the
     familiar ones are mapped.
+
+    `generate` writes the missing repository drills first. Only `next` asks for
+    that: it is the call the page already waits on, whereas grading must stay quick.
     """
     settings = get_settings()
     if settings.mock_mode:
-        return list(MOCK_SKILL_ORDER)
+        return list(MOCK_SKILL_ORDER), ()
     try:
         profile = build_profile(db, login)
     except LookupError:
-        return []
+        return [], ()
     taxonomy = get_taxonomy(settings)
     skills = profile.scores.skills
     demand = match(skills, taxonomy, get_demand(settings), "software_engineer", "AU")
@@ -96,30 +124,38 @@ def _skill_order(db: DbDep, login: str) -> list[tuple[str, str]]:
             -node.priority,
         ),
     )
-    return [(node.skill_id, node.skill_name) for node in ordered]
+    order = [(node.skill_id, node.skill_name) for node in ordered]
+    repos = owned_selected_repos(db, login)
+    if generate:
+        return order, ensure_repo_drills(db, settings, login, skills, repos, order)
+    return order, load_repo_entries(db, [repo.id for repo in repos])
 
 
 @router.get("/next", response_model=NextQuestion)
 def next_drill(user: CurrentUser, db: DbDep) -> NextQuestion:
     """The question to ask now, given everything answered so far."""
     settings = get_settings()
-    order = _skill_order(db, user)
+    order, repo_drills = _session(db, user, generate=True)
     if not order:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND, "No analysed repositories to build a session from"
         )
-    return next_question(settings, _attempts(db, _user(db, user)), order)
+    return _step(settings, _attempts(db, _user(db, user)), order, repo_drills)
 
 
 @router.post("/answer", response_model=AdaptiveGrade)
 def answer_drill(answer: Answer, user: CurrentUser, db: DbDep) -> AdaptiveGrade:
     """Grade one drill, record it, and return the question it earned."""
     settings = get_settings()
-    entry = entry_for(settings, answer.question_id)
+    owner = _user(db, user)
+    entry = entry_for(settings, answer.question_id) or repo_entry_for(
+        db, [repo.id for repo in owned_selected_repos(db, user)], answer.question_id
+    )
     if entry is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Question not found")
+    if len(_attempts(db, owner)) >= roadmap_review.SESSION_LENGTH:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This recall session is already complete")
 
-    owner = _user(db, user)
     verdict = grade_drill(settings, entry, answer)
     passed = verdict.score >= PASS_MARK
     skill_id = entry.question.skill_ids[0]
@@ -150,7 +186,10 @@ def answer_drill(answer: Answer, user: CurrentUser, db: DbDep) -> AdaptiveGrade:
             db.commit()
             tier_change[skill_id] = Tier.VERIFIED
 
-    upcoming = next_question(settings, _attempts(db, owner), _skill_order(db, user))
+    upcoming = _step(settings, _attempts(db, owner), *_session(db, user))
+    if upcoming.question is None:
+        # The answers just changed the roadmap, so it has to be agreed to again.
+        roadmap_review.mark_pending(db, owner.id)
     return AdaptiveGrade(
         question_id=entry.question.id,
         passed=passed,

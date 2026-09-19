@@ -106,6 +106,9 @@ def _prompt(entry: BankEntry, submission: str) -> str:
             ),
             "question": entry.question.prompt,
             "kind": entry.question.type.value,
+            # Present for drills written against the user's repository: the task
+            # is about this code, so the judge has to see it too.
+            "code_context": entry.question.code_context,
             "key_points": entry.key_points,
             "reference_solution": entry.solution,
             "answer": submission,
@@ -162,10 +165,24 @@ def _grade_with_model(settings: Settings, entry: BankEntry, submission: str) -> 
     return _from_judgement(entry, ModelJudgement.model_validate_json(text))
 
 
+def grade_choice(entry: BankEntry, submission: str) -> DrillVerdict:
+    """A multiple-choice drill has one right option, so no model and no judgement call."""
+    if submission.strip() == entry.answer.strip():
+        return DrillVerdict(score=1.0, feedback="That is the one.")
+    return DrillVerdict(
+        score=0.0,
+        feedback="Not that one. Compare your pick with the answer below and see what it misses.",
+        missing=entry.key_points,
+    )
+
+
 def grade_drill(settings: Settings, entry: BankEntry, answer: Answer) -> DrillVerdict:
-    """Model first, key points if the model is unavailable or misbehaves."""
+    """Multiple choice by exact match. Otherwise the model first, and key points
+    if the model is unavailable or misbehaves."""
     if not answer.submission.strip():
         return DrillVerdict(score=0.0, feedback="Nothing to grade yet.", missing=entry.key_points)
+    if entry.answer:
+        return grade_choice(entry, answer.submission)
     try:
         return _grade_with_model(settings, entry, answer.submission)
     except Exception as exc:
@@ -181,4 +198,6 @@ def model_answer(entry: BankEntry) -> str:
     """What to show after grading, so a miss still teaches something."""
     if entry.question.type is QuestionType.CODING and entry.solution:
         return entry.solution
+    if entry.answer:
+        return entry.answer
     return "Key points: " + "; ".join(entry.key_points) if entry.key_points else ""

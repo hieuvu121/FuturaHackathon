@@ -49,6 +49,13 @@ class Question(BaseModel):
         2, ge=1, le=4, description="1 name it, 2 explain it, 3 reason about it, 4 design with it"
     )
     starter: str = Field("", description="Opening lines for a coding task.")
+    choices: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Options for a multiple-choice concept drill, already shuffled. "
+            "The submission is the chosen option's text. Empty for free-text and coding drills."
+        ),
+    )
 
 
 class Answer(BaseModel):
@@ -75,6 +82,7 @@ class NextQuestion(BaseModel):
 
     question: Question | None = None
     asked: int = 0
+    session_length: int = Field(5, description="How many questions one recall session asks.")
     remaining_skills: int = 0
     reason: str = Field("", description="Why this question was chosen, shown to the user.")
 

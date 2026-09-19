@@ -106,6 +106,43 @@ class RecallAttemptRow(Base):
     submission: Mapped[str] = mapped_column(Text, default="")
 
 
+class RoadmapReviewRow(Base):
+    """Where one user stands with their roadmap: shown, accepted, or being redone.
+
+    `recall_floor` is the id of the last recall attempt BEFORE the current
+    session. Redoing the test raises it, so old answers stop counting without
+    being deleted. `hidden_skills` is the user's own tailoring of the roadmap.
+    """
+
+    __tablename__ = "roadmap_reviews"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    status: Mapped[str] = mapped_column(String(16), default="pending")
+    recall_floor: Mapped[int] = mapped_column(Integer, default=0)
+    hidden_skills: Mapped[list] = mapped_column(JSON, default=list)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+
+
+class CapstoneSubmissionRow(Base):
+    """One final-project submission and the review it received.
+
+    The brief is stored with it: a review is against the requirements the user
+    was given at the time, even if their roadmap has since moved on.
+    """
+
+    __tablename__ = "capstone_submissions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    repo_url: Mapped[str] = mapped_column(Text)
+    notes: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(16), default="reviewing")
+    error: Mapped[str | None] = mapped_column(Text, default=None)
+    brief: Mapped[dict] = mapped_column(JSON)
+    review: Mapped[dict | None] = mapped_column(JSON, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+
+
 class SkillStatusRow(Base):
     __tablename__ = "skill_status"
 
