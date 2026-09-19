@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     taxonomy_source: Literal["seeded", "external"] = "seeded"
     # "chained" tries each source in demand_chain order and takes the first hit.
     # It is the default because the real source is still undecided -- see plan.md §10.
-    demand_source: Literal["seeded", "scraped", "llm", "chained"] = "chained"
+    demand_source: Literal["seeded", "scraped", "llm", "chained"] = "seeded"
     demand_chain: list[str] = ["scraped", "llm", "seeded"]
     ladder_source: Literal["seeded", "external"] = "seeded"
 

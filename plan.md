@@ -321,11 +321,10 @@ The candidates, weakest to strongest:
 | `scraped` — real job ads in `data/jobs_raw/` | High | ~half a day, plus collection | `scraped`, confidence high, real n |
 | `external` — Lightcast / ESCO / ASC | Highest | Access + integration; likely post-hackathon | `external` |
 
-**Current implementation status:** seeded demand works. `ScrapedDemand`,
-`LLMDemand`, and `ChainedDemand.top_skills()` are still stubs. Although
-`DEMAND_SOURCE=chained` is currently configured as the default, it is not yet a
-safe runtime fallback because the first unimplemented provider raises before the
-seeded provider can answer.
+**Current implementation status:** evidence-first matching and bucket construction
+work with seeded demand, and `DEMAND_SOURCE=seeded` is the safe default.
+`ScrapedDemand`, `LLMDemand`, and `ChainedDemand.top_skills()` are still stubs, so
+the chained provider remains opt-in and is not yet a safe runtime fallback.
 
 **Immediate Phase 2 rule:** use `DEMAND_SOURCE=seeded` when exercising Learn New,
 or return no Learn New items. Revise and Deepen must continue working either way.
@@ -350,7 +349,7 @@ Why this is safe to leave open:
 - `frequency` is nullable and invariant #5 requires graceful degradation, so even
   "all demand sources fail" remains a supported state.
 
-Required Phase 2 tests (not all exist yet):
+Required Phase 2 tests (implemented in `tests/test_roadmap_services.py`):
 
 1. touched but unverified → Revise;
 2. verified → Deepen;
@@ -358,9 +357,10 @@ Required Phase 2 tests (not all exist yet):
 4. `frequency=None` still produces deterministic proximity ordering;
 5. unavailable demand produces valid Revise/Deepen output without Learn New.
 
-The current contract tests only prove that nullable market rows validate and a
-synthetic silent frequency chain returns `None`; they do not yet exercise real
-bucket construction or `top_skills()` fallback behaviour.
+The service tests exercise real bucket construction, seeded `top_skills()`, alias
+normalisation, evidence merging, provenance retention, unavailable demand, and
+null-frequency proximity ordering. The generic chained `top_skills()` fallback
+still belongs to the later chained-provider implementation.
 
 Constraint on the LLM option: an estimate is **never** presented as a measurement.
 `llm.py` clamps confidence to 0.4, sets `sample_size=None`, and stamps

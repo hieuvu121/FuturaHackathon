@@ -62,9 +62,8 @@ def _demand_impl(settings: Settings, name: str) -> DemandSource:
 def get_demand(settings: Settings) -> DemandSource:
     """The demand source-of-truth is still undecided (plan.md §10).
 
-    Until it is, the default is "chained": each source in settings.demand_chain
-    is tried in order and the first to answer wins, so scraped data can land
-    incrementally without anyone waiting on the decision.
+    Seeded demand is the safe default until every configured chained provider is
+    implemented. The chain remains opt-in and preserves first-source-wins order.
     """
     from .demand.chained import ChainedDemand
 
