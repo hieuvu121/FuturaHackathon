@@ -143,6 +143,13 @@ five deterministic question types are implemented. Context safely includes the
 target, known callees, and available creating-commit diff, capped near 3k tokens.
 The ownership-checked real endpoint persists its generated `QuestionRow` records.
 
+**Recall-verification checkpoint (2026-09-20):** bug injection runs only against
+an isolated repository copy after a passing baseline suite, clears bytecode
+caches between attempts, and accepts a candidate only when the real suite fails.
+Debug/extend submissions are test-graded; open answers are rubric-graded. A live
+OpenAI transfer grade returned a typed passing result and a `python` promotion.
+Answer results and touched-to-verified evidence are persisted transactionally.
+
 ---
 
 ### Phase 4 — Demo prep & buffer · ~3h
