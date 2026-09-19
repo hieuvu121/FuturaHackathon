@@ -1,0 +1,79 @@
+# Community: who counts as a mentor, and the sample roadmaps a new install starts with.
+#
+# `mentors` are GitHub logins whose reviews carry the Mentor badge. Anyone else
+# earns the Experienced badge from their own verified skills (see
+# services/community.py) -- standing here is earned or granted, never claimed.
+#
+# `samples` are inserted once, flagged as samples, so the page is not empty on
+# day one. Their authors and reviewers are fictional and cannot log in.
+
+mentors: []
+
+samples:
+  - title: Backend engineer (junior)
+    author: mai-tran
+    summary: >-
+      Two years of Python APIs at university and one internship. I want to know
+      whether testing should really come before Docker for a first backend role.
+    overall: 0.46
+    stages:
+      - title: Learn first
+        concepts:
+          - {name: Programming Languages, mastery: 0.75}
+          - {name: Programming Concepts, mastery: 0.5}
+          - {name: Version Control, mastery: 0.5}
+      - title: Then, in parallel
+        concepts:
+          - {name: Backend Development, mastery: 0.5}
+          - {name: Data Engineering, mastery: 0.25}
+      - title: Make it solid
+        concepts:
+          - {name: Testing and Quality, mastery: 0.25}
+          - {name: Application Security, mastery: 0.1}
+      - title: Ship and scale
+        concepts:
+          - {name: DevOps and Platform, mastery: 0.0}
+    comments:
+      - author: k-nguyen
+        standing: mentor
+        verdict: validates
+        body: >-
+          The order is right. Hiring managers for junior backend roles ask about
+          tests long before they ask about containers -- get to the point where
+          you can explain why a test is brittle, then pick up Docker in a weekend.
+      - author: ops-linh
+        standing: experienced
+        verdict: suggests
+        body: >-
+          Mostly agree, but move SQL up. At 25% in data you will hit a wall on
+          your first real ticket; indexes and joins matter more day to day than
+          security theory does at this level.
+
+  - title: Frontend developer moving to full-stack
+    author: duc-pham
+    summary: >-
+      Three years of React. My roadmap says to learn backend and data side by
+      side -- is that realistic while working full time?
+    overall: 0.38
+    stages:
+      - title: Learn first
+        concepts:
+          - {name: Programming Languages, mastery: 0.75}
+          - {name: Version Control, mastery: 0.75}
+      - title: Then, in parallel
+        concepts:
+          - {name: Frontend Development, mastery: 1.0}
+          - {name: Backend Development, mastery: 0.1}
+          - {name: Data Engineering, mastery: 0.0}
+          - {name: API and Service Design, mastery: 0.25}
+      - title: Make it solid
+        concepts:
+          - {name: Testing and Quality, mastery: 0.5}
+    comments:
+      - author: k-nguyen
+        standing: mentor
+        verdict: suggests
+        body: >-
+          In parallel is fine on paper, but do API design first: you already
+          consume APIs every day, so designing one is the shortest bridge from
+          what you know to what you do not.

@@ -358,3 +358,49 @@ export interface CapstoneState {
   brief: CapstoneBrief;
   submission: CapstoneSubmission | null;
 }
+
+/* --- Community: shared roadmaps and the reviews they collect --------------- */
+
+/** Why a reviewer's word carries weight. Earned or granted, never self-declared. */
+export type CommunityStanding = "mentor" | "experienced" | "member";
+export type CommunityVerdict = "validates" | "suggests" | "comment";
+
+export interface SharedStage {
+  title: string;
+  concepts: { name: string; mastery: number }[];
+}
+
+export interface CommunityComment {
+  id: number;
+  author: string;
+  standing: CommunityStanding;
+  verdict: CommunityVerdict;
+  body: string;
+  created_at: string | null;
+  mine: boolean;
+}
+
+/** A snapshot, not a live view: reviews are about the roadmap as it was shared. */
+export interface CommunityRoadmap {
+  id: number;
+  /** The role this roadmap is for, in the author's words. */
+  title: string;
+  summary: string;
+  author: string;
+  author_standing: CommunityStanding;
+  overall: number;
+  stages: SharedStage[];
+  /** Reviews from mentors or experienced users only. */
+  validations: number;
+  suggestions: number;
+  comment_count: number;
+  is_sample: boolean;
+  mine: boolean;
+  created_at: string | null;
+}
+
+export interface CommunityRoadmapDetail extends CommunityRoadmap {
+  comments: CommunityComment[];
+  /** What badge the viewer's own review would carry. */
+  my_standing: CommunityStanding;
+}

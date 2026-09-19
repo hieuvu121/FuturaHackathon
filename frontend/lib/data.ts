@@ -12,7 +12,7 @@ import roadmapMock from "../../backend/mock/roadmap.json";
 import scoresMock from "../../backend/mock/scores.json";
 
 import type {
-  AdaptiveGrade, AnalysisStatus, Answer, Buckets, CapstoneState, CodeSlice, CurrentUser, Evidence, Finding, GradeResult, NextQuestion, PortfolioProfile, PortfolioSelection, PracticeGrade, PracticeTopic, Question, QuestionType, Repo, RepoMap, RoadmapGraph, RoadmapReview, Scores,
+  AdaptiveGrade, AnalysisStatus, Answer, Buckets, CapstoneState, CodeSlice, CommunityRoadmap, CommunityRoadmapDetail, CommunityVerdict, CurrentUser, Evidence, Finding, GradeResult, NextQuestion, PortfolioProfile, PortfolioSelection, PracticeGrade, PracticeTopic, Question, QuestionType, Repo, RepoMap, RoadmapGraph, RoadmapReview, Scores,
 } from "./types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -286,3 +286,38 @@ export async function submitAnswer(answer: Answer): Promise<GradeResult> {
 }
 
 export const dataMode = USE_MOCK ? "mock" : "live";
+
+/* --- Community ---------------------------------------------------------------- */
+
+export async function getCommunityRoadmaps(): Promise<CommunityRoadmap[]> {
+  return request<CommunityRoadmap[]>("/community/roadmaps");
+}
+
+export async function getCommunityRoadmap(id: number): Promise<CommunityRoadmapDetail> {
+  return request<CommunityRoadmapDetail>(`/community/roadmaps/${id}`);
+}
+
+/** Shares a snapshot of the caller's roadmap under a role title. */
+export async function shareRoadmap(title: string, summary: string): Promise<CommunityRoadmapDetail> {
+  return request<CommunityRoadmapDetail>("/community/roadmaps", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, summary }),
+  });
+}
+
+export async function commentOnRoadmap(
+  id: number, body: string, verdict: CommunityVerdict,
+): Promise<CommunityRoadmapDetail> {
+  return request<CommunityRoadmapDetail>(`/community/roadmaps/${id}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ body, verdict }),
+  });
+}
+
+export async function deleteCommunityRoadmap(id: number): Promise<void> {
+  const response = await fetch(`${API}/community/roadmaps/${id}`, { method: "DELETE", credentials: "include" });
+  if (!response.ok) throw new ApiError(response.status, response.statusText);
+}
+

@@ -143,6 +143,47 @@ class CapstoneSubmissionRow(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
 
 
+class CommunityRoadmapRow(Base):
+    """A roadmap shared with the community, as it stood when it was shared.
+
+    `stages` is a snapshot -- step titles, concept names and mastery only. No
+    evidence, findings or file paths: sharing a roadmap must not publish code.
+    `user_id` is null for the seeded samples, which carry `author_name` instead.
+    """
+
+    __tablename__ = "community_roadmaps"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), index=True, default=None)
+    author_name: Mapped[str | None] = mapped_column(String(128), default=None)
+    title: Mapped[str] = mapped_column(String(160))
+    summary: Mapped[str] = mapped_column(Text, default="")
+    stages: Mapped[list] = mapped_column(JSON, default=list)
+    overall: Mapped[float] = mapped_column(Float, default=0.0)
+    is_sample: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+
+
+class CommunityCommentRow(Base):
+    """A review of a shared roadmap.
+
+    `standing` is stamped when the comment is written, from what the author had
+    earned at that moment, so a badge shown beside an old review stays true to
+    the review rather than drifting with the author's later progress.
+    """
+
+    __tablename__ = "community_comments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    roadmap_id: Mapped[int] = mapped_column(ForeignKey("community_roadmaps.id"), index=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), index=True, default=None)
+    author_name: Mapped[str | None] = mapped_column(String(128), default=None)
+    standing: Mapped[str] = mapped_column(String(16), default="member")
+    verdict: Mapped[str] = mapped_column(String(16), default="comment")
+    body: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+
+
 class SkillStatusRow(Base):
     __tablename__ = "skill_status"
 

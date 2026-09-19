@@ -30,6 +30,10 @@ export function ShareIcon(props: IconProps) {
   return <IconBase {...props}><path d="M12 16V3" /><path d="m7 8 5-5 5 5" /><path d="M5 13v7h14v-7" /></IconBase>;
 }
 
+export function CommunityIcon(props: IconProps) {
+  return <IconBase {...props}><circle cx="9" cy="8" r="3.2" /><path d="M2.8 19.5c.6-3.4 3-5.2 6.2-5.2s5.6 1.8 6.2 5.2" /><path d="M16 5.2a3 3 0 0 1 0 5.6" /><path d="M18 14.6c1.8.6 2.9 2.2 3.2 4.9" /></IconBase>;
+}
+
 export function CheckIcon(props: IconProps) {
   return <IconBase {...props}><path d="m5 12 4 4L19 6" /></IconBase>;
 }
