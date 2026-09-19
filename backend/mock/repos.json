@@ -1,0 +1,5 @@
+[
+  {"id": "1", "full_name": "demo-user/invoice-engine", "language": "Python", "is_fork": false, "stars": 12, "pushed_at": "2026-07-14T09:20:00Z"},
+  {"id": "2", "full_name": "demo-user/scrape-toolkit", "language": "Python", "is_fork": false, "stars": 3, "pushed_at": "2026-06-02T17:41:00Z"},
+  {"id": "3", "full_name": "demo-user/course-planner", "language": "Python", "is_fork": false, "stars": 0, "pushed_at": "2026-08-28T11:05:00Z"}
+]

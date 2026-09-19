@@ -1,0 +1,75 @@
+# Seeded skill taxonomy with aliases. Owner: Track D.
+# Target: 80-120 skills. The sample below is the shape; Track D fills it out.
+
+skills:
+  - id: python
+    name: Python
+    parents: [programming_languages]
+    aliases: [py, python3, cpython]
+
+  - id: fastapi
+    name: FastAPI
+    parents: [python, web_frameworks, backend]
+    aliases: [fast-api]
+
+  - id: sql
+    name: SQL
+    parents: [data]
+    aliases: [postgres, postgresql, mysql, sqlite, rdbms]
+
+  - id: testing_unit
+    name: Unit Testing
+    parents: [testing]
+    aliases: [pytest, unittest, jest, unit tests]
+
+  - id: rest_api_design
+    name: REST API Design
+    parents: [backend, api_design]
+    aliases: [rest, restful, http api]
+
+  - id: async_programming
+    name: Asynchronous Programming
+    parents: [programming_concepts]
+    aliases: [asyncio, async/await, concurrency]
+
+  - id: git
+    name: Git
+    parents: [version_control]
+    aliases: [github, version control, source control]
+
+  - id: docker
+    name: Docker
+    parents: [devops, containers]
+    aliases: [containerisation, dockerfile]
+
+  - id: react
+    name: React
+    parents: [frontend, javascript]
+    aliases: [reactjs, react.js]
+
+  - id: typescript
+    name: TypeScript
+    parents: [programming_languages, javascript]
+    aliases: [ts]
+
+# --- roots (no parents) ---
+  - id: backend
+    name: Backend Development
+    parents: []
+    aliases: [server-side]
+  - id: frontend
+    name: Frontend Development
+    parents: []
+    aliases: [client-side, ui development]
+  - id: testing
+    name: Testing
+    parents: []
+    aliases: [qa, quality assurance]
+  - id: data
+    name: Data
+    parents: []
+    aliases: []
+  - id: devops
+    name: DevOps
+    parents: []
+    aliases: [platform engineering, sre]
