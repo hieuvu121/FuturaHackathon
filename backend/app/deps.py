@@ -6,10 +6,11 @@ Owner: Track A (ingest/auth). Other tracks consume these, do not edit them.
 from typing import Annotated, Iterator
 
 from fastapi import Depends, HTTPException, Request, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .config import Settings, get_settings
-from .models.db import SessionLocal
+from .models.db import Repo, SessionLocal, User
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
@@ -43,4 +44,16 @@ CurrentUser = Annotated[str, Depends(get_current_user)]
 
 def verify_repo_access(repo_id: str, user: CurrentUser, db: DbDep) -> str:
     """Confirms the session user owns/selected this repo. Returns repo_id."""
-    raise NotImplementedError("Track A: check the repos table")
+    try:
+        numeric_repo_id = int(repo_id)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Repository not found") from exc
+
+    repo = db.scalar(
+        select(Repo)
+        .join(User, Repo.user_id == User.id)
+        .where(Repo.id == numeric_repo_id, User.github_login == user)
+    )
+    if repo is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Repository not found")
+    return repo_id
