@@ -3,8 +3,10 @@
 Backend execution plan for the architecture in [OVERALL.md](./OVERALL.md).
 Three backend tracks, five phases, conflict-free parallel branches.
 
-> **Current scope:** backend only. The frontend is being developed independently.
-> Treat `frontend/` as read-only and do not include UI work in these phases.
+> **Current execution:** Phase 3 backend work is complete. Two people now work in
+> parallel: the project owner owns UI/demo integration, and the member owns the
+> provisional LLM roadmap-demand backend. Backend contributors continue to treat
+> `frontend/` as read-only.
 
 ---
 
@@ -38,6 +40,24 @@ cd backend && ./.venv/bin/python -m pytest tests/ -q
 ---
 
 ## 1. Tracks and ownership
+
+### Current two-person split — demo completion
+
+| Person | Owns now | Deliverable | Does not edit |
+|---|---|---|---|
+| **You — UI & Demo Integration** | `frontend/*`, UI-facing setup/docs | Complete the user journey, connect real APIs, add loading/empty/error states, pre-warm and rehearse the demo, and verify the mock fallback. | Demand-provider implementation and its backend tests |
+| **Member — Roadmap Demand Backend** | `backend/app/services/knowledge/demand/llm.py`, focused tests, provider configuration/docs, and any later demand dataset/API adapter | Implement the LLM demo provider, preserve provenance, test provider/null-frequency failures, and verify the roadmap API. Dataset collection is deferred for the LLM demo but remains this person's future ownership. | `frontend/*`, ingest/analyze/recall services |
+
+Coordination contract:
+
+- The member works on `feat/demand-llm`; you continue UI work on a separate branch.
+- `MarketSkill`, `Provenance`, and `Buckets` remain frozen contracts.
+- The member provides example real API responses before UI integration is final;
+  the UI renders provenance and never relabels an estimate as measured demand.
+- Merge the backend provider first, update the UI branch from `main`, then run the
+  complete journey together during the Phase 4 bug bash.
+
+The table below records the original backend ownership used through Phase 3.
 
 Each person owns a set of paths **exclusively**. If you need a change in someone
 else's path, ask them — do not edit it. This is what keeps merges clean.
@@ -207,7 +227,7 @@ main                          always green, always demo-able
  ├─ feat/d3-roadmap-buckets   Track D, Phase 2
  ├─ feat/d4-roadmap-promotion Track D, Phase 3
  ├─ feat/phase3-integration   Tracks A/B/D, Phase 3
- ├─ feat/demand-llm           optional; provisional demand fallback
+ ├─ feat/demand-llm           Member; chosen provisional demo demand source
  └─ feat/market-scraped       optional; validated only if ads get collected
 ```
 
@@ -307,7 +327,7 @@ expensive. Prefer additive.
 | Live clone + analysis too slow to demo | Medium | Pre-warm one repo in Phase 4. Cache the analysis. Never clone cold on stage. |
 | tree-sitter query complexity eats a day | Medium | Python only for the MVP (`TARGET_LANGUAGE=python`). Do not add a second language before Phase 4. |
 | Market data never materialises | Medium | Ship evidence-backed Revise/Deepen. Learn New stays empty or explicitly seeded/provisional. Frequency is nullable by design; the roadmap ranks by proximity instead of crashing. |
-| Demand source-of-truth decision drags on | **High** | Keep demand optional: build Revise/Deepen first and use seeded or empty Learn New until a provider is validated. Do not enable the incomplete chain. Forcing date in §10. |
+| LLM demo-demand provider slips or fails | **High** | Keep Revise/Deepen evidence-first; fall back to visibly seeded or empty Learn New, and rehearse `MOCK_MODE=true`. Do not enable the incomplete chain. |
 | Selected LLM provider is exhausted or rate-limited mid-demo | Low | Switch `LLM_PROVIDER` when the alternate provider is funded; otherwise use the rehearsed `MOCK_MODE=true` fallback. |
 | Merge conflicts stall the team | Low | Exclusive path ownership (§1) plus everything pre-created in Phase 0. |
 
@@ -342,17 +362,17 @@ Small, deliberate, listed here so nobody thinks they are accidents.
 | `backend/app/mock_store.py` | All six routers needed the same three-line JSON loader. Owned by Track D with the fixtures. |
 | `backend/mock/{repos,questions,roadmap}.json` | OVERALL.md names four fixtures; the routers need three more to serve the full journey in mock mode. |
 | `backend/tests/test_contracts.py` | Guards the fixtures against schema drift, which is the main way mock mode rots. |
-| `demand/llm.py`, `demand/chained.py`, `SourceKind.ESTIMATED` | OVERALL.md offers seeded-or-scraped only. The demand decision is still open, so a third provider and a fallback chain keep it open without blocking anyone. See §10. |
+| `demand/llm.py`, `demand/chained.py`, `SourceKind.ESTIMATED` | The LLM provider is the chosen provisional demo input for Learn New. The chain remains future work; estimates must stay distinguishable from measured demand. See §10. |
 
 ---
 
-## 10. Open decisions
+## 10. Decisions and remaining open questions
 
-Decisions nobody has made yet. Each one must have a safe implementation path so
-no track is blocked while it stays open. Do not describe a configured provider
-as running until its methods and integration tests are complete.
+Resolved demo decisions and questions intentionally deferred until after the
+hackathon. Do not describe a configured provider as running until its methods and
+integration tests are complete.
 
-### 10.1 What is the roadmap's source of truth for market demand? — OPEN
+### 10.1 What drives the demo roadmap? — DECIDED FOR DEMO
 
 The candidates, weakest to strongest:
 
@@ -363,31 +383,41 @@ The candidates, weakest to strongest:
 | `scraped` — real job ads in `data/jobs_raw/` | High | ~half a day, plus collection | `scraped`, confidence high, real n |
 | `external` — Lightcast / ESCO / ASC | Highest | Access + integration; likely post-hackathon | `external` |
 
-**Current implementation status:** evidence-first matching and bucket construction
-work with seeded demand, and `DEMAND_SOURCE=seeded` is the safe default.
-`ScrapedDemand`, `LLMDemand`, and `ChainedDemand.top_skills()` are still stubs, so
-the chained provider remains opt-in and is not yet a safe runtime fallback.
+**Demo decision (2026-09-20):** use the LLM provider as a provisional input for
+**Learn New**. Configure `DEMAND_SOURCE=llm` only after its implementation and
+tests land. This does **not** make the LLM a validated market-data source.
 
-**Immediate Phase 2 rule:** use `DEMAND_SOURCE=seeded` when exercising Learn New,
-or return no Learn New items. Revise and Deepen must continue working either way.
-Do not use an LLM estimate or a hand-written frequency as validated market data.
+The roadmap has two evidence authorities:
 
-**Target after provider implementation:**
-`DEMAND_SOURCE=chained`, `DEMAND_CHAIN=["scraped","llm","seeded"]`.
+- **Revise and Deepen:** repository analysis and recall evidence remain the source
+  of truth. LLM output cannot move a skill between these buckets.
+- **Learn New:** the LLM may propose role/region-relevant skills for the demo. Every
+  result must be visibly estimated and provisional.
 
-Once implemented, the chain takes the first source that answers for each skill. So a scraped
-figure is used where the ads cover that skill; an LLM estimate fills gaps; the
-seeded table is the floor. **Every row keeps the provenance of whichever source
-actually answered**, so a mixed roadmap still shows the user, per item, which
-numbers were measured and which were guessed. The API preserves that difference
-in each row's `Provenance`.
+The member's `feat/demand-llm` acceptance criteria:
 
-Why this is safe to leave open:
+1. Implement both `frequency()` and `top_skills()` with typed model output.
+2. Return only skill IDs recognized by the configured taxonomy.
+3. Stamp every row `SourceKind.ESTIMATED`, confidence `<= 0.4`,
+   `sample_size=None`, collection date, role, and region.
+4. Keep `frequency=None` when the model has no defensible numerical basis; never
+   invent a sample size or present a percentage as observed job-ad frequency.
+5. Cache the demo response so opening the roadmap does not repeatedly call the
+   model or change ordering during a presentation.
+6. Test malformed output, missing credentials, provider failure, canonical skill
+   normalization, provenance, confidence clamping, and null-frequency ordering.
+7. Verify `/repos/{id}/roadmap` with `DEMAND_SOURCE=llm`; retain
+   `DEMAND_SOURCE=seeded` and `MOCK_MODE=true` as rehearsed demo fallbacks.
+
+`ChainedDemand` and scraped/external demand are post-demo improvements. Do not
+enable the incomplete chain for the demo.
+
+Why this demo decision is contained:
 
 - `buckets.py` depends on the `DemandSource` protocol, never on a concrete provider.
 - Revise and Deepen depend on repository evidence, not market demand.
-- Deciding later changes provider configuration, not roadmap contracts or stored
-  skill statuses.
+- Replacing the LLM later changes provider configuration, not roadmap contracts
+  or stored skill statuses.
 - `frequency` is nullable and invariant #5 requires graceful degradation, so even
   "all demand sources fail" remains a supported state.
 
@@ -401,8 +431,8 @@ Required Phase 2 tests (implemented in `tests/test_roadmap_services.py`):
 
 The service tests exercise real bucket construction, seeded `top_skills()`, alias
 normalisation, evidence merging, provenance retention, unavailable demand, and
-null-frequency proximity ordering. The generic chained `top_skills()` fallback
-still belongs to the later chained-provider implementation.
+null-frequency proximity ordering. The generic chained fallback remains
+post-demo work.
 
 Constraint on the LLM option: an estimate is **never** presented as a measurement.
 `llm.py` clamps confidence to 0.4, sets `sample_size=None`, and stamps
@@ -410,10 +440,10 @@ Constraint on the LLM option: an estimate is **never** presented as a measuremen
 A product whose entire argument is "claims must carry evidence" cannot ship an
 unlabelled guess in its own roadmap.
 
-- **Owner:** Track D.
-- **Forcing date:** end of Phase 2. If no validated source exists, ship
-  evidence-backed Revise/Deepen plus empty or visibly seeded/provisional Learn New.
-  Do not ship the incomplete chained provider as though it were validated.
+- **Owner:** Member — Roadmap Demand Backend.
+- **Demo status:** decided; implementation remains on `feat/demand-llm`.
+- **Post-demo decision:** replace estimates with scraped or external measured data
+  before describing Learn New as market-validated guidance.
 
 ### 10.2 Skill taxonomy: seeded or standard? — OPEN
 
