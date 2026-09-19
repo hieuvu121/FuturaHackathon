@@ -7,19 +7,19 @@ import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 
 import AppShell from "@/components/AppShell";
+import { EvidenceProvider } from "@/components/EvidenceViewer";
 
 const heading = Bricolage_Grotesque({ subsets: ["latin"], weight: ["500", "700"], variable: "--font-heading" });
 const body = Figtree({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-body" });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-mono" });
 
-const ORDER = ["/connect", "/profile", "/recall", "/roadmap", "/share"];
+const ORDER = ["/connect", "/recall", "/roadmap", "/share"];
 const META: Record<string, { title: string; description: string }> = {
   "/connect": { title: "Connect repositories | Retrace", description: "Choose the repositories that best represent your engineering work." },
-  "/profile": { title: "Capability map | Retrace", description: "Explore verified engineering capabilities with evidence linked to source code." },
   "/recall": { title: "Recall session | Retrace", description: "Revisit past code through supportive, evidence-based revision." },
   "/roadmap": { title: "Learning roadmap | Retrace", description: "Prioritise what to revise, deepen, and learn next." },
   "/share": { title: "Verified profile | Retrace", description: "Share engineering skills backed by exact source-code evidence." },
-  "/404": { title: "Page not found | Retrace", description: "Return to your Retrace capability profile." },
+  "/404": { title: "Page not found | Retrace", description: "Return to your Retrace roadmap." },
 };
 
 function routeIndex(pathname: string) {
@@ -64,6 +64,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <meta name="twitter:card" content="summary_large_image" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>
+      <EvidenceProvider>
       <AppShell>
         <AnimatePresence mode="popLayout" initial={false} custom={direction}>
           <motion.div key={router.pathname} custom={direction} variants={variants} initial="enter" animate="center" exit="exit" transition={{ duration: reduceMotion ? 0 : 0.5, ease: [0.77, 0, 0.18, 1] }}>
@@ -71,6 +72,7 @@ export default function App({ Component, pageProps }: AppProps) {
           </motion.div>
         </AnimatePresence>
       </AppShell>
+      </EvidenceProvider>
     </div>
   );
 }

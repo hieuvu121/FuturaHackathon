@@ -8,7 +8,7 @@ export default function NotFoundPage() {
         <h1>This trail ends here</h1>
         <p>The page may have moved, but your repository analysis is still available.</p>
         <div className="empty-actions">
-          <Link className="primary-button" href="/profile">Open profile</Link>
+          <Link className="primary-button" href="/roadmap">Open roadmap</Link>
           <Link className="secondary-button" href="/connect">Return to Connect</Link>
         </div>
       </section>

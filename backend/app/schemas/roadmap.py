@@ -51,7 +51,13 @@ class ConceptSkill(BaseModel):
     skill_id: str
     skill_name: str
     status: NodeStatus
-    focus: str = Field(description="Personalised next step, derived from status and proximity.")
+    focus: str = Field(description="Short next step, grounded in a real finding where one exists.")
+    mastery: float = Field(
+        0.0, ge=0.0, le=1.0, description="new 0.0, familiar 0.5, verified 1.0"
+    )
+    gap_evidence: Evidence | None = Field(
+        None, description="The line the finding behind `focus` points at, when there is one."
+    )
     related_to: list[str] = Field(
         default_factory=list,
         description="Skills the user already works with that this one builds on.",
@@ -68,6 +74,7 @@ class RoadmapConcept(BaseModel):
     concept_id: str
     concept_name: str
     summary: str
+    mastery: float = Field(0.0, ge=0.0, le=1.0, description="Mean mastery of this concept's skills.")
     verified_count: int = 0
     familiar_count: int = 0
     new_count: int = 0

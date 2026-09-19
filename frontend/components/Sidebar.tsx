@@ -4,11 +4,10 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 import { getCurrentUser } from "@/lib/data";
-import { ConnectIcon, ProfileIcon, RecallIcon, RoadmapIcon, ShareIcon } from "./Icons";
+import { ConnectIcon, RecallIcon, RoadmapIcon, ShareIcon } from "./Icons";
 
 export const NAV_ITEMS = [
   { href: "/connect", label: "Connect", icon: ConnectIcon },
-  { href: "/profile", label: "Profile", icon: ProfileIcon },
   { href: "/recall", label: "Recall", icon: RecallIcon },
   { href: "/roadmap", label: "Roadmap", icon: RoadmapIcon },
   { href: "/share/demo", label: "Share", icon: ShareIcon },

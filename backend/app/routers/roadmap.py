@@ -57,8 +57,20 @@ def portfolio_roadmap_graph(
     Grouping needs the taxonomy, which only exists here, so the frontend asks
     for concepts rather than reassembling them from a flat bucket list.
     """
-    taxonomy = get_taxonomy(get_settings())
-    return graph_from_buckets(portfolio_roadmap(user, db, role, region), taxonomy)
+    settings = get_settings()
+    taxonomy = get_taxonomy(settings)
+    if settings.mock_mode:
+        return graph_from_buckets(Buckets.model_validate(_fixture_for(role)), taxonomy, [])
+    try:
+        profile = build_profile(db, user)
+    except LookupError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    skills = profile.scores.skills
+    demand = match(skills, taxonomy, get_demand(settings), role, region)
+    buckets = build(skills, demand, role, region, taxonomy)
+    # The scanner's findings are what let a next step name a real problem in
+    # this user's code instead of offering a syllabus.
+    return graph_from_buckets(buckets, taxonomy, profile.findings)
 
 
 @router.get("/{repo_id}/roadmap", response_model=Buckets)

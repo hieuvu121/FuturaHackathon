@@ -22,8 +22,8 @@ test.describe("roadmap diagram", () => {
     const collapsed = page.getByTestId("concept-node").filter({ hasText: /Show \d+ skill/ }).first();
 
     await expect(collapsed).toHaveAttribute("aria-expanded", "false");
-    await expect(collapsed).not.toContainText("Verified in");
     await expect(collapsed).not.toContainText("New ground");
+    await expect(collapsed).not.toContainText("to fix it");
     await expect(collapsed.locator("h3")).toBeVisible();
   });
 
@@ -46,7 +46,7 @@ test.describe("roadmap diagram", () => {
     await expect(firstSkill.locator("h4")).not.toBeEmpty();
     // Every leaf carries a next step written for this user, not a generic blurb.
     await expect(firstSkill.locator(".skill-focus")).toContainText(
-      /Verified|You have written|builds on|New ground/
+      /Proven in|Prove it|Builds on|New ground|Optimise it|Harden it|to fix it/
     );
   });
 
@@ -88,7 +88,7 @@ test.describe("roadmap diagram", () => {
     expect(await statuses.count()).toBeGreaterThan(0);
 
     for (const text of await statuses.allTextContents()) {
-      expect(["Verified", "You have the basics", "New to you"]).toContain(text);
+      expect(["Verified", "Basics", "New"]).toContain(text);
     }
   });
 
@@ -100,5 +100,41 @@ test.describe("roadmap diagram", () => {
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth
     );
     expect(overflow).toBeLessThanOrEqual(1);
+  });
+
+  test("every node carries a percentage bar, parent and child alike", async ({ page }) => {
+    const concept = page.getByTestId("concept-node").first();
+    await expect(concept.locator(".mastery b")).toHaveText(/^\d+%$/);
+
+    const panel = page.locator(".concept-detail").first();
+    const bars = panel.locator(".skill-node .mastery b");
+    expect(await bars.count()).toBeGreaterThan(0);
+    for (const text of await bars.allTextContents()) {
+      expect(text).toMatch(/^\d+%$/);
+    }
+  });
+
+  test("a concept's bar is the mean of the bars beneath it", async ({ page }) => {
+    const concept = page.getByTestId("concept-node").first();
+    const parent = Number((await concept.locator(".mastery b").textContent())!.replace("%", ""));
+
+    const children = await page.locator(".concept-detail .skill-node .mastery b").allTextContents();
+    const mean = children.reduce((sum, t) => sum + Number(t.replace("%", "")), 0) / children.length;
+
+    expect(Math.abs(parent - mean)).toBeLessThanOrEqual(1);
+  });
+
+  test("evidence opens source in place instead of navigating away", async ({ page }) => {
+    await page.locator(".evidence-link").first().click();
+
+    await expect(page.getByTestId("evidence-dialog")).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe("/roadmap");
+
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("evidence-dialog")).toHaveCount(0);
+  });
+
+  test("the profile page is gone from the shell", async ({ page }) => {
+    await expect(page.locator(".nav-link", { hasText: "Profile" })).toHaveCount(0);
   });
 });

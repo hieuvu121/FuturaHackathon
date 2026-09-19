@@ -228,7 +228,7 @@ export default function ConnectPage() {
                 <div className="pipeline-actions">
                   <button type="button" className="secondary-button" onClick={goBack}>Back</button>
                   {currentStep >= PIPELINE.length && (
-                    <button type="button" className="primary-button" onClick={() => void router.push("/profile")}>Open profile <ArrowRightIcon width="19" height="19" /></button>
+                    <button type="button" className="primary-button" onClick={() => void router.push("/roadmap")}>Open roadmap <ArrowRightIcon width="19" height="19" /></button>
                   )}
                 </div>
               </aside>

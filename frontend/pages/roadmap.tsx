@@ -11,20 +11,49 @@ const ROLE = { id: "software_engineer", label: "Software engineer" } as const;
 
 const STATUS_LABEL: Record<NodeStatus, string> = {
   verified: "Verified",
-  familiar: "You have the basics",
-  new: "New to you",
+  familiar: "Basics",
+  new: "New",
 };
 
 function StatusMark({ status }: { status: NodeStatus }) {
   return (
     <span className={`status-mark status-${status}`} aria-hidden="true">
-      {status === "new" ? null : <CheckIcon width="11" height="11" />}
+      {status === "new" ? null : <CheckIcon width="10" height="10" />}
     </span>
   );
 }
 
+/** The progress bar every node carries: how far along this user is, 0–100%. */
+function MasteryBar({
+  mastery,
+  status,
+  reduceMotion,
+  label,
+}: {
+  mastery: number;
+  status?: NodeStatus;
+  reduceMotion: boolean | null;
+  label: string;
+}) {
+  const percent = Math.round(mastery * 100);
+  return (
+    <div className="mastery" role="img" aria-label={`${label}: ${percent}% mastered`}>
+      <span className={`mastery-track${status ? ` mastery-${status}` : ""}`}>
+        <motion.i
+          initial={reduceMotion ? false : { scaleX: 0 }}
+          animate={{ scaleX: mastery }}
+          transition={{ duration: reduceMotion ? 0 : 0.6, ease: [0.2, 0.8, 0.2, 1] }}
+        />
+      </span>
+      <b>{percent}%</b>
+    </div>
+  );
+}
+
 function SkillNode({ skill, reduceMotion }: { skill: ConceptSkill; reduceMotion: boolean | null }) {
-  const evidence = skill.evidence[0];
+  // The gap the focus line names beats the skill's own evidence: it points at
+  // the problem to fix, not merely at where the skill was used.
+  const evidence = skill.gap_evidence ?? skill.evidence[0];
   return (
     <motion.li
       className={`skill-node node-${skill.status}`}
@@ -36,23 +65,21 @@ function SkillNode({ skill, reduceMotion }: { skill: ConceptSkill; reduceMotion:
         <h4>{skill.skill_name}</h4>
         <span className="skill-status">{STATUS_LABEL[skill.status]}</span>
       </header>
+      <MasteryBar
+        mastery={skill.mastery}
+        status={skill.status}
+        reduceMotion={reduceMotion}
+        label={skill.skill_name}
+      />
       <p className="skill-focus">{skill.focus}</p>
-      {skill.related_to.length > 0 && (
-        <p className="skill-related">Builds on {skill.related_to.join(", ")}</p>
-      )}
-      {evidence && <EvidenceLink evidence={evidence} />}
-      {skill.market_frequency != null && (
-        <div className="frequency-row">
-          <span className="frequency-bar">
-            <motion.i
-              initial={reduceMotion ? false : { scaleX: 0 }}
-              animate={{ scaleX: skill.market_frequency }}
-              transition={{ duration: reduceMotion ? 0 : 0.6, ease: [0.2, 0.8, 0.2, 1] }}
-            />
+      <footer>
+        {evidence ? <EvidenceLink evidence={evidence} compact /> : <span />}
+        {skill.market_frequency != null && (
+          <span className="demand-chip" title="Share of sampled job ads naming this skill">
+            {Math.round(skill.market_frequency * 100)}% of roles
           </span>
-          <small>{Math.round(skill.market_frequency * 100)}% of sampled roles</small>
-        </div>
-      )}
+        )}
+      </footer>
     </motion.li>
   );
 }
@@ -85,7 +112,7 @@ function ConceptRow({
     >
       <motion.ul
         className="skill-list"
-        variants={{ hidden: {}, show: { transition: { staggerChildren: reduceMotion ? 0 : 0.06 } } }}
+        variants={{ hidden: {}, show: { transition: { staggerChildren: reduceMotion ? 0 : 0.05 } } }}
         initial="hidden"
         animate="show"
       >
@@ -112,10 +139,10 @@ function ConceptRow({
         onClick={onToggle}
       >
         <h3>{concept.concept_name}</h3>
-        <p>{concept.summary}</p>
+        <MasteryBar mastery={concept.mastery} reduceMotion={reduceMotion} label={concept.concept_name} />
         <div className="concept-counts">
           {concept.verified_count > 0 && <span className="count count-verified">{concept.verified_count} verified</span>}
-          {concept.familiar_count > 0 && <span className="count count-familiar">{concept.familiar_count} with basics</span>}
+          {concept.familiar_count > 0 && <span className="count count-familiar">{concept.familiar_count} basics</span>}
           {concept.new_count > 0 && <span className="count count-new">{concept.new_count} new</span>}
         </div>
         <span className="concept-hint">{open ? "Hide detail" : `Show ${total} skill${total === 1 ? "" : "s"}`}</span>
@@ -166,6 +193,9 @@ export default function RoadmapPage() {
   const everySkill = graph?.concepts.flatMap((concept) => concept.skills) ?? [];
   const noMarketData = everySkill.length > 0 && everySkill.every((skill) => skill.market_frequency == null);
   const provenance = everySkill.find((skill) => skill.provenance != null)?.provenance ?? null;
+  const overall = everySkill.length
+    ? everySkill.reduce((sum, skill) => sum + skill.mastery, 0) / everySkill.length
+    : 0;
 
   return (
     <motion.main
@@ -184,6 +214,12 @@ export default function RoadmapPage() {
         </div>
         <div className="role-controls">
           <span className="role-pill chip active" aria-current="true">{ROLE.label}</span>
+          {everySkill.length > 0 && (
+            <div className="overall-mastery">
+              <span>Overall</span>
+              <MasteryBar mastery={overall} reduceMotion={reduceMotion} label="Overall roadmap" />
+            </div>
+          )}
           <div className="market-note">
             {noMarketData ? (
               <>

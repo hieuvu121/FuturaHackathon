@@ -194,8 +194,12 @@ export interface ConceptSkill {
   skill_id: string;
   skill_name: string;
   status: NodeStatus;
-  /** Personalised next step, derived by the backend from tier + taxonomy proximity. */
+  /** Short next step, grounded in a real finding where one exists. */
   focus: string;
+  /** new 0, familiar 0.5, verified 1 -- drives the node's bar. */
+  mastery: number;
+  /** The line the finding behind `focus` points at, when there is one. */
+  gap_evidence: Evidence | null;
   related_to: string[];
   evidence: Evidence[];
   market_frequency: number | null;
@@ -207,6 +211,8 @@ export interface RoadmapConcept {
   concept_id: string;
   concept_name: string;
   summary: string;
+  /** Mean mastery of this concept's skills. */
+  mastery: number;
   verified_count: number;
   familiar_count: number;
   new_count: number;
