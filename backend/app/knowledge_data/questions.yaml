@@ -1,0 +1,49 @@
+# Templates and reference answers for the five question types. Owner: Track D.
+# generator.py fills {function_name} / {file} / {code_context}.
+
+question_types:
+  recall:
+    intent: "Can the user reconstruct what they wrote and why it is shaped that way?"
+    template: |
+      You wrote `{function_name}` in `{file}`. Without looking at the code below in detail:
+      what does it do, and what were the inputs and outputs you designed it around?
+    reference_criteria:
+      - "Names the function's actual responsibility, not a paraphrase of its name"
+      - "Identifies the inputs and the shape of the return value"
+    grading: rubric
+
+  justify:
+    intent: "Was the design a decision, or an accident?"
+    template: |
+      In `{function_name}` you chose this approach over the alternatives.
+      What were you trading off, and what would have broken with a simpler version?
+    reference_criteria:
+      - "Names at least one concrete alternative"
+      - "States a trade-off in terms of a real constraint, not a slogan"
+    grading: rubric
+
+  transfer:
+    intent: "Does the understanding survive a change of context? This is the promotion gate."
+    template: |
+      Suppose `{function_name}` had to handle ten times the input volume,
+      or run concurrently. What breaks first, and what would you change?
+    reference_criteria:
+      - "Identifies the actual bottleneck or shared-state hazard in this code"
+      - "Proposes a change proportionate to the problem"
+    grading: rubric
+    promotes_to_verified: true
+
+  debug:
+    intent: "Can the user read their own code under pressure?"
+    template: |
+      A bug has been introduced into `{function_name}`. One test now fails.
+      Find it and fix it.
+    grading: unit_test    # injector.py verifies the bug actually fails a test
+    promotes_to_verified: true
+
+  extend:
+    intent: "Can the user build on their own foundation?"
+    template: |
+      Add {extension_requirement} to `{function_name}` without breaking the existing tests.
+    grading: unit_test
+    promotes_to_verified: true

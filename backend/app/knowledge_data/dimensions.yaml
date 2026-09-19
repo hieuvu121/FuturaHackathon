@@ -1,0 +1,69 @@
+# Six dimensions x four levels. Owner: Track D (research role).
+# Editing this file changes the rubric. No code change required.
+#
+# metric_thresholds map repo_map numbers to a level. scorer.py reads them;
+# they are what populates DimensionScore.metric_basis in the UI.
+
+dimensions:
+  - id: code_structure
+    name: Code Structure & Decomposition
+    levels:
+      1: "Long functions, little decomposition. Responsibilities are mixed within single units."
+      2: "Functions are split, but boundaries follow file size rather than responsibility."
+      3: "Clear single-purpose units with coherent interfaces; dependencies flow one way."
+      4: "Decomposition reflects the domain. Boundaries hold under change; internals are replaceable."
+    metric_thresholds:
+      median_complexity: { 1: ">15", 2: "8-15", 3: "4-8", 4: "<4" }
+      max_nesting_depth: { 1: ">6", 2: "5-6", 3: "3-4", 4: "<3" }
+
+  - id: testing
+    name: Testing & Verification
+    levels:
+      1: "No tests, or tests that assert nothing meaningful."
+      2: "Happy-path tests on a minority of the codebase."
+      3: "Core logic covered including edge cases; tests are independent and fast."
+      4: "Tests drive design. Failure modes and boundaries are covered deliberately."
+    metric_thresholds:
+      test_coverage_ratio: { 1: "<0.05", 2: "0.05-0.3", 3: "0.3-0.6", 4: ">0.6" }
+
+  - id: error_handling
+    name: Error Handling & Robustness
+    levels:
+      1: "Errors ignored or swallowed; empty catch blocks present."
+      2: "Errors caught but handled uniformly regardless of cause."
+      3: "Failure modes distinguished and handled at the right layer."
+      4: "Failure is designed for: explicit contracts, recovery paths, no silent loss."
+    metric_thresholds:
+      empty_catch_count: { 1: ">5", 2: "2-5", 3: "1", 4: "0" }
+
+  - id: domain_modelling
+    name: Domain Modelling
+    levels:
+      1: "Primitive obsession; domain concepts exist only as loose variables."
+      2: "Some types exist but one concept is modelled inconsistently across the code."
+      3: "Domain concepts are named and modelled consistently."
+      4: "The model teaches the domain. Invalid states are unrepresentable."
+    metric_thresholds:
+      domain_inconsistency_findings: { 1: ">5", 2: "2-5", 3: "1", 4: "0" }
+
+  - id: version_control
+    name: Version Control Practice
+    levels:
+      1: "Rare, huge, undescriptive commits."
+      2: "Regular commits, but mixed concerns per commit."
+      3: "Focused commits with meaningful messages; refactors separated from features."
+      4: "History is a readable narrative of the project's decisions."
+    metric_thresholds:
+      median_commit_size: { 1: ">800", 2: "300-800", 3: "80-300", 4: "<80" }
+      refactor_ratio: { 1: "<0.02", 2: "0.02-0.08", 3: "0.08-0.2", 4: ">0.2" }
+
+  - id: security_awareness
+    name: Security & Data Handling
+    levels:
+      1: "Secrets committed; inputs trusted unconditionally."
+      2: "Secrets externalised, but input validation is inconsistent."
+      3: "Inputs validated at boundaries; secrets and config separated cleanly."
+      4: "Threat-aware: least privilege, path/traversal safety, defence in depth."
+    metric_thresholds:
+      hardcoded_secret_count: { 1: ">0", 2: "0", 3: "0", 4: "0" }
+      security_risk_findings: { 1: ">5", 2: "2-5", 3: "1", 4: "0" }

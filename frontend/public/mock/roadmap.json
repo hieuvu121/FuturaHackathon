@@ -1,0 +1,16 @@
+{
+  "role": "backend",
+  "region": "AU",
+  "revise": [
+    {"skill_id": "testing_unit", "skill_name": "Unit Testing", "bucket": "revise", "reason": "Touched but not verified: the two tested functions are the two simplest in the repo, and the four highest-complexity functions have no test mapping at all.", "evidence": [{"file": "app/billing/invoice.py", "lines": [41, 132], "commit": "a1b2c3d4"}], "market_frequency": 0.41, "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.6, "sample_size": 400, "collected_at": "2026-09-01"}, "priority": 0.82},
+    {"skill_id": "sql", "skill_name": "SQL", "bucket": "revise", "reason": "Touched in persist_invoice, but the connection handling swallows every failure mode, so the practice is not yet demonstrated under error conditions.", "evidence": [{"file": "app/storage/repository.py", "lines": [88, 141], "commit": "778899aa"}], "market_frequency": 0.58, "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.6, "sample_size": 400, "collected_at": "2026-09-01"}, "priority": 0.74}
+  ],
+  "deepen": [
+    {"skill_id": "python", "skill_name": "Python", "bucket": "deepen", "reason": "Verified across the billing path. The next level is domain modelling: money is represented three ways between invoice.py and repository.py.", "evidence": [{"file": "app/billing/invoice.py", "lines": [41, 132], "commit": "a1b2c3d4"}], "market_frequency": 0.62, "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.6, "sample_size": 400, "collected_at": "2026-09-01"}, "priority": 0.91},
+    {"skill_id": "rest_api_design", "skill_name": "REST API Design", "bucket": "deepen", "reason": "Routes exist and work, but handle_webhook mixes transport with business logic -- the next step is separating the two.", "evidence": [{"file": "app/api/routes.py", "lines": [55, 148], "commit": "ff001122"}], "market_frequency": 0.39, "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.6, "sample_size": 400, "collected_at": "2026-09-01"}, "priority": 0.63}
+  ],
+  "learn_new": [
+    {"skill_id": "docker", "skill_name": "Docker", "bucket": "learn_new", "reason": "Never touched in any analysed repository, and appears in 47% of backend job ads for this region. Adjacent to the deployment concerns already present in config handling.", "evidence": [], "market_frequency": 0.47, "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.6, "sample_size": 400, "collected_at": "2026-09-01"}, "priority": 0.55},
+    {"skill_id": "async_programming", "skill_name": "Asynchronous Programming", "bucket": "learn_new", "reason": "Never touched. Demand figure unavailable for this role and region, so this item is ranked by proximity to persist_invoice's concurrency exposure alone.", "evidence": [], "market_frequency": null, "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.3, "sample_size": null, "collected_at": "2026-09-01"}, "priority": 0.31}
+  ]
+}

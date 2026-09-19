@@ -1,0 +1,144 @@
+# Seeded skill taxonomy with aliases. Owner: Track D.
+# Keep ids stable: scores, market data, and roadmaps persist these values.
+
+skills:
+  # Taxonomy roots
+  - {id: programming_languages, name: Programming Languages, parents: [], aliases: [coding languages]}
+  - {id: programming_concepts, name: Programming Concepts, parents: [], aliases: [computer science fundamentals]}
+  - {id: backend, name: Backend Development, parents: [], aliases: [server-side development]}
+  - {id: frontend, name: Frontend Development, parents: [], aliases: [client-side development, ui development]}
+  - {id: mobile, name: Mobile Development, parents: [], aliases: [app development]}
+  - {id: data, name: Data Engineering, parents: [], aliases: [data systems]}
+  - {id: testing, name: Testing and Quality, parents: [], aliases: [qa, quality assurance]}
+  - {id: devops, name: DevOps and Platform, parents: [], aliases: [platform engineering, sre]}
+  - {id: cloud, name: Cloud Computing, parents: [], aliases: [cloud platforms]}
+  - {id: security, name: Application Security, parents: [], aliases: [cybersecurity, appsec]}
+  - {id: api_design, name: API and Service Design, parents: [], aliases: [service interfaces]}
+  - {id: version_control, name: Version Control, parents: [], aliases: [source control]}
+  - {id: collaboration, name: Engineering Collaboration, parents: [], aliases: [software delivery practice]}
+
+  # Programming languages
+  - {id: python, name: Python, parents: [programming_languages], aliases: [py, python3, cpython]}
+  - {id: javascript, name: JavaScript, parents: [programming_languages, frontend, backend], aliases: [js, ecmascript]}
+  - {id: typescript, name: TypeScript, parents: [programming_languages, javascript], aliases: [ts]}
+  - {id: java, name: Java, parents: [programming_languages, backend], aliases: [jvm java]}
+  - {id: csharp, name: C Sharp, parents: [programming_languages, backend], aliases: [c-sharp, dotnet language]}
+  - {id: go, name: Go, parents: [programming_languages, backend], aliases: [golang]}
+  - {id: rust, name: Rust, parents: [programming_languages], aliases: [rustlang]}
+  - {id: cpp, name: C Plus Plus, parents: [programming_languages], aliases: [c++, cplusplus]}
+  - {id: kotlin, name: Kotlin, parents: [programming_languages, mobile], aliases: [kotlin jvm]}
+  - {id: swift, name: Swift, parents: [programming_languages, mobile], aliases: [swiftlang]}
+  - {id: ruby, name: Ruby, parents: [programming_languages, backend], aliases: [ruby language]}
+  - {id: php, name: PHP, parents: [programming_languages, backend], aliases: [php language]}
+
+  # Programming concepts
+  - {id: object_oriented_programming, name: Object-Oriented Programming, parents: [programming_concepts], aliases: [oop, object oriented design]}
+  - {id: functional_programming, name: Functional Programming, parents: [programming_concepts], aliases: [fp, functional design]}
+  - {id: async_programming, name: Asynchronous Programming, parents: [programming_concepts], aliases: [asyncio, async await, asynchronous code]}
+  - {id: concurrency, name: Concurrency, parents: [programming_concepts], aliases: [multithreading, parallel programming]}
+  - {id: data_structures, name: Data Structures, parents: [programming_concepts], aliases: [collections, abstract data types]}
+  - {id: algorithms, name: Algorithms, parents: [programming_concepts], aliases: [algorithm design]}
+  - {id: design_patterns, name: Software Design Patterns, parents: [programming_concepts], aliases: [gang of four, gof patterns]}
+  - {id: clean_code, name: Clean Code, parents: [programming_concepts], aliases: [code quality, maintainable code]}
+
+  # Backend frameworks and runtime skills
+  - {id: fastapi, name: FastAPI, parents: [python, backend], aliases: [fast-api]}
+  - {id: django, name: Django, parents: [python, backend], aliases: [django framework]}
+  - {id: flask, name: Flask, parents: [python, backend], aliases: [flask framework]}
+  - {id: nodejs, name: Node.js, parents: [javascript, backend], aliases: [node, node js]}
+  - {id: expressjs, name: Express, parents: [nodejs, backend], aliases: [express.js, express js]}
+  - {id: nestjs, name: NestJS, parents: [nodejs, typescript, backend], aliases: [nest.js, nest js]}
+  - {id: spring_boot, name: Spring Boot, parents: [java, backend], aliases: [springboot, spring framework]}
+  - {id: aspnet_core, name: ASP.NET Core, parents: [csharp, backend], aliases: [asp.net core, aspnet]}
+  - {id: rails, name: Ruby on Rails, parents: [ruby, backend], aliases: [rails framework, ror]}
+  - {id: laravel, name: Laravel, parents: [php, backend], aliases: [laravel framework]}
+
+  # Frontend skills
+  - {id: html, name: HTML, parents: [frontend], aliases: [html5, semantic html]}
+  - {id: css, name: CSS, parents: [frontend], aliases: [css3, stylesheets]}
+  - {id: react, name: React, parents: [frontend, javascript], aliases: [reactjs, react.js]}
+  - {id: nextjs, name: Next.js, parents: [react, frontend], aliases: [next js, next]}
+  - {id: vue, name: Vue, parents: [frontend, javascript], aliases: [vuejs, vue.js]}
+  - {id: angular, name: Angular, parents: [frontend, typescript], aliases: [angular framework]}
+  - {id: svelte, name: Svelte, parents: [frontend, javascript], aliases: [sveltekit]}
+  - {id: state_management, name: Frontend State Management, parents: [frontend], aliases: [redux, zustand, client state]}
+  - {id: web_accessibility, name: Web Accessibility, parents: [frontend], aliases: [a11y, wcag, accessible web]}
+  - {id: responsive_design, name: Responsive Web Design, parents: [frontend, css], aliases: [mobile first design, responsive ui]}
+  - {id: web_performance, name: Web Performance, parents: [frontend], aliases: [core web vitals, frontend performance]}
+  - {id: frontend_testing, name: Frontend Testing, parents: [frontend, testing], aliases: [react testing library, component testing]}
+
+  # Mobile skills
+  - {id: react_native, name: React Native, parents: [react, mobile], aliases: [react-native]}
+  - {id: flutter, name: Flutter, parents: [mobile], aliases: [dart flutter]}
+  - {id: ios_development, name: iOS Development, parents: [mobile, swift], aliases: [ios, xcode]}
+  - {id: android_development, name: Android Development, parents: [mobile, kotlin], aliases: [android, android sdk]}
+
+  # Data and persistence
+  - {id: sql, name: SQL, parents: [data], aliases: [structured query language, relational queries]}
+  - {id: postgresql, name: PostgreSQL, parents: [sql, data], aliases: [postgres, psql]}
+  - {id: mysql, name: MySQL, parents: [sql, data], aliases: [mariadb]}
+  - {id: sqlite, name: SQLite, parents: [sql, data], aliases: [sqlite3]}
+  - {id: mongodb, name: MongoDB, parents: [data], aliases: [mongo, document database]}
+  - {id: redis, name: Redis, parents: [data], aliases: [key value store]}
+  - {id: orm, name: Object-Relational Mapping, parents: [data, backend], aliases: [sqlalchemy, hibernate, prisma]}
+  - {id: database_design, name: Database Design, parents: [data, sql], aliases: [schema design, relational modelling]}
+  - {id: data_modelling, name: Data Modelling, parents: [data], aliases: [data modeling, entity modelling]}
+  - {id: etl, name: ETL Pipelines, parents: [data], aliases: [extract transform load, data pipelines]}
+  - {id: data_analytics, name: Data Analytics, parents: [data], aliases: [analytics, business intelligence]}
+  - {id: search_systems, name: Search Systems, parents: [data, backend], aliases: [elasticsearch, opensearch, full text search]}
+
+  # Testing skills
+  - {id: testing_unit, name: Unit Testing, parents: [testing], aliases: [pytest, unittest, jest, unit tests]}
+  - {id: testing_integration, name: Integration Testing, parents: [testing], aliases: [integration tests, service testing]}
+  - {id: testing_e2e, name: End-to-End Testing, parents: [testing], aliases: [e2e, playwright, cypress]}
+  - {id: test_driven_development, name: Test-Driven Development, parents: [testing], aliases: [tdd, test first development]}
+  - {id: property_testing, name: Property-Based Testing, parents: [testing], aliases: [hypothesis, generative testing]}
+  - {id: contract_testing, name: Contract Testing, parents: [testing, api_design], aliases: [consumer driven contracts, pact testing]}
+  - {id: mocking, name: Test Doubles and Mocking, parents: [testing], aliases: [mocks, stubs, fakes]}
+  - {id: load_testing, name: Load and Performance Testing, parents: [testing], aliases: [k6, locust, stress testing]}
+
+  # DevOps and cloud
+  - {id: git, name: Git, parents: [version_control], aliases: [github, gitlab, source code management]}
+  - {id: docker, name: Docker, parents: [devops], aliases: [containerisation, containerization, dockerfile]}
+  - {id: kubernetes, name: Kubernetes, parents: [devops, cloud], aliases: [k8s, container orchestration]}
+  - {id: ci_cd, name: Continuous Integration and Delivery, parents: [devops], aliases: [ci/cd, github actions, continuous delivery]}
+  - {id: linux, name: Linux, parents: [devops], aliases: [unix administration, linux systems]}
+  - {id: shell_scripting, name: Shell Scripting, parents: [devops, programming_languages], aliases: [bash, zsh, shell]}
+  - {id: terraform, name: Terraform, parents: [devops, cloud], aliases: [infrastructure as code, iac]}
+  - {id: ansible, name: Ansible, parents: [devops], aliases: [configuration management]}
+  - {id: observability, name: Observability, parents: [devops], aliases: [monitoring, logging, tracing]}
+  - {id: aws, name: Amazon Web Services, parents: [cloud], aliases: [amazon cloud, aws cloud]}
+  - {id: azure, name: Microsoft Azure, parents: [cloud], aliases: [azure cloud]}
+  - {id: gcp, name: Google Cloud Platform, parents: [cloud], aliases: [google cloud, google cloud platform]}
+  - {id: serverless, name: Serverless Computing, parents: [cloud, backend], aliases: [lambda functions, cloud functions, faas]}
+  - {id: networking, name: Computer Networking, parents: [devops, cloud], aliases: [tcp ip, dns, http networking]}
+  - {id: incident_response, name: Incident Response, parents: [devops, security], aliases: [on-call, production incidents]}
+
+  # Security skills
+  - {id: secure_coding, name: Secure Coding, parents: [security, programming_concepts], aliases: [defensive programming, application security practice]}
+  - {id: owasp, name: OWASP Practices, parents: [security], aliases: [owasp top ten, web security]}
+  - {id: authentication, name: Authentication and Authorization, parents: [security, backend], aliases: [authn, authz, identity access]}
+  - {id: oauth, name: OAuth and OpenID Connect, parents: [authentication, api_design], aliases: [oauth2, oidc, openid connect]}
+  - {id: cryptography, name: Applied Cryptography, parents: [security], aliases: [encryption, hashing, tls]}
+  - {id: secrets_management, name: Secrets Management, parents: [security, devops], aliases: [vault, secret rotation]}
+  - {id: threat_modelling, name: Threat Modelling, parents: [security], aliases: [threat modeling, stride]}
+  - {id: dependency_security, name: Dependency Security, parents: [security, devops], aliases: [software composition analysis, supply chain security]}
+
+  # APIs and architecture
+  - {id: rest_api_design, name: REST API Design, parents: [backend, api_design], aliases: [rest, restful, http api]}
+  - {id: graphql, name: GraphQL, parents: [api_design, backend], aliases: [graphql api]}
+  - {id: grpc, name: gRPC, parents: [api_design, backend], aliases: [protocol buffers, protobuf rpc]}
+  - {id: openapi, name: OpenAPI, parents: [api_design], aliases: [swagger, api schema]}
+  - {id: microservices, name: Microservices, parents: [backend, api_design], aliases: [microservice architecture]}
+  - {id: event_driven_architecture, name: Event-Driven Architecture, parents: [backend, api_design], aliases: [eda, event based systems]}
+  - {id: message_queues, name: Message Queues, parents: [backend, api_design], aliases: [kafka, rabbitmq, asynchronous messaging]}
+  - {id: distributed_systems, name: Distributed Systems, parents: [backend, programming_concepts], aliases: [distributed computing]}
+  - {id: system_design, name: System Design, parents: [backend, programming_concepts], aliases: [software architecture, solution architecture]}
+  - {id: caching, name: Caching Strategies, parents: [backend, data], aliases: [cache design, application caching]}
+
+  # Engineering collaboration
+  - {id: code_review, name: Code Review, parents: [collaboration], aliases: [pull request review, peer review]}
+  - {id: technical_writing, name: Technical Writing, parents: [collaboration], aliases: [documentation, engineering docs]}
+  - {id: agile_delivery, name: Agile Delivery, parents: [collaboration], aliases: [scrum, kanban, iterative delivery]}
+  - {id: debugging, name: Debugging, parents: [programming_concepts, collaboration], aliases: [troubleshooting, fault isolation]}
+  - {id: performance_profiling, name: Performance Profiling, parents: [programming_concepts, testing], aliases: [profiling, performance tuning]}
