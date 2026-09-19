@@ -3,7 +3,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..models.db import Analysis, Repo, SkillStatusRow, User
+from ..models.db import Analysis, QuestionRow, Repo, SkillStatusRow, User
 from .analyze import AnalysisArtifacts
 
 
@@ -74,6 +74,11 @@ def complete_analysis(
     artifacts: AnalysisArtifacts,
 ) -> None:
     """Atomically store public artifacts and touched skill evidence."""
+    if artifacts.analysis_mode == "full" or artifacts.changed_files:
+        for question in db.scalars(
+            select(QuestionRow).where(QuestionRow.repo_id == repo.id)
+        ).all():
+            db.delete(question)
     analysis.repo_map = artifacts.repo_map.model_dump(mode="json")
     analysis.findings = [finding.model_dump(mode="json") for finding in artifacts.findings]
     analysis.scores = artifacts.scores.model_dump(mode="json")

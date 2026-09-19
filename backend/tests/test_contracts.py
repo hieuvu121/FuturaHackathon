@@ -51,7 +51,10 @@ def test_market_fixture_allows_null_frequency():
 
 
 def test_roadmap_fixture():
-    Buckets.model_validate(_load("roadmap"))
+    fixtures = _load("roadmap")
+    assert fixtures
+    for fixture in fixtures.values():
+        Buckets.model_validate(fixture)
 
 
 @pytest.mark.parametrize("dimension_id", [

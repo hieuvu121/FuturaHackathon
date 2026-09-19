@@ -7,9 +7,21 @@ from ..deps import CurrentUser, DbDep
 from ..mock_store import load
 from ..schemas.findings import Finding
 from ..schemas.scores import Scores
+from ..schemas.portfolio import PortfolioProfile
+from ..services.portfolio import build_profile
 from ..services.storage import get_owned_repo, latest_analysis
 
 router = APIRouter(prefix="/repos", tags=["analysis"])
+
+
+@router.get("/portfolio/profile", response_model=PortfolioProfile)
+def portfolio_profile(user: CurrentUser, db: DbDep) -> PortfolioProfile:
+    if get_settings().mock_mode:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Portfolio profile requires live mode")
+    try:
+        return build_profile(db, user)
+    except LookupError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
 
 
 @router.get("/{repo_id}/scores", response_model=Scores)

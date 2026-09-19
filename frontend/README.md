@@ -1,40 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Retrace frontend
 
-## Getting Started
+The frontend is a Next.js Pages Router application connected to the portfolio-level backend API.
 
-First, run the development server:
+## Run locally
 
 ```bash
+cd frontend
+cp .env.local.example .env.local
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). The root route redirects to `/connect`.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+Useful checks:
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+```bash
+npx tsc --noEmit
+npm run lint
+npm run build
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+## Switch between mock and live data
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`lib/data.ts` is the only mock/live boundary. Components never import mock files or call `fetch` directly.
 
-## Learn More
+Live API mode is the default:
 
-To learn more about Next.js, take a look at the following resources:
+```env
+NEXT_PUBLIC_USE_MOCK=false
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+For an offline UI rehearsal, enable canonical mock JSON explicitly:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```env
+NEXT_PUBLIC_USE_MOCK=true
+```
 
-## Deploy on Vercel
+Restart the development server after changing environment variables.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Regenerate API types
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+`lib/types.ts` temporarily mirrors these backend schemas:
+
+- `Evidence` and `Provenance`
+- `FunctionNode` and `RepoMap`
+- `Finding`
+- `DimensionScore`, `SkillStatus`, and `Scores`
+- `MarketSkill`
+- `Question`, `Answer`, and `GradeResult`
+- `RoadmapItem` and `Buckets`
+
+When the backend OpenAPI endpoint is running, replace the temporary declarations:
+
+```bash
+npm run gen:types
+```
+
+After generation, update imports in `lib/data.ts` to the generated schema names and run the checks above.

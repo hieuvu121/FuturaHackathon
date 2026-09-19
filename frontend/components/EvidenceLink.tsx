@@ -1,22 +1,25 @@
-/** Turns an Evidence object into a clickable jump into CodeViewer. Owner: Track C. */
+import Link from "next/link";
 
 import type { Evidence } from "@/lib/types";
+import { ExternalIcon } from "./Icons";
 
 export interface EvidenceLinkProps {
   evidence: Evidence;
-  onOpen: (evidence: Evidence) => void;
-  label?: string;
+  onOpen?: (evidence: Evidence) => void;
+  findingId?: string;
 }
+export default function EvidenceLink({ evidence, onOpen, findingId }: EvidenceLinkProps) {
+  const label = `${evidence.file}:${evidence.lines[0]}-${evidence.lines[1]}`;
+  const content = <><span>{label}</span><ExternalIcon width="15" height="15" /></>;
+  const className = "evidence-link";
 
-export default function EvidenceLink({ evidence, onOpen, label }: EvidenceLinkProps) {
-  const text = label ?? `${evidence.file}:${evidence.lines[0]}-${evidence.lines[1]}`;
-  return (
-    <button
-      type="button"
-      onClick={() => onOpen(evidence)}
-      className="font-mono text-xs text-blue-700 underline underline-offset-2 hover:text-blue-900"
-    >
-      {text}
-    </button>
-  );
+  if (onOpen) {
+    return <button type="button" className={className} onClick={() => onOpen(evidence)}>{content}</button>;
+  }
+
+  const href = findingId
+    ? { pathname: "/profile", query: { ev: findingId } }
+    : { pathname: "/profile", query: { repo: evidence.repo_id ?? undefined, file: evidence.file, from: evidence.lines[0], to: evidence.lines[1], commit: evidence.commit ?? undefined } };
+
+  return <Link className={className} href={href}>{content}</Link>;
 }

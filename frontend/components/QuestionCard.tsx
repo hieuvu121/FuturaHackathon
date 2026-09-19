@@ -1,56 +1,76 @@
-/**
- * Presents a question with its code context and the input mode appropriate to
- * its type: prose for recall/justify/transfer, a code editor for debug/extend.
- * Owner: Track C.
- */
-
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 
 import type { GradeResult, Question } from "@/lib/types";
 
 export interface QuestionCardProps {
-  repoId: string;
   question: Question;
   onSubmit: (submission: string) => Promise<GradeResult>;
+  result?: GradeResult;
+  answer?: string;
+  onAnswerChange?: (answer: string) => void;
+  onResult?: (result: GradeResult) => void;
 }
 
-export default function QuestionCard({ repoId, question, onSubmit }: QuestionCardProps) {
-  const [submission, setSubmission] = useState("");
-  const [result, setResult] = useState<GradeResult | null>(null);
-  const [busy, setBusy] = useState(false);
+export default function QuestionCard({ question, onSubmit, result: suppliedResult, answer, onAnswerChange, onResult }: QuestionCardProps) {
+  const reduceMotion = useReducedMotion();
+  const [localSubmission, setLocalSubmission] = useState("");
+  const [localResult, setLocalResult] = useState<GradeResult | undefined>();
+  const [checking, setChecking] = useState(false);
+  const codeAnswer = question.type === "debug" || question.type === "extend";
+  const submission = answer ?? localSubmission;
 
-  const isCode = question.type === "debug" || question.type === "extend";
-
-  async function handleSubmit() {
-    setBusy(true);
-    try {
-      setResult(await onSubmit(submission));
-    } finally {
-      setBusy(false);
-    }
+  function updateSubmission(value: string) {
+    if (onAnswerChange) onAnswerChange(value);
+    else setLocalSubmission(value);
   }
 
-  // TODO(Track C): render CodeViewer for question.target, code editor when isCode.
-  // Framing rule: this is revision, never an exam. No score out of 10, no ranking.
+  async function handleSubmit() {
+    if (!submission.trim() || checking) return;
+    setChecking(true);
+    try {
+      const nextResult = await onSubmit(submission);
+      setLocalResult(nextResult);
+      onResult?.(nextResult);
+    } finally { setChecking(false); }
+  }
+
+  const result = suppliedResult ?? localResult;
+
   return (
-    <section className="space-y-3 rounded-xl border border-neutral-200 p-5">
-      <span className="text-xs uppercase tracking-wide text-neutral-500">{question.type}</span>
-      <p className="text-neutral-800">{question.prompt}</p>
+    <article className="question-card surface">
+      <div className="question-meta">
+        <strong>{question.type} question</strong>
+      </div>
+      <h2>{question.prompt}</h2>
+      <label htmlFor={`answer-${question.id}`} className="sr-only">Your answer</label>
       <textarea
-        className="h-40 w-full rounded-lg border border-neutral-300 p-3 font-mono text-sm"
+        id={`answer-${question.id}`}
         value={submission}
-        onChange={(e) => setSubmission(e.target.value)}
-        placeholder={isCode ? "Your fix…" : "Your answer…"}
+        onChange={(event) => updateSubmission(event.target.value)}
+        className={codeAnswer ? "code-answer" : undefined}
+        placeholder={codeAnswer ? "Write the corrected line or implementation" : "Describe your thinking in a sentence or two"}
       />
-      <button
-        type="button"
-        disabled={busy || !submission.trim()}
-        onClick={handleSubmit}
-        className="rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-40"
-      >
-        {busy ? "Checking…" : "Submit"}
-      </button>
-      {result && <p className="text-sm text-neutral-700">{result.feedback}</p>}
-    </section>
+      <div className="question-actions">
+        <button type="button" className="primary-button" disabled={!submission.trim() || checking} onClick={handleSubmit}>
+          {checking ? "Checking..." : result ? "Check again" : "Check my answer"}
+        </button>
+        <span>{codeAnswer ? "Checked by unit tests" : "Compared against a rubric"}</span>
+      </div>
+      <AnimatePresence>
+        {result && (
+          <motion.div
+            className="gentle-feedback"
+            role="status"
+            initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+          >
+            {result.feedback}
+            {Object.keys(result.tier_change).length > 0 && <strong> Skill tier updated.</strong>}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </article>
   );
 }

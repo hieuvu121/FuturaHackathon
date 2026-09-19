@@ -1,8 +1,0 @@
-[
-  {"skill_id": "python", "frequency": 0.62, "role": "backend", "region": "AU", "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.6, "sample_size": 400, "collected_at": "2026-09-01"}},
-  {"skill_id": "sql", "frequency": 0.58, "role": "backend", "region": "AU", "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.6, "sample_size": 400, "collected_at": "2026-09-01"}},
-  {"skill_id": "docker", "frequency": 0.47, "role": "backend", "region": "AU", "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.6, "sample_size": 400, "collected_at": "2026-09-01"}},
-  {"skill_id": "testing_unit", "frequency": 0.41, "role": "backend", "region": "AU", "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.6, "sample_size": 400, "collected_at": "2026-09-01"}},
-  {"skill_id": "rest_api_design", "frequency": 0.39, "role": "backend", "region": "AU", "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.6, "sample_size": 400, "collected_at": "2026-09-01"}},
-  {"skill_id": "async_programming", "frequency": null, "role": "backend", "region": "AU", "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.3, "sample_size": null, "collected_at": "2026-09-01"}}
-]

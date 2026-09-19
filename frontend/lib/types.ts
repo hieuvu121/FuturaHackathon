@@ -1,21 +1,15 @@
 /**
- * Hand-written ONLY until the backend is live. See OVERALL.md:
- *   "lib/types.ts -- Generated from the OpenAPI schema; never hand-written."
- *
- * Once the backend runs, regenerate with:
- *   npm run gen:types
- * and delete everything below the marker.
+ * Temporary handwritten contracts mirroring backend/app/schemas.
+ * This file will be replaced by openapi-typescript output when the backend OpenAPI schema is available.
  */
 
-// --- BEGIN placeholder (delete after first `npm run gen:types`) ---
-
 export interface Evidence {
+  repo_id?: string | null;
   file: string;
   lines: [number, number];
   commit?: string | null;
 }
-
-export type SourceKind = "seeded" | "scraped" | "external";
+export type SourceKind = "seeded" | "scraped" | "external" | "estimated";
 
 export interface Provenance {
   source_kind: SourceKind;
@@ -60,8 +54,6 @@ export interface Finding {
   confidence: number;
 }
 
-export type Tier = "touched" | "verified";
-
 export interface DimensionScore {
   dimension: string;
   level: 1 | 2 | 3 | 4;
@@ -69,6 +61,8 @@ export interface DimensionScore {
   evidence: Evidence[];
   metric_basis: Record<string, number | string>;
 }
+
+export type Tier = "touched" | "verified";
 
 export interface SkillStatus {
   skill_id: string;
@@ -80,6 +74,14 @@ export interface Scores {
   repo: string;
   dimensions: DimensionScore[];
   skills: SkillStatus[];
+}
+
+export interface MarketSkill {
+  skill_id: string;
+  frequency: number | null;
+  role: string;
+  region: string;
+  provenance: Provenance;
 }
 
 export type QuestionType = "recall" | "justify" | "transfer" | "debug" | "extend";
@@ -133,8 +135,40 @@ export interface Repo {
   full_name: string;
   language: string | null;
   is_fork: boolean;
-  stars: number;
-  pushed_at: string;
+  has_original_commits?: boolean;
+  function_count?: number;
+  pushed_label?: string;
+  stars?: number;
+  pushed_at?: string;
+  clone_url?: string;
+  default_branch?: string;
+  private?: boolean;
+}
+
+export interface PortfolioRepo {
+  id: string;
+  full_name: string;
+  language: string | null;
+  stage: string;
+  progress: number;
+}
+
+export interface PortfolioSelection {
+  repositories: PortfolioRepo[];
+}
+
+export interface PortfolioProfile {
+  repositories: PortfolioRepo[];
+  total_files: number;
+  total_functions: number;
+  excluded_files: number;
+  scores: Scores;
+  findings: Finding[];
+}
+
+export interface CurrentUser {
+  user: string;
+  mock_mode: boolean;
 }
 
 export interface CodeSlice {
@@ -142,6 +176,14 @@ export interface CodeSlice {
   start: number;
   end: number;
   lines: string[];
+  commit?: string | null;
 }
 
-// --- END placeholder ---
+export interface AnalysisStatus {
+  repo_id?: string;
+  stage: string;
+  step: number;
+  progress: number;
+  done: boolean;
+  error?: string | null;
+}

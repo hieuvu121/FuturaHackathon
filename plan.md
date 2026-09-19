@@ -3,10 +3,11 @@
 Backend execution plan for the architecture in [OVERALL.md](./OVERALL.md).
 Three backend tracks, five phases, conflict-free parallel branches.
 
-> **Current execution:** Phase 3 backend work is complete. Two people now work in
-> parallel: the project owner owns UI/demo integration, and the member owns the
-> provisional LLM roadmap-demand backend. Backend contributors continue to treat
-> `frontend/` as read-only.
+> **Current execution:** Phase 3 backend work is complete. The project owner is
+> integrating the real UI against one portfolio made from 3–5 selected repositories;
+> the member owns the provisional LLM roadmap-demand backend. The portfolio is the
+> unit of profile, Recall, and roadmap output—repositories are evidence sources, not
+> independent user profiles.
 
 ---
 
@@ -182,13 +183,30 @@ movement. A final isolated live run against `hieuvu121/ragPullRequest` completed
 with 106 functions and 10 validated findings; a real OpenAI transfer grade scored
 1.0 and moved `python` from Revise to Deepen in the next persisted roadmap call.
 
+**Portfolio integration checkpoint (2026-09-20):** the selected 3–5 repositories
+are now persisted as one user portfolio. Analysis still runs per repository, while
+profile dimensions, skill tiers, findings, Recall targets, and roadmap inputs are
+aggregated across the complete selection. Every aggregate evidence pointer carries
+its origin `repo_id`. Recall makes one LLM call with the combined portfolio summary
+and repo-grounded target contexts; it does not pretend one repository represents the
+user. A live three-repository run completed with 538 functions and 29 validated
+findings, and generated persisted Recall questions spanning all three repositories.
+
+**Long-term memory checkpoint (2026-09-20):** the initial repository analysis remains
+the expensive full clone/parse/scan. Repeat runs fetch the cached clone, diff remote
+HEAD against the last analysed commit, retain parsed functions and validated findings
+from unchanged files, then parse and model-scan only changed Python files. An unchanged
+live `ragPullRequest` refresh reused all 106 functions and 12 findings and completed in
+2.1 seconds without another full model scan. Persisted skill evidence is merged rather
+than erased, so later portfolio profiles retain the developer's observed history.
+
 ---
 
 ### Phase 4 — Demo prep & buffer · ~3h
 
 Not optional. Reserve it.
 
-- Pick and pre-warm **one** demo repository. Cache its analysis. Never demo a cold clone.
+- Pick and pre-warm **one 3-repository demo portfolio**. Cache all analyses. Never demo cold clones.
 - `MOCK_MODE=true` as the fallback path, rehearsed. If the API key dies mid-demo, flip one env var.
 - Keep both provider paths configured where possible. `LLM_PROVIDER=openai` is the
   verified default; `LLM_PROVIDER=anthropic` remains a code-compatible fallback.
@@ -227,6 +245,7 @@ main                          always green, always demo-able
  ├─ feat/d3-roadmap-buckets   Track D, Phase 2
  ├─ feat/d4-roadmap-promotion Track D, Phase 3
  ├─ feat/phase3-integration   Tracks A/B/D, Phase 3
+ ├─ feat/frontend-real-api   Owner; portfolio API + real UI integration
  ├─ feat/demand-llm           Member; chosen provisional demo demand source
  └─ feat/market-scraped       optional; validated only if ads get collected
 ```
@@ -300,6 +319,11 @@ From OVERALL.md §1. If a PR violates one, it does not merge.
 8. Recall API feedback is **revision, never an exam**. No failing grade, no ranking.
 9. `schemas/` and `models/db.py` do **not** share classes. API contract and storage
     are separate on purpose.
+10. Selected repositories form **one portfolio**. Per-repository analysis is an
+    implementation detail; user-facing skills, questions, and roadmap use all selected evidence.
+11. Repository refreshes are incremental after the first successful analysis. Never
+    discard unchanged parsed functions, findings, or historical skill evidence merely
+    because a new commit was fetched.
 
 ---
 
@@ -339,7 +363,8 @@ expensive. Prefer additive.
 2. `demand/scraped.py` + job-ad collection — `seeded.py` covers the demo.
 3. `extend` question type — keep recall, justify, transfer, debug.
 4. `injector.py` and the `debug` type — keep the three rubric-graded types.
-5. Multi-repo analysis — demo one repository well.
+5. Reduce the pre-warmed portfolio from five repositories to three; do not fall back
+   to a single-repository profile.
 
 **Never cut:** `validator.py`, evidence-bearing response contracts, or verified-tier
 filtering on any public export. Those are the product's credibility boundary.

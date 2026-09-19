@@ -13,6 +13,10 @@ from pydantic import BaseModel, Field
 class Evidence(BaseModel):
     """A pointer into the cached clone. Never holds source code itself."""
 
+    repo_id: str | None = Field(
+        default=None,
+        description="Origin repository id when evidence is returned in a portfolio aggregate",
+    )
     file: str = Field(description="Path relative to the repository root")
     lines: tuple[int, int] = Field(description="Inclusive 1-based (start, end)")
     commit: str | None = Field(default=None, description="Commit SHA the pointer is valid at")

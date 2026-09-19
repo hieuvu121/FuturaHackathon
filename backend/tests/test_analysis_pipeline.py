@@ -138,3 +138,45 @@ def test_analysis_pipeline_handles_an_empty_scan_set(tmp_path: Path, monkeypatch
     assert result.findings == []
     assert result.dropped_findings == []
     assert result.scores.repo == "owner/project"
+
+
+def test_incremental_analysis_scans_only_changed_files_and_reuses_findings(
+    tmp_path: Path, monkeypatch
+):
+    settings = Settings(cache_dir=tmp_path / "cache", scan_file_limit=5)
+    root = analyze.clone_service.cache_path(settings, "developer", "owner/project")
+    root.mkdir(parents=True)
+    (root / "simple.py").write_text("def simple():\n    return 1\n", encoding="utf-8")
+    (root / "complex.py").write_text(
+        "def complex_handler(value):\n    if value:\n        return value\n    return None\n",
+        encoding="utf-8",
+    )
+    previous = analyze.AnalysisArtifacts(
+        repo_map=_repo_map(),
+        findings=[_finding("keep", "simple.py", (1, 2)), _finding("replace", "complex.py", (1, 2))],
+        dropped_findings=[],
+        scores=analyze.Scores(repo="owner/project"),
+        repository_metrics={},
+    )
+    monkeypatch.setattr(
+        analyze,
+        "build_repo_map_incremental",
+        lambda *args, **kwargs: (_repo_map(), ["complex.py"]),
+    )
+    monkeypatch.setattr(analyze.gitlog, "commit_stats", lambda root: {})
+    scanned: list[str] = []
+
+    def fake_scan(settings, root, rel_path):
+        scanned.append(rel_path)
+        return [_finding("updated", rel_path, (1, 2))]
+
+    monkeypatch.setattr(analyze, "scan_file", fake_scan)
+
+    result = analyze.analyze_repository_incremental(
+        settings, "developer", "owner/project", "", previous
+    )
+
+    assert scanned == ["complex.py"]
+    assert [finding.id for finding in result.findings] == ["keep", "updated"]
+    assert result.repository_metrics["analysis_mode"] == "incremental"
+    assert result.repository_metrics["changed_files"] == 1
