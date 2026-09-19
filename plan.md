@@ -155,6 +155,13 @@ from persisted per-repository skill tiers. A passing transfer answer updates the
 same skill from Revise to Deepen immediately; failed or unverified skills remain
 in Revise, while Learn New retains its demand provenance and nullable frequency.
 
+**Phase 3 integration checkpoint (2026-09-20):** one database-backed integration
+flow now verifies persisted repo map/scores/findings, five accepted answer rows,
+promotion only for transfer/debug/extend, and the resulting Revise→Deepen roadmap
+movement. A final isolated live run against `hieuvu121/ragPullRequest` completed
+with 106 functions and 10 validated findings; a real OpenAI transfer grade scored
+1.0 and moved `python` from Revise to Deepen in the next persisted roadmap call.
+
 ---
 
 ### Phase 4 — Demo prep & buffer · ~3h
