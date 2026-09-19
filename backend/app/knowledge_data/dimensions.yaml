@@ -43,7 +43,8 @@ dimensions:
       2: "Some types exist but one concept is modelled inconsistently across the code."
       3: "Domain concepts are named and modelled consistently."
       4: "The model teaches the domain. Invalid states are unrepresentable."
-    metric_thresholds: {}   # qualitative; driven by scanner findings
+    metric_thresholds:
+      domain_inconsistency_findings: { 1: ">5", 2: "2-5", 3: "1", 4: "0" }
 
   - id: version_control
     name: Version Control Practice
@@ -64,4 +65,5 @@ dimensions:
       3: "Inputs validated at boundaries; secrets and config separated cleanly."
       4: "Threat-aware: least privilege, path/traversal safety, defence in depth."
     metric_thresholds:
-      hardcoded_secret_count: { 1: ">0", 4: "0" }
+      hardcoded_secret_count: { 1: ">0", 2: "0", 3: "0", 4: "0" }
+      security_risk_findings: { 1: ">5", 2: "2-5", 3: "1", 4: "0" }
