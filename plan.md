@@ -97,10 +97,13 @@ tracks that are still on mock keep working.
 |---|---|
 | **A** | `parser.py` (tree-sitter → `FunctionNode`), `metrics.py` (complexity, nesting, call graph, test mapping, smell flags), `gitlog.py` (churn, `times_modified`, `last_modified`, `created_commit`), `blame.py` (optional, defaults 1.0). `ingest/__init__.py` assembles a validated `RepoMap`. |
 | **B** | `scanner.py` uses the provider selected by `LLM_PROVIDER` (`openai` default, `anthropic` fallback). OpenAI uses typed Structured Outputs; both providers produce raw `Finding` candidates that must pass through `validator.py`. `scorer.py` combines metrics + validated findings + `dimensions.yaml` → levels with `metric_basis` populated. |
-| **D** | `roadmap/matcher.py` + `buckets.py`, including the **`frequency is None` path**. Implement whichever demand sources are ready — the chain (§10) means you do not need the final answer to ship this. Collect job ads into `data/jobs_raw/` in parallel. |
+| **D** | Build the roadmap evidence-first. `matcher.py` normalises real `SkillStatus` entries. `buckets.py` produces **Revise** and **Deepen** from repository evidence without depending on market data, then adds **Learn New** only from an available demand source. Implement and test the **`frequency is None` path** so unknown demand ranks by skill proximity rather than being dropped. Use seeded demand as the temporary source; keep Learn New explicitly provisional until a validated market source exists. Collect job ads into `data/jobs_raw/` independently so research cannot block the roadmap mechanics. |
 
-**Exit criteria:** `MOCK_MODE=false` produces a real `repo_map.json` and real
-validated `findings.json` for one live GitHub repository.
+**Exit criteria:** `MOCK_MODE=false` produces a real `repo_map.json`, real
+validated `findings.json`, and a roadmap for one live GitHub repository.
+Revise/Deepen items must cite repository evidence. Learn New may be empty or
+seeded/provisional, must preserve provenance, and must still rank safely when
+market frequency is unknown.
 
 **Verified provider checkpoint (2026-09-20):** the authenticated live flow cloned
 `hieuvu121/ragPullRequest`, ranked its Python files, scanned `indexer/tasks.py`
@@ -117,7 +120,7 @@ still depends on wiring `ingest/__init__.py` and the analysis storage pipeline.
 |---|---|
 | **A** | Pipeline wired as a BackgroundTask with real stage/progress in the `analyses` table. Clone cleanup and size limits enforced. |
 | **B** | `selector.py` (the five-condition filter), `generator.py` (five question types, ~3k-token context), `injector.py` (**bug injection verified by actually running the test suite**), `grader.py` (unit tests for debug/extend, rubric for open answers, touched→verified promotion). |
-| **D** | Roadmap against real `SkillStatus` from the grader. Every market figure returned by the API retains its `Provenance`. |
+| **D** | Feed grader promotions back into the evidence-first roadmap so failed/touched skills appear in Revise and newly verified skills move to Deepen. Integrate a validated market-demand provider only if one is ready; every returned market figure retains its `Provenance`. |
 
 **Exit criteria:** API calls connect a real repo → return scores → accept five
 answers → promote a skill to verified → return it in a new roadmap bucket.
@@ -203,7 +206,8 @@ Track A parser+metrics ──► Track B selector      (needs has_test, last_mod
 Track A clone          ──► Track B scanner       (needs files on disk to scan)
 Track D skills.yaml    ──► Track B scorer        (needs skill ids to emit)
 Track D dimensions.yaml──► Track B scorer        (needs the rubric)
-Track B scorer         ──► Track D buckets       (needs real SkillStatus)
+Track B scorer         ──► Track D Revise/Deepen (needs real SkillStatus)
+Demand source          ──► Track D Learn New     (optional; never blocks evidence buckets)
 ```
 
 **Nobody is ever actually blocked**, because the mock fixtures satisfy every one of
@@ -260,8 +264,8 @@ expensive. Prefer additive.
 | `injector.py` produces bugs no test catches | High | Verify by running the suite; regenerate up to `max_attempts`. If it stays flaky, cut debug/extend questions and ship three question types. |
 | Live clone + analysis too slow to demo | Medium | Pre-warm one repo in Phase 4. Cache the analysis. Never clone cold on stage. |
 | tree-sitter query complexity eats a day | Medium | Python only for the MVP (`TARGET_LANGUAGE=python`). Do not add a second language before Phase 4. |
-| Market data never materialises | Medium | The demand chain (§10) falls back scraped → llm → seeded. Frequency is nullable by design; the roadmap degrades instead of crashing. |
-| Demand source-of-truth decision drags on | **High** | It is already deferred safely — `DEMAND_SOURCE=chained` is the default and nothing blocks on it. Forcing date in §10. |
+| Market data never materialises | Medium | Ship evidence-backed Revise/Deepen. Learn New stays empty or explicitly seeded/provisional. Frequency is nullable by design; the roadmap ranks by proximity instead of crashing. |
+| Demand source-of-truth decision drags on | **High** | Keep demand optional: build Revise/Deepen first and use seeded or empty Learn New until a provider is validated. Do not enable the incomplete chain. Forcing date in §10. |
 | Selected LLM provider is exhausted or rate-limited mid-demo | Low | Switch `LLM_PROVIDER` when the alternate provider is funded; otherwise use the rehearsed `MOCK_MODE=true` fallback. |
 | Merge conflicts stall the team | Low | Exclusive path ownership (§1) plus everything pre-created in Phase 0. |
 
@@ -302,9 +306,9 @@ Small, deliberate, listed here so nobody thinks they are accidents.
 
 ## 10. Open decisions
 
-Decisions nobody has made yet. Each one has a **default already running in code**,
-so no track is blocked while it stays open. That is the point: an undecided
-question should cost you a conversation later, not a day of idle work now.
+Decisions nobody has made yet. Each one must have a safe implementation path so
+no track is blocked while it stays open. Do not describe a configured provider
+as running until its methods and integration tests are complete.
 
 ### 10.1 What is the roadmap's source of truth for market demand? — OPEN
 
@@ -317,9 +321,20 @@ The candidates, weakest to strongest:
 | `scraped` — real job ads in `data/jobs_raw/` | High | ~half a day, plus collection | `scraped`, confidence high, real n |
 | `external` — Lightcast / ESCO / ASC | Highest | Access + integration; likely post-hackathon | `external` |
 
-**Running default: `DEMAND_SOURCE=chained`, `DEMAND_CHAIN=["scraped","llm","seeded"]`.**
+**Current implementation status:** seeded demand works. `ScrapedDemand`,
+`LLMDemand`, and `ChainedDemand.top_skills()` are still stubs. Although
+`DEMAND_SOURCE=chained` is currently configured as the default, it is not yet a
+safe runtime fallback because the first unimplemented provider raises before the
+seeded provider can answer.
 
-For each skill, the chain takes the first source that answers. So a scraped
+**Immediate Phase 2 rule:** use `DEMAND_SOURCE=seeded` when exercising Learn New,
+or return no Learn New items. Revise and Deepen must continue working either way.
+Do not use an LLM estimate or a hand-written frequency as validated market data.
+
+**Target after provider implementation:**
+`DEMAND_SOURCE=chained`, `DEMAND_CHAIN=["scraped","llm","seeded"]`.
+
+Once implemented, the chain takes the first source that answers for each skill. So a scraped
 figure is used where the ads cover that skill; an LLM estimate fills gaps; the
 seeded table is the floor. **Every row keeps the provenance of whichever source
 actually answered**, so a mixed roadmap still shows the user, per item, which
@@ -329,10 +344,23 @@ in each row's `Provenance`.
 Why this is safe to leave open:
 
 - `buckets.py` depends on the `DemandSource` protocol, never on a concrete provider.
-- Deciding later costs one line in `.env`. No code change, no migration.
+- Revise and Deepen depend on repository evidence, not market demand.
+- Deciding later changes provider configuration, not roadmap contracts or stored
+  skill statuses.
 - `frequency` is nullable and invariant #5 requires graceful degradation, so even
-  "all three sources fail" is a supported state, covered by two tests in
-  `tests/test_contracts.py`.
+  "all demand sources fail" remains a supported state.
+
+Required Phase 2 tests (not all exist yet):
+
+1. touched but unverified → Revise;
+2. verified → Deepen;
+3. never touched + available demand → Learn New;
+4. `frequency=None` still produces deterministic proximity ordering;
+5. unavailable demand produces valid Revise/Deepen output without Learn New.
+
+The current contract tests only prove that nullable market rows validate and a
+synthetic silent frequency chain returns `None`; they do not yet exercise real
+bucket construction or `top_skills()` fallback behaviour.
 
 Constraint on the LLM option: an estimate is **never** presented as a measurement.
 `llm.py` clamps confidence to 0.4, sets `sample_size=None`, and stamps
@@ -341,7 +369,9 @@ A product whose entire argument is "claims must carry evidence" cannot ship an
 unlabelled guess in its own roadmap.
 
 - **Owner:** Track D.
-- **Forcing date:** end of Phase 2. If undecided by then, the chain default ships as-is — which is an acceptable outcome, not a failure.
+- **Forcing date:** end of Phase 2. If no validated source exists, ship
+  evidence-backed Revise/Deepen plus empty or visibly seeded/provisional Learn New.
+  Do not ship the incomplete chained provider as though it were validated.
 
 ### 10.2 Skill taxonomy: seeded or standard? — OPEN
 
