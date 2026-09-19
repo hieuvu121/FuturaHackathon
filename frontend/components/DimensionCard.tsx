@@ -8,13 +8,23 @@ export interface DimensionCardProps {
   selected: boolean;
   onOpenEvidence: (evidence: Evidence) => void;
 }
+
+const DIMENSION_LABELS: Record<string, string> = {
+  code_structure: "Code structure",
+  testing: "Testing",
+  error_handling: "Error handling",
+  domain_modelling: "Domain modelling",
+  version_control: "Version control",
+  security_awareness: "Security awareness",
+};
+
 export default function DimensionCard({ score, selected, onOpenEvidence }: DimensionCardProps) {
   const reduceMotion = useReducedMotion();
 
   return (
     <article className={`dimension-card${selected ? " selected" : ""}`}>
       <header>
-        <h3>{score.dimension}</h3>
+        <h3>{DIMENSION_LABELS[score.dimension] ?? score.dimension}</h3>
         <strong>Level {score.level} of 4</strong>
       </header>
       <div className="level-segments" aria-label={`Level ${score.level} of 4`}>

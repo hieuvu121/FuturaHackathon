@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
+import { getCurrentUser } from "@/lib/data";
 import { ConnectIcon, ProfileIcon, RecallIcon, RoadmapIcon, ShareIcon } from "./Icons";
 
 export const NAV_ITEMS = [
@@ -22,11 +23,12 @@ function Logo() {
   );
 }
 
-function UserChip() {
+function UserChip({ login }: { login: string }) {
+  const initials = login.slice(0, 2).toUpperCase() || "GH";
   return (
     <div className="user-chip">
-      <span className="avatar" aria-hidden="true">YH</span>
-      <span><strong>@yourhandle</strong><small><i aria-hidden="true" />GitHub connected</small></span>
+      <span className="avatar" aria-hidden="true">{initials}</span>
+      <span><strong>@{login || "not-connected"}</strong><small><i aria-hidden="true" />{login ? "GitHub connected" : "Connect GitHub"}</small></span>
     </div>
   );
 }
@@ -57,7 +59,12 @@ export default function Sidebar() {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const [pendingPath, setPendingPath] = useState<string | null>(null);
+  const [login, setLogin] = useState("");
   const activePath = pendingPath ?? normalizePath(router.pathname);
+
+  useEffect(() => {
+    getCurrentUser().then((user) => setLogin(user.user)).catch(() => setLogin(""));
+  }, []);
 
   useEffect(() => {
     const handleStart = (url: string) => setPendingPath(normalizePath(url));
@@ -74,8 +81,8 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="sidebar"><Logo /><Navigation activePath={activePath} reduceMotion={reduceMotion} variant="sidebar" /><UserChip /></aside>
-      <header className="topbar"><Logo /><Navigation activePath={activePath} reduceMotion={reduceMotion} variant="topbar" /><UserChip /></header>
+      <aside className="sidebar"><Logo /><Navigation activePath={activePath} reduceMotion={reduceMotion} variant="sidebar" /><UserChip login={login} /></aside>
+      <header className="topbar"><Logo /><Navigation activePath={activePath} reduceMotion={reduceMotion} variant="topbar" /><UserChip login={login} /></header>
     </>
   );
 }

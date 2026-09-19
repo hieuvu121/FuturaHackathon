@@ -7,33 +7,40 @@ import CodeViewer from "@/components/CodeViewer";
 import DimensionCard from "@/components/DimensionCard";
 import { CheckIcon } from "@/components/Icons";
 import PageSkeleton from "@/components/PageSkeleton";
-import { getFindings, getRepoMap, getScores } from "@/lib/data";
-import type { Evidence, Finding, RepoMap, Scores } from "@/lib/types";
-
-const REPO_ID = "orders-api";
+import { ApiError, getPortfolioProfile } from "@/lib/data";
+import type { Evidence, Finding, PortfolioProfile } from "@/lib/types";
 
 function sameEvidence(left: Evidence, right: Evidence) {
-  return left.file === right.file && left.lines[0] <= right.lines[1] && right.lines[0] <= left.lines[1];
+  return left.repo_id === right.repo_id && left.file === right.file && left.lines[0] <= right.lines[1] && right.lines[0] <= left.lines[1];
 }
 
 export default function ProfilePage() {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
-  const [scores, setScores] = useState<Scores | null>(null);
-  const [repoMap, setRepoMap] = useState<RepoMap | null>(null);
-  const [findings, setFindings] = useState<Finding[]>([]);
+  const [profile, setProfile] = useState<PortfolioProfile | null>(null);
   const [selected, setSelected] = useState<Finding | null>(null);
   const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
-    Promise.all([getScores(REPO_ID), getRepoMap(REPO_ID), getFindings(REPO_ID)])
-      .then(([scoreData, mapData, findingData]) => {
-        setScores(scoreData);
-        setRepoMap(mapData);
-        setFindings(findingData);
-        setSelected(findingData[0] ?? null);
-      })
-      .catch((error: unknown) => setLoadError(error instanceof Error ? error.message : "The capability map could not be loaded."));
+    let active = true;
+    let timer: number | undefined;
+    async function load() {
+      try {
+        const data = await getPortfolioProfile();
+        if (!active) return;
+        setProfile(data);
+        setSelected(data.findings[0] ?? null);
+      } catch (error: unknown) {
+        if (!active) return;
+        if (error instanceof ApiError && [404, 409].includes(error.status)) {
+          timer = window.setTimeout(load, 1800);
+        } else {
+          setLoadError(error instanceof Error ? error.message : "The capability map could not be loaded.");
+        }
+      }
+    }
+    void load();
+    return () => { active = false; if (timer) window.clearTimeout(timer); };
   }, []);
 
   const queryEvidence = useMemo<Evidence | null>(() => {
@@ -41,29 +48,25 @@ export default function ProfilePage() {
     const from = Number(router.query.from);
     const to = Number(router.query.to);
     if (!Number.isFinite(from) || !Number.isFinite(to)) return null;
-    return { file: router.query.file, lines: [from, to], commit: typeof router.query.commit === "string" ? router.query.commit : null };
-  }, [router.isReady, router.query.commit, router.query.file, router.query.from, router.query.to]);
+    return { repo_id: typeof router.query.repo === "string" ? router.query.repo : null, file: router.query.file, lines: [from, to], commit: typeof router.query.commit === "string" ? router.query.commit : null };
+  }, [router.isReady, router.query.commit, router.query.file, router.query.from, router.query.repo, router.query.to]);
   const queryFinding = useMemo(() => {
-    if (typeof router.query.ev === "string") return findings.find((finding) => finding.id === router.query.ev) ?? null;
-    if (queryEvidence) return findings.find((finding) => sameEvidence(finding.evidence, queryEvidence)) ?? null;
+    if (typeof router.query.ev === "string") return profile?.findings.find((finding) => finding.id === router.query.ev) ?? null;
+    if (queryEvidence) return profile?.findings.find((finding) => sameEvidence(finding.evidence, queryEvidence)) ?? null;
     return null;
-  }, [findings, queryEvidence, router.query.ev]);
+  }, [profile?.findings, queryEvidence, router.query.ev]);
   const activeFinding = queryFinding ?? selected;
-  const activeEvidence = queryEvidence ?? activeFinding?.evidence ?? scores?.dimensions[0]?.evidence[0] ?? null;
-  const sourceWindow = useMemo(() => {
-    if (!activeEvidence || !repoMap) return null;
-    const functionNode = repoMap.functions.find((node) => node.file === activeEvidence.file && node.lines[0] <= activeEvidence.lines[0] && node.lines[1] >= activeEvidence.lines[1]);
-    return functionNode ? { start: functionNode.lines[0], count: functionNode.lines[1] - functionNode.lines[0] + 1 } : { start: activeEvidence.lines[0], count: activeEvidence.lines[1] - activeEvidence.lines[0] + 1 };
-  }, [activeEvidence, repoMap]);
+  const activeEvidence = queryEvidence ?? activeFinding?.evidence ?? profile?.scores.dimensions[0]?.evidence[0] ?? null;
+  const sourceWindow = activeEvidence ? { start: activeEvidence.lines[0], count: activeEvidence.lines[1] - activeEvidence.lines[0] + 1 } : null;
 
   function openEvidence(evidence: Evidence) {
-    const finding = findings.find((candidate) => sameEvidence(candidate.evidence, evidence)) ?? null;
+    const finding = profile?.findings.find((candidate) => sameEvidence(candidate.evidence, evidence)) ?? null;
     setSelected(finding);
     void router.replace("/profile", undefined, { shallow: true });
   }
 
   if (loadError) return <main className="page"><div className="error-state" role="alert">{loadError}</div></main>;
-  if (!scores || !repoMap) return <PageSkeleton label="Building your capability map" />;
+  if (!profile) return <PageSkeleton label="Building your capability map" />;
   if (!activeEvidence || !sourceWindow) return (
     <main className="page">
       <section className="empty-state surface">
@@ -75,6 +78,7 @@ export default function ProfilePage() {
     </main>
   );
 
+  const { scores } = profile;
   const verified = scores.skills.filter((skill) => skill.tier === "verified");
   const touched = scores.skills.filter((skill) => skill.tier === "touched");
   const container = { hidden: {}, show: { transition: { staggerChildren: reduceMotion ? 0 : .08 } } };
@@ -85,9 +89,9 @@ export default function ProfilePage() {
       <motion.header className="profile-header" variants={item}>
         <div><p className="eyebrow">Profile</p><h1 className="page-title">Capability map</h1></div>
         <div className="profile-stats">
-          <span className="chip mono">orders-api</span>
-          <span className="chip">214 functions mapped</span>
-          <span className="chip">{repoMap.excluded_files.length} files excluded</span>
+          <span className="chip mono">{profile.repositories.length} repositories</span>
+          <span className="chip">{profile.total_functions} functions mapped</span>
+          <span className="chip">{profile.excluded_files} files excluded</span>
         </div>
       </motion.header>
 
@@ -118,6 +122,7 @@ export default function ProfilePage() {
 
         <motion.aside className="profile-code" variants={item}>
           <CodeViewer
+            repoId={activeEvidence.repo_id ?? profile.repositories[0].id}
             file={activeEvidence.file}
             startLine={sourceWindow.start}
             lines={sourceWindow.count}

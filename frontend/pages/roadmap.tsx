@@ -4,10 +4,8 @@ import { useEffect, useState } from "react";
 import EvidenceLink from "@/components/EvidenceLink";
 import { InfoIcon } from "@/components/Icons";
 import SourceBadge from "@/components/SourceBadge";
-import { getRoadmap } from "@/lib/data";
-import type { BucketName, Buckets, Evidence, RoadmapItem } from "@/lib/types";
-
-const REPO_ID = "orders-api";
+import { ApiError, getPortfolioRoadmap } from "@/lib/data";
+import type { BucketName, Buckets, RoadmapItem } from "@/lib/types";
 const ROLES = [
   { id: "backend", label: "Backend engineer" },
   { id: "data", label: "Data engineer" },
@@ -20,27 +18,19 @@ const BUCKETS: Array<{ id: BucketName; title: string; description: string }> = [
   { id: "learn_new", title: "Learn new", description: "Never touched, in demand, close to what you know" },
 ];
 
-const fallbackEvidence: Evidence = { file: "orders/api/views.py", lines: [88, 101], commit: "7cd201a" };
-
-function findingFor(evidence: Evidence) {
-  if (evidence.file === "orders/services/pricing.py") return "f-pricing";
-  if (evidence.file === "notify/worker.py") return "f-worker";
-  return "f-checkout";
-}
-
 function RoadmapCard({ item, rank, reduceMotion }: { item: RoadmapItem; rank: number; reduceMotion: boolean | null }) {
-  const evidence = item.evidence[0] ?? fallbackEvidence;
+  const evidence = item.evidence[0];
   const hasMarketData = item.market_frequency != null;
   return (
     <motion.article className="roadmap-card" variants={{ hidden: reduceMotion ? {} : { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }}>
       <header><h3>{item.skill_name}</h3><strong>Priority {rank}</strong></header>
       <p>{item.reason}</p>
-      <EvidenceLink evidence={evidence} findingId={findingFor(evidence)} />
+      {evidence && <EvidenceLink evidence={evidence} />}
       <div className="frequency-row">
         <span className="frequency-bar">
           {hasMarketData && <motion.i initial={reduceMotion ? false : { scaleX: 0 }} animate={{ scaleX: item.market_frequency ?? 0 }} transition={{ duration: reduceMotion ? 0 : .7, delay: reduceMotion ? 0 : .25, ease: [.2,.8,.2,1] }} />}
         </span>
-        <small>{hasMarketData ? `in ${Math.round((item.market_frequency ?? 0) * 100)}% of ads (demo)` : "No market data"}</small>
+        <small>{hasMarketData ? `in ${Math.round((item.market_frequency ?? 0) * 100)}% of sampled roles` : "No market data"}</small>
       </div>
     </motion.article>
   );
@@ -55,13 +45,26 @@ export default function RoadmapPage() {
 
   useEffect(() => {
     let active = true;
-    getRoadmap(REPO_ID, role)
-      .then((data) => { if (active) { setRoadmap(data); setLoading(false); } })
-      .catch((error: unknown) => { if (active) { setLoadError(error instanceof Error ? error.message : "The roadmap could not be loaded."); setLoading(false); } });
-    return () => { active = false; };
+    let timer: number | undefined;
+    async function load() {
+      try {
+        const data = await getPortfolioRoadmap(role);
+        if (active) { setRoadmap(data); setLoading(false); }
+      } catch (error: unknown) {
+        if (!active) return;
+        if (error instanceof ApiError && [404, 409].includes(error.status)) {
+          timer = window.setTimeout(load, 1800);
+        } else {
+          setLoadError(error instanceof Error ? error.message : "The roadmap could not be loaded.");
+          setLoading(false);
+        }
+      }
+    }
+    void load();
+    return () => { active = false; if (timer) window.clearTimeout(timer); };
   }, [role]);
 
-  const noMarketData = role === "ml";
+  const noMarketData = roadmap ? [...roadmap.revise, ...roadmap.deepen, ...roadmap.learn_new].every((item) => item.market_frequency == null) : false;
   const provenance = roadmap?.revise[0]?.provenance ?? roadmap?.deepen[0]?.provenance ?? roadmap?.learn_new[0]?.provenance;
 
   function changeRole(nextRole: (typeof ROLES)[number]["id"]) {

@@ -9,11 +9,55 @@ from ..deps import CurrentUser, DbDep
 from ..mock_store import load
 from ..models.db import Repo, User, init_db
 from ..schemas.repo_map import RepoMap
+from ..schemas.portfolio import (
+    PortfolioRepoSummary,
+    PortfolioSelectionRequest,
+    PortfolioSelectionResponse,
+)
 from ..services.ingest.github import list_repos as list_github_repos
 from ..services.pipeline import run_analysis_task
+from ..services.portfolio import owned_selected_repos, replace_selection, selection_summaries
 from ..services.storage import get_owned_repo, latest_analysis, start_analysis
 
 router = APIRouter(prefix="/repos", tags=["repos"])
+
+
+@router.get("/portfolio", response_model=PortfolioSelectionResponse)
+def get_portfolio(user: CurrentUser, db: DbDep) -> PortfolioSelectionResponse:
+    if get_settings().mock_mode:
+        repos = load("repos")[:3]
+        return PortfolioSelectionResponse(
+            repositories=[
+                PortfolioRepoSummary(
+                    id=str(repo["id"]),
+                    full_name=repo["full_name"],
+                    language=repo.get("language"),
+                    stage="done",
+                    progress=100,
+                )
+                for repo in repos
+            ]
+        )
+    return PortfolioSelectionResponse(
+        repositories=selection_summaries(db, owned_selected_repos(db, user))
+    )
+
+
+@router.put("/portfolio", response_model=PortfolioSelectionResponse)
+def set_portfolio(
+    selection: PortfolioSelectionRequest,
+    user: CurrentUser,
+    db: DbDep,
+) -> PortfolioSelectionResponse:
+    if get_settings().mock_mode:
+        return get_portfolio(user, db)
+    try:
+        repos = replace_selection(db, user, selection.repo_ids)
+    except ValueError as exc:
+        raise HTTPException(http_status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+    except LookupError as exc:
+        raise HTTPException(http_status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    return PortfolioSelectionResponse(repositories=selection_summaries(db, repos))
 
 
 @router.get("")

@@ -1,9 +1,9 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { ArrowRightIcon, CheckIcon } from "@/components/Icons";
-import { getRepos, getStatus, startAnalysis } from "@/lib/data";
+import { ApiError, getPortfolio, getRepos, getStatus, loginUrl, startAnalysis } from "@/lib/data";
 import type { Repo } from "@/lib/types";
 
 const PIPELINE = [
@@ -17,6 +17,7 @@ const PIPELINE = [
   ["Validate findings against file:lines", "ANALYZE"],
   ["Score six dimensions", "ANALYZE"],
 ] as const;
+const REPOS_PER_PAGE = 6;
 
 const languageClass: Record<string, string> = {
   Python: "language-python", TypeScript: "language-typescript", Go: "language-go", Jupyter: "language-jupyter",
@@ -33,30 +34,61 @@ export default function ConnectPage() {
   const [loadError, setLoadError] = useState("");
   const [reposLoaded, setReposLoaded] = useState(false);
   const [selectionNotice, setSelectionNotice] = useState("");
+  const [needsLogin, setNeedsLogin] = useState(false);
+  const [page, setPage] = useState(0);
 
-  useEffect(() => {
-    getRepos()
-      .then((data) => { setRepos(data); setReposLoaded(true); })
-      .catch((error: unknown) => { setLoadError(error instanceof Error ? error.message : "Could not load repositories."); setReposLoaded(true); });
+  const loadRepositories = useCallback(async () => {
+    try {
+      const [repoData, portfolio] = await Promise.all([getRepos(), getPortfolio()]);
+      setRepos(repoData);
+      const restored = new Set(portfolio.repositories.map((repo) => repo.id));
+      setSelected(restored);
+      if (portfolio.repositories.some((repo) => !["done", "not_started"].includes(repo.stage))) {
+        const average = portfolio.repositories.reduce((sum, repo) => sum + repo.progress, 0) / portfolio.repositories.length;
+        setCurrentStep(Math.min(PIPELINE.length - 1, Math.floor((average / 100) * PIPELINE.length)));
+        setPanel("pipeline");
+      }
+      setNeedsLogin(false);
+    } catch (error: unknown) {
+      setNeedsLogin(error instanceof ApiError && error.status === 401);
+      setLoadError(error instanceof Error ? error.message : "Could not load repositories.");
+    } finally {
+      setReposLoaded(true);
+    }
   }, []);
 
   useEffect(() => {
-    if (panel !== "pipeline" || currentStep >= PIPELINE.length) return;
+    const timer = window.setTimeout(() => void loadRepositories(), 0);
+    return () => window.clearTimeout(timer);
+  }, [loadRepositories]);
+
+  useEffect(() => {
+    if (panel !== "pipeline" || selected.size === 0) return;
     let cancelled = false;
     async function poll() {
       try {
-        const status = await getStatus("orders-api");
+        const statuses = await Promise.all([...selected].map(getStatus));
         if (cancelled) return;
-        setCurrentStep(status.done ? PIPELINE.length : status.step);
+        const failed = statuses.find((status) => status.stage === "failed");
+        if (failed) {
+          setLoadError(failed.error || "Repository analysis failed.");
+          return;
+        }
+        const allDone = statuses.every((status) => status.done);
+        const average = statuses.reduce((sum, status) => sum + status.progress, 0) / statuses.length;
+        setCurrentStep(allDone ? PIPELINE.length : Math.min(PIPELINE.length - 1, Math.floor((average / 100) * PIPELINE.length)));
+        if (!allDone) window.setTimeout(() => { if (!cancelled) void poll(); }, 900);
       } catch (error) {
         if (!cancelled) setLoadError(error instanceof Error ? error.message : "Analysis status could not be loaded.");
       }
     }
     void poll();
     return () => { cancelled = true; };
-  }, [currentStep, panel]);
+  }, [panel, selected]);
 
   const selectedCount = selected.size;
+  const pageCount = Math.max(1, Math.ceil(repos.length / REPOS_PER_PAGE));
+  const visibleRepos = repos.slice(page * REPOS_PER_PAGE, (page + 1) * REPOS_PER_PAGE);
   const statusHint = useMemo(() => {
     if (selectedCount < 3) return `Pick ${3 - selectedCount} more to continue`;
     if (selectedCount === 5) return "Maximum reached";
@@ -64,7 +96,6 @@ export default function ConnectPage() {
   }, [selectedCount]);
 
   function toggleRepo(repo: Repo) {
-    if (repo.is_fork && !repo.has_original_commits) return;
     const next = new Set(selected);
     if (next.has(repo.id)) {
       next.delete(repo.id);
@@ -82,18 +113,22 @@ export default function ConnectPage() {
   function retryRepositories() {
     setLoadError("");
     setReposLoaded(false);
-    getRepos()
-      .then((data) => { setRepos(data); setReposLoaded(true); })
-      .catch((error: unknown) => { setLoadError(error instanceof Error ? error.message : "Could not load repositories."); setReposLoaded(true); });
+    setNeedsLogin(false);
+    void loadRepositories();
   }
 
   async function analyse() {
     if (selectedCount < 3) return;
     setLoadError("");
-    await startAnalysis([...selected]);
     setDirection(1);
-    setCurrentStep(-1);
+    setCurrentStep(0);
     setPanel("pipeline");
+    try {
+      await startAnalysis([...selected]);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Analysis could not be started.");
+      setPanel("select");
+    }
   }
 
   function goBack() {
@@ -112,7 +147,7 @@ export default function ConnectPage() {
         <p className="page-copy">Choose 3 to 5. Dependencies, generated code, build output, and forks with no original commits are filtered out before anything is scored.</p>
       </motion.header>
 
-      {loadError && <div className="error-state" role="alert">{loadError}</div>}
+      {loadError && <div className="error-state" role="alert">{loadError}{needsLogin && <> <a href={loginUrl}>Connect GitHub</a></>}</div>}
 
       <motion.div variants={item}>
         <AnimatePresence mode="popLayout" initial={false} custom={direction}>
@@ -127,7 +162,7 @@ export default function ConnectPage() {
               transition={{ duration: reduceMotion ? 0 : .5, ease: [.77, 0, .18, 1] }}
             >
               <div className="repo-grid">
-                {!reposLoaded && [1, 2, 3, 4].map((itemIndex) => <div key={itemIndex} className="repo-card repo-skeleton" aria-hidden="true" />)}
+                {!reposLoaded && [1, 2, 3, 4, 5, 6].map((itemIndex) => <div key={itemIndex} className="repo-card repo-skeleton" aria-hidden="true" />)}
                 {reposLoaded && repos.length === 0 && (
                   <section className="empty-state repo-empty surface">
                     <h2>No repositories found</h2>
@@ -135,9 +170,9 @@ export default function ConnectPage() {
                     <button type="button" className="secondary-button" onClick={retryRepositories}>Refresh repositories</button>
                   </section>
                 )}
-                {reposLoaded && repos.map((repo) => {
+                {reposLoaded && visibleRepos.map((repo) => {
                   const isSelected = selected.has(repo.id);
-                  const disabled = repo.is_fork && !repo.has_original_commits;
+                  const disabled = false;
                   return (
                     <button
                       key={repo.id}
@@ -152,12 +187,19 @@ export default function ConnectPage() {
                         <strong>{repo.full_name.split("/")[1]}</strong>
                         <small>
                           <i className={languageClass[repo.language ?? ""]} aria-hidden="true" />
-                          {disabled ? "Fork with no original commits, excluded" : `${repo.language} · ${repo.function_count} functions · ${repo.pushed_label}`}
+                          {[repo.language ?? "Unknown language", repo.is_fork ? "fork" : null, repo.stars != null ? `${repo.stars} stars` : null, repo.pushed_at ? `updated ${new Date(repo.pushed_at).toLocaleDateString()}` : repo.pushed_label].filter(Boolean).join(" · ")}
                         </small>
                       </span>
                     </button>
                   );
                 })}
+                {reposLoaded && repos.length > REPOS_PER_PAGE && (
+                  <nav className="repo-pagination" aria-label="Repository pages">
+                    <button type="button" className="secondary-button" disabled={page === 0} onClick={() => setPage((current) => Math.max(0, current - 1))}>Previous</button>
+                    <span>Page {page + 1} of {pageCount}</span>
+                    <button type="button" className="secondary-button" disabled={page + 1 >= pageCount} onClick={() => setPage((current) => Math.min(pageCount - 1, current + 1))}>Next</button>
+                  </nav>
+                )}
               </div>
               <aside className="selection-summary surface">
                 <div><strong>{selectedCount}</strong><span>of 5 selected</span></div>

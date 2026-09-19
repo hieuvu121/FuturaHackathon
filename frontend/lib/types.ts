@@ -4,6 +4,7 @@
  */
 
 export interface Evidence {
+  repo_id?: string | null;
   file: string;
   lines: [number, number];
   commit?: string | null;
@@ -134,9 +135,40 @@ export interface Repo {
   full_name: string;
   language: string | null;
   is_fork: boolean;
-  has_original_commits: boolean;
-  function_count: number;
-  pushed_label: string;
+  has_original_commits?: boolean;
+  function_count?: number;
+  pushed_label?: string;
+  stars?: number;
+  pushed_at?: string;
+  clone_url?: string;
+  default_branch?: string;
+  private?: boolean;
+}
+
+export interface PortfolioRepo {
+  id: string;
+  full_name: string;
+  language: string | null;
+  stage: string;
+  progress: number;
+}
+
+export interface PortfolioSelection {
+  repositories: PortfolioRepo[];
+}
+
+export interface PortfolioProfile {
+  repositories: PortfolioRepo[];
+  total_files: number;
+  total_functions: number;
+  excluded_files: number;
+  scores: Scores;
+  findings: Finding[];
+}
+
+export interface CurrentUser {
+  user: string;
+  mock_mode: boolean;
 }
 
 export interface CodeSlice {
@@ -148,8 +180,10 @@ export interface CodeSlice {
 }
 
 export interface AnalysisStatus {
+  repo_id?: string;
   stage: string;
   step: number;
   progress: number;
   done: boolean;
+  error?: string | null;
 }

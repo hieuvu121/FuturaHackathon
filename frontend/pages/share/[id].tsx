@@ -5,26 +5,27 @@ import { useEffect, useState } from "react";
 import EvidenceLink from "@/components/EvidenceLink";
 import { CheckIcon, CopyIcon } from "@/components/Icons";
 import PageSkeleton from "@/components/PageSkeleton";
-import { getScores, updateShareVisibility } from "@/lib/data";
-import type { Scores } from "@/lib/types";
+import { getCurrentUser, getPortfolioProfile } from "@/lib/data";
+import type { PortfolioProfile } from "@/lib/types";
 export default function SharePage() {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
-  const [scores, setScores] = useState<Scores | null>(null);
-  const [isPublic, setIsPublic] = useState(true);
+  const [profile, setProfile] = useState<PortfolioProfile | null>(null);
+  const [login, setLogin] = useState("");
   const [copied, setCopied] = useState(false);
   const [loadError, setLoadError] = useState("");
-  const [visibilityState, setVisibilityState] = useState<"idle" | "saving" | "saved">("idle");
   const shareId = typeof router.query.id === "string" ? router.query.id : "yourhandle";
-  const shareUrl = `retrace.app/share/${shareId}`;
+  const shareUrl = router.isReady && typeof window !== "undefined" ? window.location.href : `/share/${shareId}`;
 
   useEffect(() => {
-    getScores("orders-api").then(setScores).catch((error: unknown) => setLoadError(error instanceof Error ? error.message : "The public profile could not be loaded."));
+    Promise.all([getPortfolioProfile(), getCurrentUser()])
+      .then(([profileData, user]) => { setProfile(profileData); setLogin(user.user); })
+      .catch((error: unknown) => setLoadError(error instanceof Error ? error.message : "The profile preview could not be loaded."));
   }, []);
 
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(`https://${shareUrl}`);
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1600);
     } catch {
@@ -33,27 +34,12 @@ export default function SharePage() {
     }
   }
 
-  async function toggleVisibility() {
-    if (visibilityState === "saving") return;
-    const nextPublic = !isPublic;
-    setIsPublic(nextPublic);
-    setVisibilityState("saving");
-    setLoadError("");
-    try {
-      await updateShareVisibility(shareId, nextPublic);
-      setVisibilityState("saved");
-      window.setTimeout(() => setVisibilityState("idle"), 1600);
-    } catch {
-      setIsPublic(!nextPublic);
-      setVisibilityState("idle");
-      setLoadError("Visibility could not be saved. Your previous setting is still active.");
-    }
-  }
+  if (loadError && !profile) return <main className="page"><div className="error-state" role="alert">{loadError}</div></main>;
+  if (!profile) return <PageSkeleton label="Preparing your profile preview" />;
 
-  if (loadError && !scores) return <main className="page"><div className="error-state" role="alert">{loadError}</div></main>;
-  if (!scores) return <PageSkeleton label="Preparing your public profile" />;
-
+  const { scores } = profile;
   const verified = scores.skills.filter((skill) => skill.tier === "verified");
+  const initials = login.slice(0, 2).toUpperCase() || "GH";
   const container = { hidden: {}, show: { transition: { staggerChildren: reduceMotion ? 0 : .08 } } };
   const item = { hidden: reduceMotion ? {} : { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: reduceMotion ? 0 : .5, ease: [.2,.8,.2,1] as const } } };
 
@@ -61,20 +47,14 @@ export default function SharePage() {
     <motion.main className="page share-page" variants={container} initial="hidden" animate="show">
       <motion.header className="page-header" variants={item}>
         <p className="eyebrow">Share</p>
-        <h1 className="page-title">A public profile made of <span className="gradient-text">proof</span></h1>
-        <p className="page-copy">Only the verified tier is exported. Touched skills stay private until you verify them in Recall.</p>
+        <h1 className="page-title">A profile preview made of <span className="gradient-text">proof</span></h1>
+        <p className="page-copy">This is an owner-only preview. Public publishing is not enabled yet.</p>
       </motion.header>
 
       {loadError && <div className="error-state" role="alert">{loadError}</div>}
       <div className="share-layout">
         <motion.aside className="owner-controls surface" variants={item}>
-          <div className="public-control">
-            <span><strong>Public profile</strong><small>{isPublic ? "Anyone with the link can view" : "Only you can view"}</small></span>
-            <button type="button" role="switch" aria-checked={isPublic} aria-label="Public profile" aria-busy={visibilityState === "saving"} disabled={visibilityState === "saving"} className={`toggle-switch${isPublic ? " on" : ""}`} onClick={() => void toggleVisibility()}>
-              <motion.span layout transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 480, damping: 30 }} />
-            </button>
-          </div>
-          <div className="save-status" role="status" aria-live="polite">{visibilityState === "saving" ? "Saving visibility..." : visibilityState === "saved" ? "Visibility saved" : ""}</div>
+          <div className="public-control"><span><strong>Owner preview</strong><small>Publishing controls are not connected yet</small></span></div>
           <label htmlFor="share-link">Link</label>
           <div className="copy-row">
             <input id="share-link" className="mono" value={shareUrl} readOnly onFocus={(event) => event.currentTarget.select()} />
@@ -83,14 +63,14 @@ export default function SharePage() {
             </button>
             <span className="sr-only" role="status" aria-live="polite">{copied ? "Share link copied" : ""}</span>
           </div>
-          <p>Every skill on the public page keeps its evidence link, so a reader can open the exact lines that support the claim.</p>
+          <p>Verified skills retain their repository-specific evidence links in this preview.</p>
         </motion.aside>
 
-        <motion.section className={`public-profile surface${isPublic ? "" : " private-preview"}`} variants={item}>
-          {!isPublic && <span className="private-badge">Private preview</span>}
+        <motion.section className="public-profile surface private-preview" variants={item}>
+          <span className="private-badge">Owner preview</span>
           <header className="public-identity">
-            <span className="share-avatar">YH</span>
-            <div><h2>@yourhandle</h2><p>{verified.length} verified skills across 3 repositories</p></div>
+            <span className="share-avatar">{initials}</span>
+            <div><h2>@{login}</h2><p>{verified.length} verified skills across {profile.repositories.length} repositories</p></div>
           </header>
           {verified.length > 0 ? <ul className="verified-list">
             {verified.map((skill) => {

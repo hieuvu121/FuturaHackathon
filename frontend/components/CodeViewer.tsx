@@ -5,7 +5,7 @@ import { getCode } from "@/lib/data";
 import type { CodeSlice, Finding } from "@/lib/types";
 
 export interface CodeViewerProps {
-  repoId?: string;
+  repoId: string;
   file: string;
   startLine: number;
   lines: number | string[];
@@ -15,7 +15,7 @@ export interface CodeViewerProps {
 }
 
 export default function CodeViewer({
-  repoId = "orders-api",
+  repoId,
   file,
   startLine,
   lines,
@@ -28,29 +28,34 @@ export default function CodeViewer({
   const [error, setError] = useState<string | null>(null);
   const lineCount = Array.isArray(lines) ? lines.length : lines;
   const overrideKey = Array.isArray(lines) ? lines.join("\n") : "";
+  const suppliedSlice: CodeSlice | null = Array.isArray(lines)
+    ? { file, start: startLine, end: startLine + lines.length - 1, lines, commit }
+    : null;
 
   useEffect(() => {
     let active = true;
+    if (Array.isArray(lines)) return () => { active = false; };
     getCode(repoId, file, startLine, startLine + lineCount - 1)
       .then((loaded) => {
         if (!active) return;
         setError(null);
-        setSlice(Array.isArray(lines) ? { ...loaded, start: startLine, end: startLine + lines.length - 1, lines } : loaded);
+        setSlice(loaded);
       })
       .catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : "Unable to load this source slice."); });
     return () => { active = false; };
-  }, [file, lineCount, overrideKey, repoId, startLine, lines]);
+  }, [commit, file, lineCount, overrideKey, repoId, startLine, lines]);
 
   const contentKey = useMemo(() => `${file}:${startLine}:${overrideKey || "source"}`, [file, overrideKey, startLine]);
+  const displayedSlice = suppliedSlice ?? slice;
 
-  if (error) return <div className="code-viewer error-state" role="alert">{error}</div>;
-  if (!slice) return <div className="code-viewer code-loading" aria-label={`Loading ${file}`}><span /><span /><span /><span /><span /></div>;
+  if (!suppliedSlice && error) return <div className="code-viewer error-state" role="alert">{error}</div>;
+  if (!displayedSlice) return <div className="code-viewer code-loading" aria-label={`Loading ${file}`}><span /><span /><span /><span /><span /></div>;
 
   return (
     <section className="code-viewer surface" aria-label={`Source code from ${file}`}>
       <header className="code-header">
         <strong>{file}</strong>
-        <span>{commit ?? slice.commit}</span>
+        <span>{commit ?? displayedSlice.commit}</span>
       </header>
       <div className="code-lines-wrap">
         <AnimatePresence mode="popLayout" initial={false}>
@@ -64,8 +69,8 @@ export default function CodeViewer({
             exit={reduceMotion ? undefined : { opacity: 0, x: -12 }}
             transition={{ duration: reduceMotion ? 0 : .24, ease: [.2, .8, .2, 1] }}
           >
-            {slice.lines.map((line, index) => {
-              const lineNumber = slice.start + index;
+            {displayedSlice.lines.map((line, index) => {
+              const lineNumber = displayedSlice.start + index;
               const highlighted = lineNumber >= highlight[0] && lineNumber <= highlight[1];
               return (
                 <div key={lineNumber} className={`code-line${highlighted ? " highlighted" : ""}`}>

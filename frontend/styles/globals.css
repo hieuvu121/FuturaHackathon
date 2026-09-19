@@ -199,6 +199,11 @@ h1, h2, h3, h4 { font-family: var(--font-heading), sans-serif; letter-spacing: -
 
 .connect-layout { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 26px; align-items: stretch; }
 .repo-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 13px; }
+.repo-pagination { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 14px; padding-top: 8px; }
+.repo-pagination span { color: var(--text-secondary); font-size: 13px; }
+.repo-pagination .secondary-button { min-width: 96px; }
+.analysis-banner { position: sticky; top: 12px; z-index: 30; display: flex; align-items: center; justify-content: space-between; max-width: 1180px; margin: 12px auto -2px; padding: 10px 14px; border: 1px solid rgba(20,116,184,.22); border-radius: 12px; color: #0e568b; background: rgba(235,247,255,.96); box-shadow: 0 8px 22px rgba(28,78,111,.08); font-size: 13px; text-decoration: none; backdrop-filter: blur(14px); }
+.analysis-banner.failed { color: #9b3c2c; border-color: rgba(155,60,44,.24); background: rgba(255,241,237,.97); }
 .repo-card { min-height: 108px; padding: 20px; display: flex; align-items: center; gap: 16px; text-align: left; border: 1px solid rgba(157,182,214,.4); border-radius: 20px; color: var(--ink); background: linear-gradient(145deg, rgba(255,255,255,.87), rgba(248,252,255,.68)); box-shadow: inset 0 1px 0 rgba(255,255,255,.76); cursor: pointer; }
 .repo-card.selected { border-color: #2f74e8; background: radial-gradient(circle at 100% 0%, rgba(25,195,155,.13), transparent 46%), linear-gradient(120deg, rgba(220,233,255,.82), rgba(238,251,247,.72)); }
 .repo-card:disabled { color: #70859a; cursor: not-allowed; opacity: .68; transform: none; }

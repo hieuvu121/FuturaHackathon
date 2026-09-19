@@ -19,7 +19,7 @@ export default function EvidenceLink({ evidence, onOpen, findingId }: EvidenceLi
 
   const href = findingId
     ? { pathname: "/profile", query: { ev: findingId } }
-    : { pathname: "/profile", query: { file: evidence.file, from: evidence.lines[0], to: evidence.lines[1], commit: evidence.commit ?? undefined } };
+    : { pathname: "/profile", query: { repo: evidence.repo_id ?? undefined, file: evidence.file, from: evidence.lines[0], to: evidence.lines[1], commit: evidence.commit ?? undefined } };
 
   return <Link className={className} href={href}>{content}</Link>;
 }

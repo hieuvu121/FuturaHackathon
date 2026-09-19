@@ -7,16 +7,12 @@ import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import CodeViewer from "@/components/CodeViewer";
 import PageSkeleton from "@/components/PageSkeleton";
 import QuestionCard from "@/components/QuestionCard";
-import { getQuestions, getRepoMap, submitAnswer } from "@/lib/data";
-import type { FunctionNode, GradeResult, Question } from "@/lib/types";
-
-const REPO_ID = "orders-api";
-const TYPES = ["recall", "justify", "transfer", "debug", "extend"] as const;
+import { ApiError, getPortfolioQuestions, submitAnswer } from "@/lib/data";
+import type { GradeResult, Question } from "@/lib/types";
 
 export default function RecallPage() {
   const reduceMotion = useReducedMotion();
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [target, setTarget] = useState<FunctionNode | null>(null);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [loadError, setLoadError] = useState("");
@@ -26,20 +22,30 @@ export default function RecallPage() {
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
-    Promise.all([getQuestions(REPO_ID), getRepoMap(REPO_ID)])
-      .then(([questionData, mapData]) => {
+    let active = true;
+    let timer: number | undefined;
+    async function load() {
+      try {
+        const questionData = await getPortfolioQuestions();
+        if (!active) return;
         setQuestions(questionData);
-        setTarget(mapData.functions.find((node) => node.name === "apply_discounts") ?? mapData.functions[0] ?? null);
         setLoaded(true);
-      })
-      .catch((error: unknown) => {
-        setLoadError(error instanceof Error ? error.message : "Revision questions could not be loaded.");
-        setLoaded(true);
-      });
+      } catch (error: unknown) {
+        if (!active) return;
+        if (error instanceof ApiError && [404, 409].includes(error.status)) {
+          timer = window.setTimeout(load, 1800);
+        } else {
+          setLoadError(error instanceof Error ? error.message : "Revision questions could not be loaded.");
+          setLoaded(true);
+        }
+      }
+    }
+    void load();
+    return () => { active = false; if (timer) window.clearTimeout(timer); };
   }, []);
 
   const question = questions[index];
-  const shownLines = useMemo(() => question?.type === "debug" ? question.code_context.split("\n") : 18, [question]);
+  const shownLines = useMemo(() => question?.type === "debug" ? question.code_context.split("\n") : question ? question.target.lines[1] - question.target.lines[0] + 1 : 1, [question]);
 
   function goTo(nextIndex: number) {
     if (nextIndex < 0 || nextIndex >= questions.length || nextIndex === index) return;
@@ -61,7 +67,7 @@ export default function RecallPage() {
 
   if (loadError) return <main className="page"><div className="error-state" role="alert">{loadError}</div></main>;
   if (!loaded) return <PageSkeleton label="Preparing a revision session" />;
-  if (!question || !target) return (
+  if (!question) return (
     <main className="page">
       <section className="empty-state surface">
         <p className="eyebrow">Recall</p>
@@ -81,36 +87,36 @@ export default function RecallPage() {
     <motion.main className="page recall-page" variants={container} initial="hidden" animate="show">
       <motion.header className="page-header" variants={item}>
         <p className="eyebrow">Recall</p>
-        <h1 className="page-title">Revisit code you wrote 7 weeks ago</h1>
+        <h1 className="page-title">Revisit patterns across your portfolio</h1>
         <p className="page-copy">This is revision, not an exam. There is no failing grade, and nothing here is ranked or shared.</p>
       </motion.header>
 
       <div className="recall-layout">
         <motion.section className="recall-source" variants={item}>
           <CodeViewer
+            repoId={question.target.repo_id ?? ""}
             file={question.target.file}
-            startLine={41}
+            startLine={question.target.lines[0]}
             lines={shownLines}
-            highlight={question.type === "debug" ? [50, 54] : [46, 54]}
+            highlight={question.target.lines}
             commit={question.target.commit}
           />
           <div className="recall-metadata" aria-label="Function metadata">
-            <span className="chip">complexity {target.complexity}</span>
-            <span className="chip">no test coverage</span>
-            <span className="chip">author ratio {target.author_ratio.toFixed(2)}</span>
-            <span className="chip">modified {target.times_modified} times</span>
+            <span className="chip mono">repository {question.target.repo_id}</span>
+            <span className="chip">{question.target_name}</span>
+            {question.skill_ids.map((skill) => <span className="chip" key={skill}>{skill}</span>)}
           </div>
         </motion.section>
 
         <motion.section className="recall-flow" variants={item}>
           <div className="question-tabs" role="tablist" aria-label="Question types">
-            {TYPES.map((type, tabIndex) => {
+            {questions.map((tabQuestion, tabIndex) => {
               const active = tabIndex === index;
               return (
                 <button
-                  key={type}
+                  key={tabQuestion.id}
                   ref={(node) => { tabRefs.current[tabIndex] = node; }}
-                  id={`recall-tab-${type}`}
+                  id={`recall-tab-${tabQuestion.id}`}
                   type="button"
                   role="tab"
                   aria-selected={active}
@@ -120,7 +126,7 @@ export default function RecallPage() {
                   onClick={() => goTo(tabIndex)}
                 >
                   {active && <motion.span layoutId="question-tab-pill" transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 330, damping: 31 }} />}
-                  <strong>{type}</strong>
+                  <strong>{tabQuestion.type}</strong>
                 </button>
               );
             })}
@@ -132,7 +138,7 @@ export default function RecallPage() {
               className="recall-card-wrap"
               id="recall-question-panel"
               role="tabpanel"
-              aria-labelledby={`recall-tab-${question.type}`}
+              aria-labelledby={`recall-tab-${question.id}`}
               custom={direction}
               initial={reduceMotion ? false : { opacity: 0, x: direction > 0 ? 64 : -64 }}
               animate={{ opacity: 1, x: 0 }}

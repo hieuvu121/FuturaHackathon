@@ -42,6 +42,16 @@ class Repo(Base):
     clone_path: Mapped[str | None] = mapped_column(Text, default=None)
 
 
+class PortfolioRepo(Base):
+    """The repositories currently selected as one user capability portfolio."""
+
+    __tablename__ = "portfolio_repos"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    repo_id: Mapped[int] = mapped_column(ForeignKey("repos.id"), primary_key=True)
+    selected_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+
+
 class Analysis(Base):
     __tablename__ = "analyses"
 

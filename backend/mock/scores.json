@@ -1,12 +1,12 @@
 {
   "repo":"orders-api",
   "dimensions":[
-    {"dimension":"Architecture and layering","level":2,"rationale":"Business rules sit in route handlers in 4 of 11 endpoints.","evidence":[{"file":"orders/api/views.py","lines":[88,101],"commit":"7cd201a"}],"metric_basis":{"route_handlers_with_business_logic":4,"endpoints":11}},
-    {"dimension":"Complexity control","level":2,"rationale":"Median complexity is 6, but three hotspots score above 12.","evidence":[{"file":"orders/services/pricing.py","lines":[46,54],"commit":"a41c9e2"}],"metric_basis":{"median_complexity":6,"hotspots_over_12":3}},
-    {"dimension":"Testing","level":1,"rationale":"Tests map to 18% of functions, and none cover the main hotspot.","evidence":[{"file":"orders/services/pricing.py","lines":[41,58],"commit":"a41c9e2"}],"metric_basis":{"test_mapping_ratio":0.18,"untested_hotspots":3}},
-    {"dimension":"Error handling","level":2,"rationale":"Two retry paths swallow broad exceptions without recording context.","evidence":[{"file":"notify/worker.py","lines":[29,31],"commit":"be390d1"}],"metric_basis":{"broad_except_count":2,"swallowed_exception_count":2}},
-    {"dimension":"Domain modelling","level":3,"rationale":"Order, Stock, and Promotion each have one reusable domain representation.","evidence":[{"file":"orders/api/views.py","lines":[90,91],"commit":"7cd201a"}],"metric_basis":{"domain_types":7,"duplicate_concepts":1}},
-    {"dimension":"Version control habits","level":3,"rationale":"Commits are focused and refactors are kept separate from features.","evidence":[{"file":"orders/services/pricing.py","lines":[41,58],"commit":"a41c9e2"}],"metric_basis":{"median_commit_files":3,"refactor_ratio":0.17}}
+    {"dimension":"code_structure","level":2,"rationale":"Business rules sit in route handlers in 4 of 11 endpoints.","evidence":[{"file":"orders/api/views.py","lines":[88,101],"commit":"7cd201a"}],"metric_basis":{"route_handlers_with_business_logic":4,"endpoints":11}},
+    {"dimension":"security_awareness","level":1,"rationale":"The sampled code has no explicit security controls or security-focused tests.","evidence":[],"metric_basis":{"security_controls_found":0,"security_tests_found":0}},
+    {"dimension":"testing","level":1,"rationale":"Tests map to 18% of functions, and none cover the main hotspot.","evidence":[{"file":"orders/services/pricing.py","lines":[41,58],"commit":"a41c9e2"}],"metric_basis":{"test_mapping_ratio":0.18,"untested_hotspots":3}},
+    {"dimension":"error_handling","level":2,"rationale":"Two retry paths swallow broad exceptions without recording context.","evidence":[{"file":"notify/worker.py","lines":[29,31],"commit":"be390d1"}],"metric_basis":{"broad_except_count":2,"swallowed_exception_count":2}},
+    {"dimension":"domain_modelling","level":3,"rationale":"Order, Stock, and Promotion each have one reusable domain representation.","evidence":[{"file":"orders/api/views.py","lines":[90,91],"commit":"7cd201a"}],"metric_basis":{"domain_types":7,"duplicate_concepts":1}},
+    {"dimension":"version_control","level":3,"rationale":"Commits are focused and refactors are kept separate from features.","evidence":[{"file":"orders/services/pricing.py","lines":[41,58],"commit":"a41c9e2"}],"metric_basis":{"median_commit_files":3,"refactor_ratio":0.17}}
   ],
   "skills":[
     {"skill_id":"REST API design","tier":"verified","evidence":[{"file":"orders/api/views.py","lines":[92,98],"commit":"7cd201a"}]},

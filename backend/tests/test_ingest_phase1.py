@@ -45,6 +45,35 @@ def test_clone_cleans_partial_checkout_when_size_limit_is_exceeded(tmp_path: Pat
     assert not (tmp_path / "cache" / "developer" / "project").exists()
 
 
+def test_sync_reuses_clone_and_reports_only_changed_files(tmp_path: Path):
+    source = tmp_path / "source"
+    origin = clone_service.Repo.init(source)
+    origin.config_writer().set_value("user", "name", "Test").set_value(
+        "user", "email", "test@example.com"
+    ).release()
+    (source / "app.py").write_text("value = 1\n", encoding="utf-8")
+    origin.index.add(["app.py"])
+    origin.index.commit("first")
+
+    settings = Settings(cache_dir=tmp_path / "cache", max_repo_mb=5)
+    destination = clone_service.cache_path(settings, "developer", "owner/project")
+    destination.parent.mkdir(parents=True)
+    clone_service.Repo.clone_from(source, destination)
+
+    (source / "app.py").write_text("value = 2\n", encoding="utf-8")
+    (source / "new.py").write_text("created = True\n", encoding="utf-8")
+    origin.index.add(["app.py", "new.py"])
+    origin.index.commit("second")
+
+    updated = clone_service.sync(settings, "developer", "owner/project", "")
+    unchanged = clone_service.sync(settings, "developer", "owner/project", "")
+
+    assert updated.is_incremental is True
+    assert updated.changed_files == ["app.py", "new.py"]
+    assert (destination / "app.py").read_text(encoding="utf-8") == "value = 2\n"
+    assert unchanged.changed_files == []
+
+
 @pytest.mark.parametrize("value", ["../user", "a/b", "", ".", ".."])
 def test_clone_rejects_unsafe_cache_segments(tmp_path: Path, value: str):
     settings = Settings(cache_dir=tmp_path / "cache")

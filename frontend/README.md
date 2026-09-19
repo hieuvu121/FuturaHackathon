@@ -1,6 +1,6 @@
 # Retrace frontend
 
-The frontend is a Next.js Pages Router application that runs entirely from mock JSON until the backend API is available.
+The frontend is a Next.js Pages Router application connected to the portfolio-level backend API.
 
 ## Run locally
 
@@ -25,19 +25,17 @@ npm run build
 
 `lib/data.ts` is the only mock/live boundary. Components never import mock files or call `fetch` directly.
 
-Mock mode is the default:
-
-```env
-NEXT_PUBLIC_USE_MOCK=true
-```
-
-It loads the canonical JSON from `../backend/mock/`.
-
-To use the backend:
+Live API mode is the default:
 
 ```env
 NEXT_PUBLIC_USE_MOCK=false
 NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+For an offline UI rehearsal, enable canonical mock JSON explicitly:
+
+```env
+NEXT_PUBLIC_USE_MOCK=true
 ```
 
 Restart the development server after changing environment variables.
