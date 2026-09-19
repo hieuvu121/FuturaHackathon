@@ -24,8 +24,10 @@ class Settings(BaseSettings):
     session_secret: str = "dev-only-change-me"
 
     # --- LLM ---
+    llm_provider: Literal["anthropic", "openai"] = "openai"
     anthropic_api_key: str = ""
-    scanner_model: str = "claude-sonnet-5"
+    openai_api_key: str = ""
+    scanner_model: str = "gpt-5"
     generator_model: str = "claude-sonnet-5"
     grader_model: str = "claude-sonnet-5"
 
