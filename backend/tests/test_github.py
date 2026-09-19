@@ -62,7 +62,7 @@ def test_authorize_url_contains_callback_scopes_and_csrf_state():
 
 def test_authorize_url_requires_credentials():
     with pytest.raises(RuntimeError, match="credentials"):
-        github.authorize_url(Settings(), "state")
+        github.authorize_url(Settings(github_client_id="", github_client_secret=""), "state")
 
 
 def test_exchange_code_returns_token(monkeypatch):
