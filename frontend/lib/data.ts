@@ -25,6 +25,7 @@ import type {
   Question,
   Repo,
   RepoMap,
+  RoadmapGraph,
   Scores,
 } from "./types";
 
@@ -147,6 +148,14 @@ export async function getRoadmap(repoId: string, role = "backend", region = "AU"
 export async function getPortfolioRoadmap(role = "backend", region = "AU"): Promise<Buckets> {
   if (USE_MOCK) return getRoadmap("orders-api", role, region);
   return request<Buckets>(`/repos/portfolio/roadmap?role=${encodeURIComponent(role)}&region=${encodeURIComponent(region)}`);
+}
+
+export async function getRoadmapGraph(role = "software_engineer", region = "AU"): Promise<RoadmapGraph> {
+  // Always served by the API, in both modes. Grouping skills into concepts needs
+  // the taxonomy in skills.yaml, which only the backend has -- and the backend
+  // has its own mock mode, so this still works with no database behind it.
+  const query = new URLSearchParams({ role, region });
+  return request<RoadmapGraph>(`/repos/portfolio/roadmap/graph?${query}`);
 }
 
 export async function getCode(repoId: string, file: string, start: number, end: number): Promise<CodeSlice> {

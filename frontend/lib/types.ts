@@ -187,3 +187,35 @@ export interface AnalysisStatus {
   done: boolean;
   error?: string | null;
 }
+
+export type NodeStatus = "verified" | "familiar" | "new";
+
+export interface ConceptSkill {
+  skill_id: string;
+  skill_name: string;
+  status: NodeStatus;
+  /** Personalised next step, derived by the backend from tier + taxonomy proximity. */
+  focus: string;
+  related_to: string[];
+  evidence: Evidence[];
+  market_frequency: number | null;
+  provenance: Provenance | null;
+  priority: number;
+}
+
+export interface RoadmapConcept {
+  concept_id: string;
+  concept_name: string;
+  summary: string;
+  verified_count: number;
+  familiar_count: number;
+  new_count: number;
+  priority: number;
+  skills: ConceptSkill[];
+}
+
+export interface RoadmapGraph {
+  role: string;
+  region: string;
+  concepts: RoadmapConcept[];
+}

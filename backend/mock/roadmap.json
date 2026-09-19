@@ -1,44 +1,547 @@
 {
-  "backend":{
-    "role":"backend","region":"AU",
-    "revise":[
-      {"skill_id":"exception_handling","skill_name":"Exception handling","bucket":"revise","reason":"Retries in notify-worker swallow every error type.","evidence":[{"file":"notify/worker.py","lines":[29,31],"commit":"be390d1"}],"market_frequency":0.64,"provenance":{"source_kind":"seeded","source_name":"Seeded demo values, not scraped job ads","confidence":0.55,"sample_size":250,"collected_at":"2026-09-18"},"priority":0.94},
-      {"skill_id":"unit_testing","skill_name":"Unit testing with pytest","bucket":"revise","reason":"Your most-changed function has no test mapped to it.","evidence":[{"file":"orders/services/pricing.py","lines":[41,58],"commit":"a41c9e2"}],"market_frequency":0.71,"provenance":{"source_kind":"seeded","source_name":"Seeded demo values, not scraped job ads","confidence":0.55,"sample_size":250,"collected_at":"2026-09-18"},"priority":0.89}
+  "software_engineer": {
+    "role": "software_engineer",
+    "region": "AU",
+    "revise": [
+      {
+        "skill_id": "exception_handling",
+        "skill_name": "Exception handling",
+        "bucket": "revise",
+        "reason": "Retries in notify-worker swallow every error type.",
+        "evidence": [
+          {
+            "file": "notify/worker.py",
+            "lines": [
+              29,
+              31
+            ],
+            "commit": "be390d1"
+          }
+        ],
+        "market_frequency": 0.64,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.55,
+          "sample_size": 250,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.94
+      },
+      {
+        "skill_id": "unit_testing",
+        "skill_name": "Unit testing with pytest",
+        "bucket": "revise",
+        "reason": "Your most-changed function has no test mapped to it.",
+        "evidence": [
+          {
+            "file": "orders/services/pricing.py",
+            "lines": [
+              41,
+              58
+            ],
+            "commit": "a41c9e2"
+          }
+        ],
+        "market_frequency": 0.71,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.55,
+          "sample_size": 250,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.89
+      }
     ],
-    "deepen":[
-      {"skill_id":"rest_api_design","skill_name":"REST API design","bucket":"deepen","reason":"Verified in Recall. Next, move business rules out of handlers.","evidence":[{"file":"orders/api/views.py","lines":[92,98],"commit":"7cd201a"}],"market_frequency":0.78,"provenance":{"source_kind":"seeded","source_name":"Seeded demo values, not scraped job ads","confidence":0.55,"sample_size":250,"collected_at":"2026-09-18"},"priority":0.81},
-      {"skill_id":"refactoring","skill_name":"Refactoring conditionals","bucket":"deepen","reason":"Verified on a transfer question this week.","evidence":[{"file":"orders/services/pricing.py","lines":[46,54],"commit":"a41c9e2"}],"market_frequency":0.35,"provenance":{"source_kind":"seeded","source_name":"Seeded demo values, not scraped job ads","confidence":0.55,"sample_size":250,"collected_at":"2026-09-18"},"priority":0.72}
+    "deepen": [
+      {
+        "skill_id": "rest_api_design",
+        "skill_name": "REST API design",
+        "bucket": "deepen",
+        "reason": "Verified in Recall. Next, move business rules out of handlers.",
+        "evidence": [
+          {
+            "file": "orders/api/views.py",
+            "lines": [
+              92,
+              98
+            ],
+            "commit": "7cd201a"
+          }
+        ],
+        "market_frequency": 0.78,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.55,
+          "sample_size": 250,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.81
+      },
+      {
+        "skill_id": "refactoring",
+        "skill_name": "Refactoring conditionals",
+        "bucket": "deepen",
+        "reason": "Verified on a transfer question this week.",
+        "evidence": [
+          {
+            "file": "orders/services/pricing.py",
+            "lines": [
+              46,
+              54
+            ],
+            "commit": "a41c9e2"
+          }
+        ],
+        "market_frequency": 0.35,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.55,
+          "sample_size": 250,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.72
+      }
     ],
-    "learn_new":[
-      {"skill_id":"message_queues","skill_name":"Message queues","bucket":"learn_new","reason":"Your worker already acknowledges jobs by hand, so this is one step away.","evidence":[{"file":"notify/worker.py","lines":[23,34],"commit":"be390d1"}],"market_frequency":0.52,"provenance":{"source_kind":"seeded","source_name":"Seeded demo values, not scraped job ads","confidence":0.55,"sample_size":250,"collected_at":"2026-09-18"},"priority":0.67},
-      {"skill_id":"docker","skill_name":"Docker","bucket":"learn_new","reason":"No Dockerfile appears in any selected repository.","evidence":[],"market_frequency":0.69,"provenance":{"source_kind":"seeded","source_name":"Seeded demo values, not scraped job ads","confidence":0.55,"sample_size":250,"collected_at":"2026-09-18"},"priority":0.61},
-      {"skill_id":"ci","skill_name":"CI pipelines","bucket":"learn_new","reason":"Tests exist, but nothing runs them on push.","evidence":[],"market_frequency":0.58,"provenance":{"source_kind":"seeded","source_name":"Seeded demo values, not scraped job ads","confidence":0.55,"sample_size":250,"collected_at":"2026-09-18"},"priority":0.56}
+    "learn_new": [
+      {
+        "skill_id": "message_queues",
+        "skill_name": "Message queues",
+        "bucket": "learn_new",
+        "reason": "Your worker already acknowledges jobs by hand, so this is one step away.",
+        "evidence": [
+          {
+            "file": "notify/worker.py",
+            "lines": [
+              23,
+              34
+            ],
+            "commit": "be390d1"
+          }
+        ],
+        "market_frequency": 0.52,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.55,
+          "sample_size": 250,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.67
+      },
+      {
+        "skill_id": "docker",
+        "skill_name": "Docker",
+        "bucket": "learn_new",
+        "reason": "No Dockerfile appears in any selected repository.",
+        "evidence": [],
+        "market_frequency": 0.69,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.55,
+          "sample_size": 250,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.61
+      },
+      {
+        "skill_id": "ci",
+        "skill_name": "CI pipelines",
+        "bucket": "learn_new",
+        "reason": "Tests exist, but nothing runs them on push.",
+        "evidence": [],
+        "market_frequency": 0.58,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.55,
+          "sample_size": 250,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.56
+      }
     ]
   },
-  "data":{
-    "role":"data","region":"AU",
-    "revise":[
-      {"skill_id":"error_handling","skill_name":"Pipeline error handling","bucket":"revise","reason":"The notification worker shows the same retry pattern used in batch jobs.","evidence":[{"file":"notify/worker.py","lines":[29,31],"commit":"be390d1"}],"market_frequency":0.58,"provenance":{"source_kind":"seeded","source_name":"Seeded demo values, not scraped job ads","confidence":0.5,"sample_size":180,"collected_at":"2026-09-18"},"priority":0.88}
+  "backend": {
+    "role": "backend",
+    "region": "AU",
+    "revise": [
+      {
+        "skill_id": "exception_handling",
+        "skill_name": "Exception handling",
+        "bucket": "revise",
+        "reason": "Retries in notify-worker swallow every error type.",
+        "evidence": [
+          {
+            "file": "notify/worker.py",
+            "lines": [
+              29,
+              31
+            ],
+            "commit": "be390d1"
+          }
+        ],
+        "market_frequency": 0.64,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.55,
+          "sample_size": 250,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.94
+      },
+      {
+        "skill_id": "unit_testing",
+        "skill_name": "Unit testing with pytest",
+        "bucket": "revise",
+        "reason": "Your most-changed function has no test mapped to it.",
+        "evidence": [
+          {
+            "file": "orders/services/pricing.py",
+            "lines": [
+              41,
+              58
+            ],
+            "commit": "a41c9e2"
+          }
+        ],
+        "market_frequency": 0.71,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.55,
+          "sample_size": 250,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.89
+      }
     ],
-    "deepen":[
-      {"skill_id":"data_modelling","skill_name":"Data modelling","bucket":"deepen","reason":"Your order model is consistent. Extend that discipline to analytical schemas.","evidence":[{"file":"orders/api/views.py","lines":[90,91],"commit":"7cd201a"}],"market_frequency":0.68,"provenance":{"source_kind":"seeded","source_name":"Seeded demo values, not scraped job ads","confidence":0.5,"sample_size":180,"collected_at":"2026-09-18"},"priority":0.77}
+    "deepen": [
+      {
+        "skill_id": "rest_api_design",
+        "skill_name": "REST API design",
+        "bucket": "deepen",
+        "reason": "Verified in Recall. Next, move business rules out of handlers.",
+        "evidence": [
+          {
+            "file": "orders/api/views.py",
+            "lines": [
+              92,
+              98
+            ],
+            "commit": "7cd201a"
+          }
+        ],
+        "market_frequency": 0.78,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.55,
+          "sample_size": 250,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.81
+      },
+      {
+        "skill_id": "refactoring",
+        "skill_name": "Refactoring conditionals",
+        "bucket": "deepen",
+        "reason": "Verified on a transfer question this week.",
+        "evidence": [
+          {
+            "file": "orders/services/pricing.py",
+            "lines": [
+              46,
+              54
+            ],
+            "commit": "a41c9e2"
+          }
+        ],
+        "market_frequency": 0.35,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.55,
+          "sample_size": 250,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.72
+      }
     ],
-    "learn_new":[
-      {"skill_id":"orchestration","skill_name":"Workflow orchestration","bucket":"learn_new","reason":"Your background worker is a close starting point for scheduled data flows.","evidence":[{"file":"notify/worker.py","lines":[23,34],"commit":"be390d1"}],"market_frequency":0.63,"provenance":{"source_kind":"seeded","source_name":"Seeded demo values, not scraped job ads","confidence":0.5,"sample_size":180,"collected_at":"2026-09-18"},"priority":0.7}
+    "learn_new": [
+      {
+        "skill_id": "message_queues",
+        "skill_name": "Message queues",
+        "bucket": "learn_new",
+        "reason": "Your worker already acknowledges jobs by hand, so this is one step away.",
+        "evidence": [
+          {
+            "file": "notify/worker.py",
+            "lines": [
+              23,
+              34
+            ],
+            "commit": "be390d1"
+          }
+        ],
+        "market_frequency": 0.52,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.55,
+          "sample_size": 250,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.67
+      },
+      {
+        "skill_id": "docker",
+        "skill_name": "Docker",
+        "bucket": "learn_new",
+        "reason": "No Dockerfile appears in any selected repository.",
+        "evidence": [],
+        "market_frequency": 0.69,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.55,
+          "sample_size": 250,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.61
+      },
+      {
+        "skill_id": "ci",
+        "skill_name": "CI pipelines",
+        "bucket": "learn_new",
+        "reason": "Tests exist, but nothing runs them on push.",
+        "evidence": [],
+        "market_frequency": 0.58,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.55,
+          "sample_size": 250,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.56
+      }
     ]
   },
-  "ml":{
-    "role":"ml","region":"AU",
-    "revise":[
-      {"skill_id":"unit_testing","skill_name":"Unit testing with pytest","bucket":"revise","reason":"Your most-changed function has no test mapped to it.","evidence":[{"file":"orders/services/pricing.py","lines":[41,58],"commit":"a41c9e2"}],"market_frequency":null,"provenance":{"source_kind":"seeded","source_name":"No market sample available for this demo role","confidence":0.2,"sample_size":null,"collected_at":"2026-09-18"},"priority":0.91},
-      {"skill_id":"exception_handling","skill_name":"Exception handling","bucket":"revise","reason":"Retries swallow every error type.","evidence":[{"file":"notify/worker.py","lines":[29,31],"commit":"be390d1"}],"market_frequency":null,"provenance":{"source_kind":"seeded","source_name":"No market sample available for this demo role","confidence":0.2,"sample_size":null,"collected_at":"2026-09-18"},"priority":0.84}
+  "data": {
+    "role": "data",
+    "region": "AU",
+    "revise": [
+      {
+        "skill_id": "error_handling",
+        "skill_name": "Pipeline error handling",
+        "bucket": "revise",
+        "reason": "The notification worker shows the same retry pattern used in batch jobs.",
+        "evidence": [
+          {
+            "file": "notify/worker.py",
+            "lines": [
+              29,
+              31
+            ],
+            "commit": "be390d1"
+          }
+        ],
+        "market_frequency": 0.58,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.5,
+          "sample_size": 180,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.88
+      }
     ],
-    "deepen":[
-      {"skill_id":"refactoring","skill_name":"Refactoring conditionals","bucket":"deepen","reason":"Verified on a transfer question this week.","evidence":[{"file":"orders/services/pricing.py","lines":[46,54],"commit":"a41c9e2"}],"market_frequency":null,"provenance":{"source_kind":"seeded","source_name":"No market sample available for this demo role","confidence":0.2,"sample_size":null,"collected_at":"2026-09-18"},"priority":0.73}
+    "deepen": [
+      {
+        "skill_id": "data_modelling",
+        "skill_name": "Data modelling",
+        "bucket": "deepen",
+        "reason": "Your order model is consistent. Extend that discipline to analytical schemas.",
+        "evidence": [
+          {
+            "file": "orders/api/views.py",
+            "lines": [
+              90,
+              91
+            ],
+            "commit": "7cd201a"
+          }
+        ],
+        "market_frequency": 0.68,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.5,
+          "sample_size": 180,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.77
+      }
     ],
-    "learn_new":[
-      {"skill_id":"experiment_tracking","skill_name":"Experiment tracking","bucket":"learn_new","reason":"ml-notebooks has runs but no durable record of them.","evidence":[],"market_frequency":null,"provenance":{"source_kind":"seeded","source_name":"No market sample available for this demo role","confidence":0.2,"sample_size":null,"collected_at":"2026-09-18"},"priority":0.68},
-      {"skill_id":"model_serving","skill_name":"Model serving","bucket":"learn_new","reason":"You already build FastAPI services, so deployment is close to what you know.","evidence":[{"file":"orders/api/views.py","lines":[88,101],"commit":"7cd201a"}],"market_frequency":null,"provenance":{"source_kind":"seeded","source_name":"No market sample available for this demo role","confidence":0.2,"sample_size":null,"collected_at":"2026-09-18"},"priority":0.62}
+    "learn_new": [
+      {
+        "skill_id": "orchestration",
+        "skill_name": "Workflow orchestration",
+        "bucket": "learn_new",
+        "reason": "Your background worker is a close starting point for scheduled data flows.",
+        "evidence": [
+          {
+            "file": "notify/worker.py",
+            "lines": [
+              23,
+              34
+            ],
+            "commit": "be390d1"
+          }
+        ],
+        "market_frequency": 0.63,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "Seeded demo values, not scraped job ads",
+          "confidence": 0.5,
+          "sample_size": 180,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.7
+      }
+    ]
+  },
+  "ml": {
+    "role": "ml",
+    "region": "AU",
+    "revise": [
+      {
+        "skill_id": "unit_testing",
+        "skill_name": "Unit testing with pytest",
+        "bucket": "revise",
+        "reason": "Your most-changed function has no test mapped to it.",
+        "evidence": [
+          {
+            "file": "orders/services/pricing.py",
+            "lines": [
+              41,
+              58
+            ],
+            "commit": "a41c9e2"
+          }
+        ],
+        "market_frequency": null,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "No market sample available for this demo role",
+          "confidence": 0.2,
+          "sample_size": null,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.91
+      },
+      {
+        "skill_id": "exception_handling",
+        "skill_name": "Exception handling",
+        "bucket": "revise",
+        "reason": "Retries swallow every error type.",
+        "evidence": [
+          {
+            "file": "notify/worker.py",
+            "lines": [
+              29,
+              31
+            ],
+            "commit": "be390d1"
+          }
+        ],
+        "market_frequency": null,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "No market sample available for this demo role",
+          "confidence": 0.2,
+          "sample_size": null,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.84
+      }
+    ],
+    "deepen": [
+      {
+        "skill_id": "refactoring",
+        "skill_name": "Refactoring conditionals",
+        "bucket": "deepen",
+        "reason": "Verified on a transfer question this week.",
+        "evidence": [
+          {
+            "file": "orders/services/pricing.py",
+            "lines": [
+              46,
+              54
+            ],
+            "commit": "a41c9e2"
+          }
+        ],
+        "market_frequency": null,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "No market sample available for this demo role",
+          "confidence": 0.2,
+          "sample_size": null,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.73
+      }
+    ],
+    "learn_new": [
+      {
+        "skill_id": "experiment_tracking",
+        "skill_name": "Experiment tracking",
+        "bucket": "learn_new",
+        "reason": "ml-notebooks has runs but no durable record of them.",
+        "evidence": [],
+        "market_frequency": null,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "No market sample available for this demo role",
+          "confidence": 0.2,
+          "sample_size": null,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.68
+      },
+      {
+        "skill_id": "model_serving",
+        "skill_name": "Model serving",
+        "bucket": "learn_new",
+        "reason": "You already build FastAPI services, so deployment is close to what you know.",
+        "evidence": [
+          {
+            "file": "orders/api/views.py",
+            "lines": [
+              88,
+              101
+            ],
+            "commit": "7cd201a"
+          }
+        ],
+        "market_frequency": null,
+        "provenance": {
+          "source_kind": "seeded",
+          "source_name": "No market sample available for this demo role",
+          "confidence": 0.2,
+          "sample_size": null,
+          "collected_at": "2026-09-18"
+        },
+        "priority": 0.62
+      }
     ]
   }
 }

@@ -2,44 +2,136 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 import EvidenceLink from "@/components/EvidenceLink";
-import { InfoIcon } from "@/components/Icons";
+import { CheckIcon, InfoIcon } from "@/components/Icons";
 import SourceBadge from "@/components/SourceBadge";
-import { ApiError, getPortfolioRoadmap } from "@/lib/data";
-import type { BucketName, Buckets, RoadmapItem } from "@/lib/types";
-const ROLES = [
-  { id: "backend", label: "Backend engineer" },
-  { id: "data", label: "Data engineer" },
-  { id: "ml", label: "ML engineer" },
-] as const;
+import { ApiError, getRoadmapGraph } from "@/lib/data";
+import type { ConceptSkill, NodeStatus, RoadmapConcept, RoadmapGraph } from "@/lib/types";
 
-const BUCKETS: Array<{ id: BucketName; title: string; description: string }> = [
-  { id: "revise", title: "Revise", description: "Touched in your code, not yet verified" },
-  { id: "deepen", title: "Deepen", description: "Touched and verified, worth taking further" },
-  { id: "learn_new", title: "Learn new", description: "Never touched, in demand, close to what you know" },
-];
+const ROLE = { id: "software_engineer", label: "Software engineer" } as const;
 
-function RoadmapCard({ item, rank, reduceMotion }: { item: RoadmapItem; rank: number; reduceMotion: boolean | null }) {
-  const evidence = item.evidence[0];
-  const hasMarketData = item.market_frequency != null;
+const STATUS_LABEL: Record<NodeStatus, string> = {
+  verified: "Verified",
+  familiar: "You have the basics",
+  new: "New to you",
+};
+
+function StatusMark({ status }: { status: NodeStatus }) {
   return (
-    <motion.article className="roadmap-card" variants={{ hidden: reduceMotion ? {} : { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }}>
-      <header><h3>{item.skill_name}</h3><strong>Priority {rank}</strong></header>
-      <p>{item.reason}</p>
+    <span className={`status-mark status-${status}`} aria-hidden="true">
+      {status === "new" ? null : <CheckIcon width="11" height="11" />}
+    </span>
+  );
+}
+
+function SkillNode({ skill, reduceMotion }: { skill: ConceptSkill; reduceMotion: boolean | null }) {
+  const evidence = skill.evidence[0];
+  return (
+    <motion.li
+      className={`skill-node node-${skill.status}`}
+      data-testid="skill-node"
+      variants={{ hidden: reduceMotion ? {} : { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}
+    >
+      <header>
+        <StatusMark status={skill.status} />
+        <h4>{skill.skill_name}</h4>
+        <span className="skill-status">{STATUS_LABEL[skill.status]}</span>
+      </header>
+      <p className="skill-focus">{skill.focus}</p>
+      {skill.related_to.length > 0 && (
+        <p className="skill-related">Builds on {skill.related_to.join(", ")}</p>
+      )}
       {evidence && <EvidenceLink evidence={evidence} />}
-      <div className="frequency-row">
-        <span className="frequency-bar">
-          {hasMarketData && <motion.i initial={reduceMotion ? false : { scaleX: 0 }} animate={{ scaleX: item.market_frequency ?? 0 }} transition={{ duration: reduceMotion ? 0 : .7, delay: reduceMotion ? 0 : .25, ease: [.2,.8,.2,1] }} />}
-        </span>
-        <small>{hasMarketData ? `in ${Math.round((item.market_frequency ?? 0) * 100)}% of sampled roles` : "No market data"}</small>
+      {skill.market_frequency != null && (
+        <div className="frequency-row">
+          <span className="frequency-bar">
+            <motion.i
+              initial={reduceMotion ? false : { scaleX: 0 }}
+              animate={{ scaleX: skill.market_frequency }}
+              transition={{ duration: reduceMotion ? 0 : 0.6, ease: [0.2, 0.8, 0.2, 1] }}
+            />
+          </span>
+          <small>{Math.round(skill.market_frequency * 100)}% of sampled roles</small>
+        </div>
+      )}
+    </motion.li>
+  );
+}
+
+function ConceptRow({
+  concept,
+  side,
+  open,
+  onToggle,
+  reduceMotion,
+}: {
+  concept: RoadmapConcept;
+  side: "left" | "right";
+  open: boolean;
+  onToggle: () => void;
+  reduceMotion: boolean | null;
+}) {
+  const panelId = `concept-panel-${concept.concept_id}`;
+  const total = concept.verified_count + concept.familiar_count + concept.new_count;
+
+  const detail = (
+    <motion.div
+      className="concept-detail"
+      id={panelId}
+      key={panelId}
+      initial={reduceMotion ? false : { opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
+      transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.2, 0.8, 0.2, 1] }}
+    >
+      <motion.ul
+        className="skill-list"
+        variants={{ hidden: {}, show: { transition: { staggerChildren: reduceMotion ? 0 : 0.06 } } }}
+        initial="hidden"
+        animate="show"
+      >
+        {concept.skills.map((skill) => (
+          <SkillNode key={skill.skill_id} skill={skill} reduceMotion={reduceMotion} />
+        ))}
+      </motion.ul>
+    </motion.div>
+  );
+
+  return (
+    <div className={`concept-row side-${side}`} data-open={open}>
+      <div className="rail rail-left">
+        <AnimatePresence initial={false}>{open && side === "left" && detail}</AnimatePresence>
       </div>
-    </motion.article>
+
+      <button
+        type="button"
+        className="concept-node"
+        data-testid="concept-node"
+        data-concept={concept.concept_id}
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={onToggle}
+      >
+        <h3>{concept.concept_name}</h3>
+        <p>{concept.summary}</p>
+        <div className="concept-counts">
+          {concept.verified_count > 0 && <span className="count count-verified">{concept.verified_count} verified</span>}
+          {concept.familiar_count > 0 && <span className="count count-familiar">{concept.familiar_count} with basics</span>}
+          {concept.new_count > 0 && <span className="count count-new">{concept.new_count} new</span>}
+        </div>
+        <span className="concept-hint">{open ? "Hide detail" : `Show ${total} skill${total === 1 ? "" : "s"}`}</span>
+      </button>
+
+      <div className="rail rail-right">
+        <AnimatePresence initial={false}>{open && side === "right" && detail}</AnimatePresence>
+      </div>
+    </div>
   );
 }
 
 export default function RoadmapPage() {
   const reduceMotion = useReducedMotion();
-  const [role, setRole] = useState<(typeof ROLES)[number]["id"]>("backend");
-  const [roadmap, setRoadmap] = useState<Buckets | null>(null);
+  const [graph, setGraph] = useState<RoadmapGraph | null>(null);
+  const [openConcept, setOpenConcept] = useState<string | null>(null);
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -48,10 +140,14 @@ export default function RoadmapPage() {
     let timer: number | undefined;
     async function load() {
       try {
-        const data = await getPortfolioRoadmap(role);
-        if (active) { setRoadmap(data); setLoading(false); }
+        const data = await getRoadmapGraph(ROLE.id);
+        if (!active) return;
+        setGraph(data);
+        setOpenConcept(data.concepts[0]?.concept_id ?? null);
+        setLoading(false);
       } catch (error: unknown) {
         if (!active) return;
+        // 404/409 mean the analysis has not finished yet, so keep waiting.
         if (error instanceof ApiError && [404, 409].includes(error.status)) {
           timer = window.setTimeout(load, 1800);
         } else {
@@ -61,63 +157,77 @@ export default function RoadmapPage() {
       }
     }
     void load();
-    return () => { active = false; if (timer) window.clearTimeout(timer); };
-  }, [role]);
+    return () => {
+      active = false;
+      if (timer) window.clearTimeout(timer);
+    };
+  }, []);
 
-  const noMarketData = roadmap ? [...roadmap.revise, ...roadmap.deepen, ...roadmap.learn_new].every((item) => item.market_frequency == null) : false;
-  const provenance = roadmap?.revise[0]?.provenance ?? roadmap?.deepen[0]?.provenance ?? roadmap?.learn_new[0]?.provenance;
-
-  function changeRole(nextRole: (typeof ROLES)[number]["id"]) {
-    if (nextRole === role) return;
-    setLoadError("");
-    setLoading(true);
-    setRoadmap(null);
-    setRole(nextRole);
-  }
+  const everySkill = graph?.concepts.flatMap((concept) => concept.skills) ?? [];
+  const noMarketData = everySkill.length > 0 && everySkill.every((skill) => skill.market_frequency == null);
+  const provenance = everySkill.find((skill) => skill.provenance != null)?.provenance ?? null;
 
   return (
-    <motion.main className="page roadmap-page" initial={reduceMotion ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduceMotion ? 0 : .5, ease: [.2,.8,.2,1] }}>
+    <motion.main
+      className="page roadmap-page"
+      initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: reduceMotion ? 0 : 0.5, ease: [0.2, 0.8, 0.2, 1] }}
+    >
       <header className="roadmap-header">
-        <div><p className="eyebrow">Roadmap</p><h1 className="page-title">What to work on next</h1></div>
+        <div>
+          <p className="eyebrow">Roadmap</p>
+          <h1 className="page-title">Where your work goes next</h1>
+          <p className="roadmap-lede">
+            Each box is a concept. Open one to see what to do about it, based on what your code already proves.
+          </p>
+        </div>
         <div className="role-controls">
-          <div role="group" aria-label="Target role">
-            {ROLES.map((option) => <button key={option.id} type="button" className={`role-pill chip${role === option.id ? " active" : ""}`} aria-pressed={role === option.id} onClick={() => changeRole(option.id)}>{option.label}</button>)}
-          </div>
+          <span className="role-pill chip active" aria-current="true">{ROLE.label}</span>
           <div className="market-note">
-            {noMarketData ? <><InfoIcon width="16" height="16" /><span>No market data for this role yet. Ranked by proximity to your code.</span></> : provenance ? <SourceBadge provenance={provenance} /> : null}
+            {noMarketData ? (
+              <>
+                <InfoIcon width="16" height="16" />
+                <span>No market data for this role yet. Ranked by proximity to your code.</span>
+              </>
+            ) : provenance ? (
+              <SourceBadge provenance={provenance} />
+            ) : null}
           </div>
         </div>
       </header>
 
       {loadError && <div className="error-state" role="alert">{loadError}</div>}
-      <AnimatePresence mode="popLayout" initial={false}>
-        {loading ? (
-          <motion.div key={`loading-${role}`} className="roadmap-columns roadmap-skeleton" aria-busy="true" aria-label={`Loading ${role} roadmap`} initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            {BUCKETS.map((bucket) => <div key={bucket.id} className="roadmap-skeleton-column"><span /><i /><i /></div>)}
-          </motion.div>
-        ) : roadmap && (
-          <motion.div
-            key={role}
-            className="roadmap-columns"
-            initial={reduceMotion ? false : { opacity: 0, x: 28 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={reduceMotion ? undefined : { opacity: 0, x: -28 }}
-            transition={{ duration: reduceMotion ? 0 : .3, ease: [.2,.8,.2,1] }}
-          >
-            {BUCKETS.map((bucket) => {
-              const items = [...roadmap[bucket.id]].sort((left, right) => right.priority - left.priority);
-              return (
-                <section className={`roadmap-column bucket-${bucket.id}`} key={bucket.id}>
-                  <header><h2>{bucket.title}</h2><p>{bucket.description}</p></header>
-                  <motion.div variants={{ hidden: {}, show: { transition: { staggerChildren: reduceMotion ? 0 : .08 } } }} initial="hidden" animate="show">
-                    {items.length > 0 ? items.map((item) => <RoadmapCard key={item.skill_id} item={item} rank={item.priority ? Math.max(1, [...roadmap.revise, ...roadmap.deepen, ...roadmap.learn_new].sort((a,b) => b.priority-a.priority).findIndex((entry) => entry.skill_id === item.skill_id) + 1) : 1} reduceMotion={reduceMotion} />) : <div className="empty-bucket"><strong>No recommendations yet</strong><span>More analysed code will make this bucket more useful.</span></div>}
-                  </motion.div>
-                </section>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+      {loading ? (
+        <div className="roadmap-diagram roadmap-skeleton" aria-busy="true" aria-label="Loading roadmap">
+          {[0, 1, 2, 3].map((row) => (
+            <div className="concept-row" key={row}>
+              <div className="rail rail-left" />
+              <span className="concept-skeleton" />
+              <div className="rail rail-right" />
+            </div>
+          ))}
+        </div>
+      ) : graph && graph.concepts.length > 0 ? (
+        <div className="roadmap-diagram" data-testid="roadmap-diagram">
+          {graph.concepts.map((concept, index) => (
+            <ConceptRow
+              key={concept.concept_id}
+              concept={concept}
+              side={index % 2 === 0 ? "right" : "left"}
+              open={openConcept === concept.concept_id}
+              onToggle={() => setOpenConcept(openConcept === concept.concept_id ? null : concept.concept_id)}
+              reduceMotion={reduceMotion}
+            />
+          ))}
+        </div>
+      ) : !loadError ? (
+        <div className="empty-bucket">
+          <strong>No roadmap yet</strong>
+          <span>Analyse a few repositories and this diagram will fill in.</span>
+        </div>
+      ) : null}
     </motion.main>
   );
 }
