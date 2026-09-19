@@ -138,6 +138,11 @@ isolated run against `hieuvu121/ragPullRequest` with stage `done`, progress 100,
 retained for code slices and recall. Unit coverage also verifies progress stages,
 duplicate-run rejection, failure persistence, and failed-clone cleanup.
 
+**Recall-selection checkpoint (2026-09-20):** the five-condition selector and
+five deterministic question types are implemented. Context safely includes the
+target, known callees, and available creating-commit diff, capped near 3k tokens.
+The ownership-checked real endpoint persists its generated `QuestionRow` records.
+
 ---
 
 ### Phase 4 — Demo prep & buffer · ~3h
