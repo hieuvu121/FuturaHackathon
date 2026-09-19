@@ -108,9 +108,10 @@ market frequency is unknown.
 **Verified provider checkpoint (2026-09-20):** the authenticated live flow cloned
 `hieuvu121/ragPullRequest`, ranked its Python files, scanned `indexer/tasks.py`
 with `LLM_PROVIDER=openai` / `SCANNER_MODEL=gpt-5`, and returned 10 typed findings.
-All 10 cited real file ranges and passed `validator.py`; none were dropped. This
-verifies the provider boundary, not the Phase 2 persistence exit criterion, which
-still depends on wiring `ingest/__init__.py` and the analysis storage pipeline.
+All 10 cited real file ranges and passed `validator.py`; none were dropped. The
+real `RepoMap` assembly is also wired and verified against that repository (42
+kept Python files and 106 definitions). Phase 2's persistence exit criterion now
+depends on the analysis orchestration and storage/API branches.
 
 ---
 
@@ -152,7 +153,10 @@ main                          always green, always demo-able
  ├─ feat/a2-clone-filter      Track A, Phase 1
  ├─ feat/a3-parser-metrics    Track A, Phase 2
  ├─ feat/a4-gitlog-blame      Track A, Phase 2
- ├─ feat/a5-pipeline-task     Track A, Phase 3
+ ├─ feat/a5-repo-map-assembly Track A, Phase 2
+ ├─ feat/phase2-analysis-pipeline Tracks A/B, Phase 2
+ ├─ feat/phase2-persistence-api Track A, Phase 2
+ ├─ feat/a6-background-analysis Track A, Phase 3
  │
  ├─ feat/b1-validator         Track B, Phase 1  ← build this first
  ├─ feat/b2-ranker            Track B, Phase 1
@@ -165,8 +169,10 @@ main                          always green, always demo-able
  ├─ feat/d1-skills-yaml       Track D, Phase 1
  ├─ feat/d2-knowledge-seeded  Track D, Phase 1
  ├─ feat/d3-roadmap-buckets   Track D, Phase 2
- ├─ feat/d4-demand-llm        Track D, Phase 2  ← unblocks the roadmap
- └─ feat/d5-market-scraped    Track D, Phase 2/3, only if ads get collected
+ ├─ feat/d4-roadmap-promotion Track D, Phase 3
+ ├─ feat/phase3-integration   Tracks A/B/D, Phase 3
+ ├─ feat/demand-llm           optional; provisional demand fallback
+ └─ feat/market-scraped       optional; validated only if ads get collected
 ```
 
 Naming: `feat/<track-letter><number>-<short-slug>`. The letter tells everyone whose
