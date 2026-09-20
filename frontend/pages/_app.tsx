@@ -15,12 +15,12 @@ const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500", "600"],
 
 const ORDER = ["/start", "/connect", "/recall", "/roadmap", "/share"];
 const META: Record<string, { title: string; description: string }> = {
-  "/start": { title: "Start | Retrace", description: "Connect your repositories, or answer a short survey, and get a roadmap built for you." },
-  "/connect": { title: "Connect repositories | Retrace", description: "Choose the repositories that best represent your engineering work." },
-  "/recall": { title: "Recall session | Retrace", description: "Revisit past code through supportive, evidence-based revision." },
-  "/roadmap": { title: "Learning roadmap | Retrace", description: "Prioritise what to revise, deepen, and learn next." },
-  "/share": { title: "Verified profile | Retrace", description: "Share engineering skills backed by exact source-code evidence." },
-  "/404": { title: "Page not found | Retrace", description: "Return to your Retrace roadmap." },
+  "/start": { title: "Start | mindthegap", description: "Connect your repositories, or answer a short survey, and get a roadmap built for you." },
+  "/connect": { title: "Connect repositories | mindthegap", description: "Choose the repositories that best represent your engineering work." },
+  "/recall": { title: "Recall session | mindthegap", description: "Revisit past code through supportive, evidence-based revision." },
+  "/roadmap": { title: "Learning roadmap | mindthegap", description: "Prioritise what to revise, deepen, and learn next." },
+  "/share": { title: "Verified profile | mindthegap", description: "Share engineering skills backed by exact source-code evidence." },
+  "/404": { title: "Page not found | mindthegap", description: "Return to your mindthegap roadmap." },
 };
 
 function routeIndex(pathname: string) {
@@ -35,7 +35,7 @@ export default function App({ Component, pageProps }: AppProps) {
   const previousIndex = useRef(routeIndex(router.pathname));
   const [direction, setDirection] = useState(1);
   const metaKey = router.pathname.startsWith("/share") ? "/share" : router.pathname;
-  const meta = META[metaKey] ?? { title: "Retrace", description: "Engineering capability, backed by evidence." };
+  const meta = META[metaKey] ?? { title: "mindthegap", description: "Know where you stand, plan where you land." };
 
   useEffect(() => {
     function handleRouteStart(url: string) {
@@ -61,7 +61,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <meta property="og:title" content={meta.title} />
         <meta property="og:description" content={meta.description} />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="/og-retrace.svg" />
+        <meta property="og:image" content="/og-mindthegap.svg" />
         <meta name="twitter:card" content="summary_large_image" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>

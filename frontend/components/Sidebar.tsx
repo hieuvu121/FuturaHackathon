@@ -17,9 +17,11 @@ export const NAV_ITEMS = [
 
 function Logo() {
   return (
-    <Link href="/start" className="brand-link" aria-label="Retrace home">
-      <span className="brand-mark"><RecallIcon width="22" height="22" /></span>
-      <span>Retrace</span>
+    <Link href="/start" className="brand-link" aria-label="mindthegap home">
+      {/* The mark is decorative here: the link already has its name. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- a 1 KB static SVG; next/image adds nothing */}
+      <img className="brand-mark" src="/logo-mark.svg" alt="" width="40" height="40" />
+      <span className="brand-word">mindthe<b>gap</b></span>
     </Link>
   );
 }

@@ -81,7 +81,9 @@ h1, h2, h3, h4 { font-family: var(--font-heading), sans-serif; letter-spacing: -
 }
 .topbar { display: none; }
 .brand-link { display: inline-flex; align-items: center; gap: 11px; padding: 0 7px; color: var(--ink); font: 700 22px/1 var(--font-heading); text-decoration: none; }
-.brand-mark { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 13px; color: white; background: linear-gradient(135deg, var(--decorative-a), var(--decorative-b)); box-shadow: 0 14px 30px -14px rgba(29,95,214,.7), inset 0 1px 0 rgba(255,255,255,.42); }
+.brand-mark { width: 40px; height: 40px; display: block; flex: 0 0 auto; border-radius: 11px; box-shadow: 0 12px 26px -14px rgba(24,33,47,.75); }
+.brand-word { letter-spacing: -.035em; }
+.brand-word b { color: #d9962b; font-weight: inherit; }
 .nav-list { display: grid; gap: 7px; margin-top: 34px; }
 .nav-link { position: relative; isolation: isolate; min-height: 46px; padding: 0 14px; display: flex; align-items: center; gap: 11px; border-radius: 14px; color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 600; transition: transform .2s var(--ease-fluid), color .2s var(--ease-fluid); }
 .nav-link:hover { transform: translateX(4px); color: var(--ink); }

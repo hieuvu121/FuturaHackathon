@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#FFFFFF"/>
+  <g transform="translate(104 96) scale(2.5)">
+    <rect width="64" height="64" rx="15" fill="#18212F"/>
+    <g fill="none" stroke="#17877A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M27 16c-6 0-8 2-8 8v4c0 3-2 4-5 4 3 0 5 1 5 4v4c0 6 2 8 8 8"/>
+      <path d="M37 16c6 0 8 2 8 8v4c0 3 2 4 5 4-3 0-5 1-5 4v4c0 6-2 8-8 8"/>
+    </g>
+    <path d="M28 41h8" fill="none" stroke="#E0A33A" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <text x="300" y="212" font-family="Arial, sans-serif" font-size="104" font-weight="700" letter-spacing="-3"><tspan fill="#18212F">mindthe</tspan><tspan fill="#E0A33A">gap</tspan></text>
+  <text x="104" y="380" fill="#18212F" font-family="Arial, sans-serif" font-size="58" font-weight="700">Know where you stand,</text>
+  <text x="104" y="452" fill="#17877A" font-family="Arial, sans-serif" font-size="58" font-weight="700">plan where you land.</text>
+  <text x="106" y="530" fill="#3E566F" font-family="Arial, sans-serif" font-size="28">A roadmap built from your code, or from a short survey, and checked by recall.</text>
+</svg>
