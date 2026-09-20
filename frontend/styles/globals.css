@@ -480,6 +480,14 @@ h1, h2, h3, h4 { font-family: var(--font-heading), sans-serif; letter-spacing: -
 .topic-chip { padding: 4px 11px; border: 1px solid rgba(47,116,232,.35); border-radius: 99px; color: var(--primary-a); background: rgba(47,116,232,.06); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
 .topic-chip.static { border-color: rgba(157,182,214,.5); color: var(--text-secondary); background: transparent; cursor: default; }
 
+/* The person's level in a skill. Dashed until recall has actually tested it. */
+.level-chip { display: inline-flex; align-items: baseline; gap: 2px; padding: 2px 9px; border: 1px solid transparent; border-radius: 99px; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; vertical-align: middle; white-space: nowrap; }
+.level-chip small { font-size: 10px; font-weight: 600; text-transform: none; letter-spacing: 0; opacity: .85; }
+.level-beginner { color: #5b4a12; background: #fdf0cf; }
+.level-intermediate { color: #123a82; background: #dce9ff; }
+.level-expert { color: #0a4f49; background: #d6f5ec; }
+.level-chip.untested { border-style: dashed; border-color: currentColor; background: transparent; }
+
 /* Accept or dispute. */
 .review-bar { margin-bottom: 22px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border: 1px solid rgba(47,116,232,.35); border-radius: 20px; background: linear-gradient(120deg, rgba(47,116,232,.08), rgba(25,195,155,.08)); }
 .review-bar strong { font-size: 15px; }

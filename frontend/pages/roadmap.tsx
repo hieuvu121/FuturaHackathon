@@ -9,7 +9,7 @@ import {
   ApiError, acceptRoadmap, getRoadmapGraph, getRoadmapReview, redoRecall, tailorRoadmap,
 } from "@/lib/data";
 import type {
-  ConceptSkill, NodeStatus, RoadmapConcept, RoadmapGraph, RoadmapReview, RoadmapStage,
+  ConceptSkill, NodeStatus, Proficiency, RoadmapConcept, RoadmapGraph, RoadmapReview, RoadmapStage,
 } from "@/lib/types";
 
 const ROLE = { id: "software_engineer", label: "Software engineer" } as const;
@@ -27,6 +27,26 @@ const STATUS_LABEL: Record<NodeStatus, string> = {
   familiar: "Basics",
   new: "New",
 };
+
+const PROFICIENCY_LABEL: Record<Proficiency, string> = {
+  beginner: "Beginner",
+  intermediate: "Intermediate",
+  expert: "Expert",
+};
+
+/** The person's level in a skill. Says so plainly while nothing has tested it yet. */
+function LevelChip({ skill, compact = false }: { skill: ConceptSkill; compact?: boolean }) {
+  return (
+    <span
+      className={`level-chip level-${skill.proficiency}${skill.proficiency_tested ? "" : " untested"}`}
+      data-testid="level-chip"
+      title={skill.proficiency_tested ? "Placed by your recall answers" : "Not yet tested by recall"}
+    >
+      {PROFICIENCY_LABEL[skill.proficiency]}
+      {!skill.proficiency_tested && !compact && <small> · not yet tested</small>}
+    </span>
+  );
+}
 
 /** What is selected in the diagram: a concept, or one topic inside it. */
 type Selection =
@@ -89,6 +109,7 @@ function SkillDetail({
       <header>
         <StatusMark status={skill.status} />
         <h4>{skill.skill_name}</h4>
+        <LevelChip skill={skill} />
         <span className="skill-status">{STATUS_LABEL[skill.status]}</span>
       </header>
       <MasteryBar mastery={skill.mastery} status={skill.status} reduceMotion={reduceMotion} label={skill.skill_name} />
@@ -179,7 +200,7 @@ function ConceptSummary({
           <li key={skill.skill_id} className={`topic-item${isHidden(skill) ? " removed" : ""}`}>
             <button type="button" className="topic-row" data-testid="skill-leaf" onClick={() => onPick(skill.skill_id)}>
               <StatusMark status={skill.status} />
-              <span className="topic-name">{skill.skill_name}</span>
+              <span className="topic-name">{skill.skill_name} <LevelChip skill={skill} compact /></span>
               <span className="topic-percent">{Math.round(skill.mastery * 100)}%</span>
               <span className="topic-line">{skill.focus}</span>
             </button>

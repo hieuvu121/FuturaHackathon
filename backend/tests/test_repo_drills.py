@@ -237,3 +237,25 @@ def test_recall_results_replace_the_status_guess_for_mastery():
     assert recall_mastery(NodeStatus.NEW, {2}, set()) == 0.5
     assert recall_mastery(NodeStatus.VERIFIED, {3}, {4}) == 0.75
     assert recall_mastery(NodeStatus.VERIFIED, {3, 4}, set()) == 1.0
+
+
+def test_a_persons_level_is_read_off_the_bar():
+    from app.schemas.roadmap import Proficiency
+    from app.services.roadmap.concepts import proficiency_of
+
+    cases = {
+        # untested
+        (NodeStatus.NEW, (), ()): Proficiency.BEGINNER,
+        (NodeStatus.FAMILIAR, (), ()): Proficiency.INTERMEDIATE,
+        # tested: only "can name it", or nothing at all
+        (NodeStatus.FAMILIAR, (1,), (2,)): Proficiency.BEGINNER,
+        (NodeStatus.FAMILIAR, (), (1, 2)): Proficiency.BEGINNER,
+        # tested: can explain it, can reason about it
+        (NodeStatus.NEW, (2,), (3,)): Proficiency.INTERMEDIATE,
+        (NodeStatus.VERIFIED, (3,), (4,)): Proficiency.INTERMEDIATE,
+        # tested: cleared the hardest level
+        (NodeStatus.VERIFIED, (3, 4), ()): Proficiency.EXPERT,
+    }
+    for (status, passed, failed), expected in cases.items():
+        assert proficiency_of(recall_mastery(status, set(passed), set(failed))) is expected, (status, passed, failed)
+

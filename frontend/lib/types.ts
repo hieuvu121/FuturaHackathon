@@ -240,10 +240,17 @@ export interface LearningResource {
   kind: string;
 }
 
+/** Where a PERSON stands in a skill. Not a question's difficulty (1-4), which describes questions. */
+export type Proficiency = "beginner" | "intermediate" | "expert";
+
 export interface ConceptSkill {
   skill_id: string;
   skill_name: string;
   status: NodeStatus;
+  /** The person's level, read off the same number as the bar. */
+  proficiency: Proficiency;
+  /** False while the level rests on code or a survey answer alone; true once recall has tested it. */
+  proficiency_tested: boolean;
   /** Short next step, grounded in a real finding where one exists. */
   focus: string;
   /** Untested: new 0, familiar 0.5, verified 1. Once recall has tested it: hardest level passed / 4. */

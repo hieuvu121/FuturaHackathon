@@ -45,6 +45,19 @@ class NodeStatus(str, Enum):
     NEW = "new"
 
 
+class Proficiency(str, Enum):
+    """Where a PERSON stands in a skill.
+
+    Not to be confused with a question's difficulty (1 name it .. 4 design with
+    it, schemas/recall.py). That scale describes questions and drives the
+    adaptive loop; this one describes the learner and is what they are shown.
+    """
+
+    BEGINNER = "beginner"
+    INTERMEDIATE = "intermediate"
+    EXPERT = "expert"
+
+
 class LearningResource(BaseModel):
     """Somewhere outside the product to go and learn the skill."""
 
@@ -68,6 +81,13 @@ class ConceptSkill(BaseModel):
             "Untested: new 0.0, familiar 0.5, verified 1.0. "
             "Once recall has tested the skill: hardest drill level passed / 4."
         ),
+    )
+    proficiency: Proficiency = Field(
+        Proficiency.BEGINNER, description="The person's level in this skill, read off the same number as the bar."
+    )
+    proficiency_tested: bool = Field(
+        False,
+        description="False while the level rests on code or a survey answer alone; true once recall has tested it.",
     )
     missing: str = Field(
         "",

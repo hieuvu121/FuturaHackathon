@@ -35,6 +35,7 @@ from ...schemas.roadmap import (
     ConceptSkill,
     LearningResource,
     NodeStatus,
+    Proficiency,
     RoadmapConcept,
     RoadmapGraph,
     RoadmapItem,
@@ -54,6 +55,23 @@ RECALL_LEVELS = 4
 MISSED_EVERYTHING = 0.1
 # Verification takes a level 3 pass, so a verified skill never reads below that.
 VERIFIED_FLOOR = 0.75
+
+
+# Where the person's level changes, on the 0-1 mastery scale the bars already use.
+# Reading the label off the bar's own number means the two can never disagree.
+#   below 50%   Beginner       nothing shown yet, or recall found only "can name it"
+#   50% - 99%   Intermediate   can explain it / reason about it, or has written it (untested)
+#   100%        Expert         cleared the hardest recall level, "design with it"
+INTERMEDIATE_AT = 0.5
+EXPERT_AT = 1.0
+
+
+def proficiency_of(mastery: float) -> Proficiency:
+    if mastery >= EXPERT_AT:
+        return Proficiency.EXPERT
+    if mastery >= INTERMEDIATE_AT:
+        return Proficiency.INTERMEDIATE
+    return Proficiency.BEGINNER
 
 
 def recall_mastery(status: NodeStatus, passed: set[int], failed: set[int]) -> float:
@@ -431,12 +449,15 @@ def _to_node(
     related = _related_names(item.skill_id, known, taxonomy) if status is NodeStatus.NEW else []
     gap = gaps.get(item.skill_id)
     passed, failed = recall.get(item.skill_id, (set(), set()))
+    mastery = recall_mastery(status, passed, failed)
     return ConceptSkill(
         skill_id=item.skill_id,
         skill_name=item.skill_name,
         status=status,
         focus=_focus(item, status, related, gap),
-        mastery=recall_mastery(status, passed, failed),
+        mastery=mastery,
+        proficiency=proficiency_of(mastery),
+        proficiency_tested=bool(passed or failed),
         missing=_missing(item, status, related, gap, passed, failed, from_survey),
         resources=_resources(item.skill_id, taxonomy),
         gap_evidence=gap.evidence if gap is not None else None,
