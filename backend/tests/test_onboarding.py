@@ -179,3 +179,15 @@ def test_the_survey_also_works_in_mock_mode(db, monkeypatch):
     assert before.source == "repos" and after.source == "survey"
     assert "react" in _skills(after)
     assert drills_router.next_drill("demo-user", db).question is not None
+
+
+def test_the_profile_says_whether_github_is_really_connected(db):
+    db.add(User(github_login="ana", github_token="live-token"))
+    db.add(User(github_login="bo", github_token=None))  # signed in once, token since rejected
+    db.commit()
+
+    assert onboarding_router.profile(FakeRequest("ana"), db).github_connected is True
+    assert onboarding_router.profile(FakeRequest("bo"), db).github_connected is False
+    assert onboarding_router.profile(FakeRequest(), db).github_connected is False
+    guest = onboarding_router.submit_survey(SurveyAnswers(role="backend"), FakeRequest(), db)
+    assert guest.github_connected is False

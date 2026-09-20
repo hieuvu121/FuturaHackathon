@@ -156,8 +156,20 @@ export default function ConnectPage() {
         <p className="page-copy">Choose 3 to 5. Dependencies, generated code, build output, and forks with no original commits are filtered out before anything is scored.</p>
       </motion.header>
 
-      {loadError && <div className="error-state" role="alert">{loadError}{needsLogin && <> <a href={loginUrl}>Connect GitHub</a></>}</div>}
+      {loadError && !needsLogin && <div className="error-state" role="alert">{loadError}</div>}
 
+      {needsLogin && (
+        <section className="empty-state surface reconnect" role="alert" data-testid="reconnect-github">
+          <h2>Connect GitHub to continue</h2>
+          <p>{loadError || "Your repositories are listed from GitHub, so you need to be signed in there."}</p>
+          <div className="question-actions empty-actions">
+            <a className="primary-button" href={loginUrl} data-testid="reconnect-button">Connect GitHub <ArrowRightIcon width="19" height="19" /></a>
+            <button type="button" className="ghost-button" onClick={() => void router.push("/start")}>I have no repositories</button>
+          </div>
+        </section>
+      )}
+
+      {!needsLogin && (
       <motion.div variants={item}>
         <AnimatePresence mode="popLayout" initial={false} custom={direction}>
           {panel === "select" ? (
@@ -266,6 +278,7 @@ export default function ConnectPage() {
           )}
         </AnimatePresence>
       </motion.div>
+      )}
       {finished && (
         <div className="modal-backdrop" data-testid="analysis-complete">
           <motion.section

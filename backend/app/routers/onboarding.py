@@ -44,6 +44,9 @@ class LearnerProfile(BaseModel):
     known_skills: list[str] = Field(default_factory=list)
     user: str | None = None
     guest: bool = False
+    github_connected: bool = Field(
+        False, description="A GitHub token is on file. False for guests, and after GitHub rejected the last one."
+    )
 
 
 def _session_login(request: Request) -> str | None:
@@ -62,8 +65,11 @@ def _user(db: Session, login: str) -> User:
     return owner
 
 
-def _to_schema(row: LearnerProfileRow | None, login: str | None, role_name: str | None) -> LearnerProfile:
+def _to_schema(
+    row: LearnerProfileRow | None, login: str | None, role_name: str | None, owner: User | None = None
+) -> LearnerProfile:
     return LearnerProfile(
+        github_connected=bool(owner and owner.github_token),
         path=row.path if row else None,
         role=row.role if row else None,
         role_name=role_name,
@@ -89,7 +95,7 @@ def profile(request: Request, db: DbDep) -> LearnerProfile:
     row = db.get(LearnerProfileRow, owner.id) if owner else None
     settings = get_settings()
     path = survey.role_path(settings, get_taxonomy(settings), row.role) if row and row.role else None
-    return _to_schema(row, login, path.name if path else None)
+    return _to_schema(row, login, path.name if path else None, owner)
 
 
 @router.post("/survey", response_model=LearnerProfile, status_code=status.HTTP_201_CREATED)
@@ -123,4 +129,4 @@ def submit_survey(answers: SurveyAnswers, request: Request, db: DbDep) -> Learne
     # A new survey is a new starting point: recall begins again, and the roadmap
     # it produces has to be agreed to afresh.
     roadmap_review.restart_recall(db, owner.id)
-    return _to_schema(row, login, path.name)
+    return _to_schema(row, login, path.name, owner)

@@ -433,5 +433,7 @@ export interface LearnerProfile {
   user: string | null;
   /** Signed in by the survey, without a GitHub account. */
   guest: boolean;
+  /** A GitHub token is on file. False for guests, and after GitHub rejected the last one. */
+  github_connected: boolean;
 }
 

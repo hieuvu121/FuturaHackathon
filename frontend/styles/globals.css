@@ -569,6 +569,9 @@ h1, h2, h3, h4 { font-family: var(--font-heading), sans-serif; letter-spacing: -
 .share-form label span { color: var(--text-muted); font-weight: 500; }
 .share-form { margin-bottom: 22px; }
 @media (max-width: 600px) { .community-detail, .share-form { padding: 18px 16px 20px; } .community-detail-head { flex-direction: column; } .community-score { justify-items: start; } }
+.reconnect { max-width: 620px; }
+.reconnect .primary-button { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 22px; border-radius: 14px; font-size: 14.5px; font-weight: 700; text-decoration: none; }
+
 /* --- Start: two ways in, and the survey ---------------------------------------------- */
 .start-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 18px; max-width: 980px; }
 .start-choice { display: grid; align-content: start; gap: 11px; padding: 26px 26px 22px; text-align: left; border-radius: 26px; color: var(--ink); font: inherit; cursor: pointer; }

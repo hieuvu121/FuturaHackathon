@@ -41,7 +41,9 @@ export default function StartPage() {
   }, []);
 
   const role = roles.find((item) => item.id === roleId) ?? null;
-  const signedInWithGitHub = Boolean(profile?.user) && !profile?.guest;
+  // Having a session is not enough: the GitHub token can expire or be revoked,
+  // and then the way forward is to sign in again, not to open an empty repo list.
+  const signedInWithGitHub = Boolean(profile?.github_connected);
 
   function connectRepos() {
     // Someone already signed in with GitHub goes straight to their repositories;
