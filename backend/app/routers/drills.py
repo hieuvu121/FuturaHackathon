@@ -68,6 +68,20 @@ def _user(db: DbDep, login: str) -> User:
     return user
 
 
+def _survey_order(db: DbDep, login: str) -> list[tuple[str, str]]:
+    """Skills to probe for someone with no analysed code: what they SAID they know
+    first -- that is the unchecked belief -- then the rest of their role's path."""
+    from .roadmap import survey_graph  # roadmap.py imports nothing from here; kept local for symmetry
+
+    owner = db.scalar(select(User).where(User.github_login == login))
+    graph = survey_graph(db, owner.id if owner else None, {})
+    if graph is None:
+        return []
+    nodes = [node for concept in graph.concepts for node in concept.skills]
+    nodes.sort(key=lambda node: (0 if node.status is NodeStatus.FAMILIAR else 1, -node.priority))
+    return [(node.skill_id, node.skill_name) for node in nodes]
+
+
 def _attempts(db: DbDep, user: User) -> list[Attempt]:
     """This session's answers. A restarted test leaves the older ones behind."""
     rows = roadmap_review.session_attempts(db, user.id)
@@ -113,11 +127,11 @@ def _session(
     """
     settings = get_settings()
     if settings.mock_mode:
-        return list(MOCK_SKILL_ORDER), ()
+        return _survey_order(db, login) or list(MOCK_SKILL_ORDER), ()
     try:
         profile = build_profile(db, login)
     except LookupError:
-        return [], ()
+        return _survey_order(db, login), ()
     taxonomy = get_taxonomy(settings)
     skills = profile.scores.skills
     demand = match(skills, taxonomy, get_demand(settings), "software_engineer", "AU")

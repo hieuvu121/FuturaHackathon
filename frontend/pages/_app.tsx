@@ -13,8 +13,9 @@ const heading = Bricolage_Grotesque({ subsets: ["latin"], weight: ["500", "700"]
 const body = Figtree({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-body" });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-mono" });
 
-const ORDER = ["/connect", "/recall", "/roadmap", "/share"];
+const ORDER = ["/start", "/connect", "/recall", "/roadmap", "/share"];
 const META: Record<string, { title: string; description: string }> = {
+  "/start": { title: "Start | Retrace", description: "Connect your repositories, or answer a short survey, and get a roadmap built for you." },
   "/connect": { title: "Connect repositories | Retrace", description: "Choose the repositories that best represent your engineering work." },
   "/recall": { title: "Recall session | Retrace", description: "Revisit past code through supportive, evidence-based revision." },
   "/roadmap": { title: "Learning roadmap | Retrace", description: "Prioritise what to revise, deepen, and learn next." },

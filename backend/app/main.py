@@ -11,7 +11,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from .config import get_settings
 from .models.db import SessionLocal, init_db
-from .routers import analysis, auth, code, community, drills, recall, repos, roadmap
+from .routers import analysis, auth, code, community, drills, onboarding, recall, repos, roadmap
 from .services.storage import fail_interrupted_analyses
 
 settings = get_settings()
@@ -39,6 +39,7 @@ app.include_router(drills.router)
 app.include_router(roadmap.router)
 app.include_router(code.router)
 app.include_router(community.router)
+app.include_router(onboarding.router)
 
 
 @app.on_event("startup")

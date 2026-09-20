@@ -12,7 +12,7 @@ import roadmapMock from "../../backend/mock/roadmap.json";
 import scoresMock from "../../backend/mock/scores.json";
 
 import type {
-  AdaptiveGrade, AnalysisStatus, Answer, Buckets, CapstoneState, CodeSlice, CommunityRoadmap, CommunityRoadmapDetail, CommunityVerdict, CurrentUser, Evidence, Finding, GradeResult, NextQuestion, PortfolioProfile, PortfolioSelection, PracticeGrade, PracticeTopic, Question, QuestionType, Repo, RepoMap, RoadmapGraph, RoadmapReview, Scores,
+  AdaptiveGrade, AnalysisStatus, Answer, Buckets, CapstoneState, CodeSlice, CommunityRoadmap, CommunityRoadmapDetail, CommunityVerdict, CurrentUser, Evidence, Finding, GradeResult, LearnerProfile, NextQuestion, PortfolioProfile, PortfolioSelection, PracticeGrade, PracticeTopic, Question, QuestionType, Repo, RepoMap, RoadmapGraph, RoadmapReview, RolePath, Scores,
 } from "./types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -319,5 +319,25 @@ export async function commentOnRoadmap(
 export async function deleteCommunityRoadmap(id: number): Promise<void> {
   const response = await fetch(`${API}/community/roadmaps/${id}`, { method: "DELETE", credentials: "include" });
   if (!response.ok) throw new ApiError(response.status, response.statusText);
+}
+
+/* --- Onboarding ---------------------------------------------------------------- */
+
+export async function getRolePaths(): Promise<RolePath[]> {
+  return request<RolePath[]>("/onboarding/roles");
+}
+
+/** Never a 401: a visitor who has not chosen yet simply has no path. */
+export async function getLearnerProfile(): Promise<LearnerProfile> {
+  return request<LearnerProfile>("/onboarding/profile");
+}
+
+/** Saves the survey. Without a session this also signs the visitor in as a guest. */
+export async function submitSurvey(role: string, knownSkills: string[]): Promise<LearnerProfile> {
+  return request<LearnerProfile>("/onboarding/survey", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ role, known_skills: knownSkills }),
+  });
 }
 

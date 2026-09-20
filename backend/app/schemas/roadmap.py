@@ -142,6 +142,10 @@ class RoadmapGraph(BaseModel):
 
     role: str
     region: str
+    role_name: str = Field("", description="The role in words, when the roadmap was built for one.")
+    source: str = Field(
+        "repos", description="'repos' when built from analysed code, 'survey' when built from the onboarding survey."
+    )
     concepts: list[RoadmapConcept] = Field(default_factory=list)
     stages: list[RoadmapStage] = Field(
         default_factory=list,

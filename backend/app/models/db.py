@@ -106,6 +106,24 @@ class RecallAttemptRow(Base):
     submission: Mapped[str] = mapped_column(Text, default="")
 
 
+class LearnerProfileRow(Base):
+    """How a person came in, when it was not through their repositories.
+
+    `path` is "survey" for someone who answered the onboarding survey. `role` is
+    an id from knowledge_data/role_paths.yaml, and `known_skills` is what they
+    SAID they have used -- a claim, which is why those skills are only ever
+    "basics" until recall has checked them.
+    """
+
+    __tablename__ = "learner_profiles"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    path: Mapped[str] = mapped_column(String(16), default="survey")
+    role: Mapped[str | None] = mapped_column(String(64), default=None)
+    known_skills: Mapped[list] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+
+
 class RoadmapReviewRow(Base):
     """Where one user stands with their roadmap: shown, accepted, or being redone.
 

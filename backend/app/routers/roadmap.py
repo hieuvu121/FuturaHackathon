@@ -6,12 +6,13 @@ from sqlalchemy import select
 from ..config import get_settings
 from ..deps import CurrentUser, DbDep
 from ..mock_store import load
-from ..models.db import SkillStatusRow, User
+from ..models.db import LearnerProfileRow, SkillStatusRow, User
 from ..schemas.scores import SkillStatus
 from ..schemas.roadmap import Buckets, RoadmapGraph
 from ..services.knowledge import get_demand, get_taxonomy
 from ..services.roadmap.buckets import build
 from ..services.roadmap import review as roadmap_review
+from ..services.roadmap import survey
 from ..services.roadmap.concepts import graph_from_buckets, tailor
 from ..services.roadmap.matcher import match
 from ..services.portfolio import build_profile
@@ -53,6 +54,21 @@ def _owner_id(db: DbDep | None, login: str) -> int | None:
     return db.scalar(select(User.id).where(User.github_login == login))
 
 
+def survey_graph(db: DbDep, owner_id: int | None, recall: dict) -> RoadmapGraph | None:
+    """The roadmap for someone who came in through the survey, or None if they did not."""
+    row = db.get(LearnerProfileRow, owner_id) if owner_id and db is not None else None
+    if row is None or row.path != "survey" or not row.role:
+        return None
+    settings = get_settings()
+    taxonomy = get_taxonomy(settings)
+    path = survey.role_path(settings, taxonomy, row.role)
+    if path is None:
+        return None
+    buckets = survey.buckets_for(path, list(row.known_skills or []), get_demand(settings))
+    graph = graph_from_buckets(buckets, taxonomy, [], recall, from_survey=True)
+    return graph.model_copy(update={"role_name": path.name})
+
+
 @router.get("/portfolio/roadmap/graph", response_model=RoadmapGraph)
 def portfolio_roadmap_graph(
     user: CurrentUser,
@@ -75,12 +91,20 @@ def portfolio_roadmap_graph(
     recall = roadmap_review.recall_levels(db, owner_id) if owner_id else {}
     hidden = set(roadmap_review.review_row(db, owner_id).hidden_skills or []) if owner_id else set()
     if settings.mock_mode:
-        graph = graph_from_buckets(Buckets.model_validate(_fixture_for(role)), taxonomy, [], recall)
+        # The survey works in mock mode too; without one, the fixture stands in for analysed code.
+        graph = survey_graph(db, owner_id, recall) or graph_from_buckets(
+            Buckets.model_validate(_fixture_for(role)), taxonomy, [], recall
+        )
         return tailor(graph, hidden, keep_hidden=include_hidden)
     try:
         profile = build_profile(db, user)
     except LookupError as exc:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+        # No analysed code. Someone who answered the survey still has a roadmap:
+        # evidence wins when there is some, and the survey stands in when there is not.
+        from_survey = survey_graph(db, owner_id, recall)
+        if from_survey is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+        return tailor(from_survey, hidden, keep_hidden=include_hidden)
     skills = profile.scores.skills
     demand = match(skills, taxonomy, get_demand(settings), role, region)
     buckets = build(skills, demand, role, region, taxonomy)

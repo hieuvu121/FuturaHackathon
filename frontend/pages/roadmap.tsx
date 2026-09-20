@@ -207,6 +207,7 @@ function ReviewBar({
   tailoring,
   busy,
   hiddenCount,
+  fromSurvey,
   onAccept,
   onRedo,
   onStartTailoring,
@@ -217,6 +218,7 @@ function ReviewBar({
   tailoring: boolean;
   busy: boolean;
   hiddenCount: number;
+  fromSurvey: boolean;
   onAccept: () => void;
   onRedo: () => void;
   onStartTailoring: () => void;
@@ -265,7 +267,7 @@ function ReviewBar({
         <p>
           {disputing
             ? "Sit the five recall questions again for a fresh reading, or edit the roadmap yourself."
-            : `It was built from your repositories and your ${review.recall_answered} recall answer${review.recall_answered === 1 ? "" : "s"}. Accept it, or dispute it if something is off.`}
+            : `It was built from ${fromSurvey ? "your survey answers" : "your repositories"} and your ${review.recall_answered} recall answer${review.recall_answered === 1 ? "" : "s"}. Accept it, or dispute it if something is off.`}
         </p>
       </div>
       {disputing ? (
@@ -470,6 +472,7 @@ export default function RoadmapPage() {
           tailoring={tailoring}
           busy={busy}
           hiddenCount={hidden.size}
+          fromSurvey={graph.source === "survey"}
           onAccept={() => void accept()}
           onRedo={() => void redo()}
           onStartTailoring={() => void startTailoring()}
@@ -505,7 +508,7 @@ export default function RoadmapPage() {
                   <div className="flow-item">
                     <div className="flow-node flow-root">
                       <span className="flow-root-label">Your path</span>
-                      <h2>{ROLE.label}</h2>
+                      <h2>{graph.role_name || ROLE.label}</h2>
                       <MasteryBar mastery={overall} reduceMotion={reduceMotion} label="Overall roadmap" />
                     </div>
                   </div>
