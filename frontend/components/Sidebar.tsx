@@ -4,9 +4,10 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 import { getCurrentUser } from "@/lib/data";
-import { ConnectIcon, RecallIcon, RoadmapIcon, ShareIcon } from "./Icons";
+import { ConnectIcon, RecallIcon, RoadmapIcon, ShareIcon, StartIcon } from "./Icons";
 
 export const NAV_ITEMS = [
+  { href: "/start", label: "Start", icon: StartIcon },
   { href: "/connect", label: "Connect", icon: ConnectIcon },
   { href: "/recall", label: "Recall", icon: RecallIcon },
   { href: "/roadmap", label: "Roadmap", icon: RoadmapIcon },
@@ -15,7 +16,7 @@ export const NAV_ITEMS = [
 
 function Logo() {
   return (
-    <Link href="/connect" className="brand-link" aria-label="Retrace home">
+    <Link href="/start" className="brand-link" aria-label="Retrace home">
       <span className="brand-mark"><RecallIcon width="22" height="22" /></span>
       <span>Retrace</span>
     </Link>
@@ -27,7 +28,7 @@ function UserChip({ login }: { login: string }) {
   return (
     <div className="user-chip">
       <span className="avatar" aria-hidden="true">{initials}</span>
-      <span><strong>@{login || "not-connected"}</strong><small><i aria-hidden="true" />{login ? "GitHub connected" : "Connect GitHub"}</small></span>
+      <span><strong>@{login || "not-connected"}</strong><small><i aria-hidden="true" />{login.startsWith("guest-") ? "Guest · no GitHub" : login ? "GitHub connected" : "Connect GitHub"}</small></span>
     </div>
   );
 }
@@ -61,9 +62,11 @@ export default function Sidebar() {
   const [login, setLogin] = useState("");
   const activePath = pendingPath ?? normalizePath(router.pathname);
 
+  // Asked again on every page: the survey signs a visitor in as a guest part-way
+  // through, and a chip that was only read once would go on saying "not connected".
   useEffect(() => {
     getCurrentUser().then((user) => setLogin(user.user)).catch(() => setLogin(""));
-  }, []);
+  }, [router.pathname]);
 
   useEffect(() => {
     const handleStart = (url: string) => setPendingPath(normalizePath(url));

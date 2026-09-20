@@ -491,6 +491,35 @@ h1, h2, h3, h4 { font-family: var(--font-heading), sans-serif; letter-spacing: -
 .review-actions .primary-button { min-height: 42px; padding: 0 18px; border-radius: 13px; font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
 .review-actions button:disabled { opacity: .55; cursor: default; }
 
+/* --- Start: two ways in, and the survey ---------------------------------------------- */
+.start-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 18px; max-width: 980px; }
+.start-choice { display: grid; align-content: start; gap: 11px; padding: 26px 26px 22px; text-align: left; border-radius: 26px; color: var(--ink); font: inherit; cursor: pointer; }
+.start-choice strong { font-family: var(--font-heading), sans-serif; font-size: 22px; letter-spacing: -.02em; }
+.start-choice > span:not(.start-icon) { color: var(--text-secondary); font-size: 14.5px; line-height: 1.6; }
+.start-choice em { display: inline-flex; align-items: center; gap: 7px; margin-top: 4px; color: var(--primary-a); font-size: 14.5px; font-style: normal; font-weight: 700; }
+.start-icon { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 17px; color: #fff; background: linear-gradient(135deg, var(--primary-a), var(--primary-b)); }
+.start-icon.alt { background: linear-gradient(135deg, #e0892f, #e0b23f); }
+.start-steps { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 0; padding: 0; list-style: none; counter-reset: start-step; }
+.start-steps li { counter-increment: start-step; display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px 4px 5px; border-radius: 99px; color: var(--text-secondary); background: rgba(157,182,214,.22); font-size: 12px; font-weight: 700; }
+.start-steps li::before { content: counter(start-step); width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: var(--decorative-a); font-size: 10.5px; }
+.start-note { grid-column: 1 / -1; margin: 0; color: var(--text-secondary); font-size: 14px; }
+.start-note .detail-back { margin: 0; font-size: 14px; }
+.role-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); gap: 14px; max-width: 980px; }
+.role-card { display: grid; align-content: start; gap: 7px; padding: 20px 22px; text-align: left; border-radius: 20px; color: var(--ink); font: inherit; cursor: pointer; }
+.role-card strong { font-size: 17px; }
+.role-card span { color: var(--text-secondary); font-size: 13.5px; line-height: 1.5; }
+.role-card small { color: var(--text-muted); font-size: 11.5px; font-weight: 700; }
+.role-card[aria-checked="true"] { border-color: var(--decorative-a); box-shadow: 0 0 0 3px rgba(47,116,232,.18); }
+.survey-skills { max-width: 860px; padding: 24px 26px 26px; display: grid; gap: 14px; border-radius: 24px; }
+.skill-picks { display: flex; flex-wrap: wrap; gap: 9px; }
+.skill-pick { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 16px; border: 1.5px solid rgba(16,36,58,.16); border-radius: 99px; color: var(--ink); background: #fff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+.skill-pick:hover { border-color: rgba(47,116,232,.55); }
+.skill-pick.picked { border-color: transparent; color: #fff; background: var(--primary-a); }
+.survey-count { margin: 0; color: var(--text-secondary); font-size: 13.5px; }
+.start-actions { margin-top: 18px; }
+.start-actions .primary-button { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 22px; border-radius: 14px; font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; }
+.start-choice:focus-visible, .role-card:focus-visible, .skill-pick:focus-visible { outline: 2px solid var(--decorative-a); outline-offset: 2px; }
+
 /* Recall's two sections, and the practice pickers. */
 .section-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; max-width: 760px; margin: 0 0 22px; }
 .section-tab { display: grid; gap: 3px; padding: 12px 16px; text-align: left; border: 1.5px solid var(--hairline); border-radius: 16px; color: var(--ink); background: rgba(255,255,255,.62); font: inherit; cursor: pointer; transition: border-color .18s var(--ease-fluid), background .18s var(--ease-fluid); }

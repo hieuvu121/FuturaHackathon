@@ -249,6 +249,7 @@ def _missing(
     gap: Finding | None,
     passed: set[int],
     failed: set[int],
+    from_survey: bool = False,
 ) -> str:
     """What stands between the user and this skill, in plain sentences.
 
@@ -259,7 +260,9 @@ def _missing(
     name = item.skill_name
     parts: list[str] = []
 
-    if status is NodeStatus.NEW:
+    if status is NodeStatus.NEW and from_survey:
+        parts.append(f"{name} is on the path to this role, and you have not worked with it yet.")
+    elif status is NodeStatus.NEW:
         parts.append(
             f"None of your analysed repositories use {name}, so there is nothing yet "
             "to show you can work with it."
@@ -269,6 +272,11 @@ def _missing(
                 f"It sits close to {_join(related)}, which you already use, "
                 "so you are not starting from zero."
             )
+    elif status is NodeStatus.FAMILIAR and from_survey:
+        parts.append(
+            f"You said you have used {name}, but nothing has checked it yet -- "
+            "there is no code of yours here to look at."
+        )
     elif status is NodeStatus.FAMILIAR:
         parts.append(
             f"Your code uses {name}, but nothing has yet checked that you understand it "
@@ -418,6 +426,7 @@ def _to_node(
     taxonomy: SkillTaxonomy | None,
     gaps: dict[str, Finding],
     recall: dict[str, tuple[set[int], set[int]]],
+    from_survey: bool = False,
 ) -> ConceptSkill:
     related = _related_names(item.skill_id, known, taxonomy) if status is NodeStatus.NEW else []
     gap = gaps.get(item.skill_id)
@@ -428,7 +437,7 @@ def _to_node(
         status=status,
         focus=_focus(item, status, related, gap),
         mastery=recall_mastery(status, passed, failed),
-        missing=_missing(item, status, related, gap, passed, failed),
+        missing=_missing(item, status, related, gap, passed, failed, from_survey),
         resources=_resources(item.skill_id, taxonomy),
         gap_evidence=gap.evidence if gap is not None else None,
         related_to=related,
@@ -444,6 +453,7 @@ def graph_from_buckets(
     taxonomy: SkillTaxonomy | None = None,
     findings: list[Finding] | None = None,
     recall: dict[str, tuple[set[int], set[int]]] | None = None,
+    from_survey: bool = False,
 ) -> RoadmapGraph:
     """Regroup an already-built roadmap. `revise` is reframed, never replayed.
 
@@ -471,7 +481,7 @@ def graph_from_buckets(
 
     grouped: dict[str, list[ConceptSkill]] = {}
     for item, status in staged:
-        node = _to_node(item, status, known, taxonomy, gaps, recall or {})
+        node = _to_node(item, status, known, taxonomy, gaps, recall or {}, from_survey)
         grouped.setdefault(_concept_of(item.skill_id, taxonomy), []).append(node)
 
     concepts: list[RoadmapConcept] = []
@@ -503,7 +513,13 @@ def graph_from_buckets(
         )
     )
     concepts, stages = _staged(concepts)
-    return RoadmapGraph(role=buckets.role, region=buckets.region, concepts=concepts, stages=stages)
+    return RoadmapGraph(
+        role=buckets.role,
+        region=buckets.region,
+        source="survey" if from_survey else "repos",
+        concepts=concepts,
+        stages=stages,
+    )
 
 
 # The order concepts are best learnt in. A tier holds what can be studied side by

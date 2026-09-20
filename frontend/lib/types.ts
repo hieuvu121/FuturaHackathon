@@ -289,6 +289,10 @@ export interface RoadmapStage {
 export interface RoadmapGraph {
   role: string;
   region: string;
+  /** The role in words, when the roadmap was built for one. */
+  role_name: string;
+  /** "repos" when built from analysed code, "survey" when built from the onboarding survey. */
+  source: "repos" | "survey";
   concepts: RoadmapConcept[];
   /** The order to learn the concepts in. Every concept appears in exactly one stage. */
   stages: RoadmapStage[];
@@ -358,3 +362,24 @@ export interface CapstoneState {
   brief: CapstoneBrief;
   submission: CapstoneSubmission | null;
 }
+
+/* --- Onboarding: the two ways in ------------------------------------------- */
+
+export interface RolePath {
+  id: string;
+  name: string;
+  summary: string;
+  skills: { skill_id: string; name: string }[];
+}
+
+/** How this person came in. `path` is null until they have chosen. */
+export interface LearnerProfile {
+  path: "survey" | "repos" | null;
+  role: string | null;
+  role_name: string | null;
+  known_skills: string[];
+  user: string | null;
+  /** Signed in by the survey, without a GitHub account. */
+  guest: boolean;
+}
+

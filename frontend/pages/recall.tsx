@@ -210,6 +210,7 @@ function Evaluation({ tabs }: { tabs: ReactNode }) {
   useEffect(() => {
     let active = true;
     let timer: number | undefined;
+    let waits = 0;
     async function load() {
       try {
         const next = await getNextDrill();
@@ -220,8 +221,14 @@ function Evaluation({ tabs }: { tabs: ReactNode }) {
       } catch (error: unknown) {
         if (!active) return;
         // 404/409 mean the analysis has not finished yet, so keep waiting.
-        if (error instanceof ApiError && [404, 409].includes(error.status)) {
+        if (error instanceof ApiError && [404, 409].includes(error.status) && waits < 4) {
+          waits += 1;
           timer = window.setTimeout(load, 1800);
+        } else if (error instanceof ApiError && [404, 409].includes(error.status)) {
+          // Still nothing to ask about: this visitor has neither analysed code nor a
+          // survey, so stop waiting and point them at the start.
+          setStep({ question: null, asked: 0, session_length: 5, remaining_skills: 0, reason: "" });
+          setLoaded(true);
         } else {
           setLoadError(error instanceof Error ? error.message : "This session could not be started.");
           setLoaded(true);
@@ -296,10 +303,12 @@ function Evaluation({ tabs }: { tabs: ReactNode }) {
           <p>
             {(step?.asked ?? 0) > 0
               ? `You answered all ${step?.asked} questions, and your roadmap was built from them. If it does not look like you, dispute it there and you can sit the test again.`
-              : "Analyse a repository first, then return when there is evidence worth revisiting."}
+              : "There is nothing to ask about yet. Connect your repositories, or answer the short survey, and come back."}
           </p>
           <div className="question-actions empty-actions">
-            <Link className="primary-button" href="/roadmap">See your roadmap</Link>
+            <Link className="primary-button" href={(step?.asked ?? 0) > 0 ? "/roadmap" : "/start"}>
+              {(step?.asked ?? 0) > 0 ? "See your roadmap" : "Choose how to start"}
+            </Link>
             {(step?.asked ?? 0) > 0 && (
               <button
                 type="button"
