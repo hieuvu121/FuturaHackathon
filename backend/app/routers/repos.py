@@ -1,5 +1,6 @@
 """Repository listing, selection, and pipeline kick-off. Owner: Track A."""
 
+import httpx
 from fastapi import APIRouter, BackgroundTasks
 from fastapi import HTTPException, status as http_status
 from sqlalchemy import select
@@ -71,7 +72,27 @@ def list_repos(user: CurrentUser, db: DbDep) -> list[dict]:
     if owner is None or not owner.github_token:
         raise HTTPException(http_status.HTTP_401_UNAUTHORIZED, "GitHub account is not connected")
 
-    github_repos = list_github_repos(owner.github_token)
+    try:
+        github_repos = list_github_repos(owner.github_token)
+    except httpx.HTTPStatusError as exc:
+        if exc.response.status_code in (401, 403):
+            # GitHub no longer accepts the stored token: it was revoked, it expired, or
+            # the OAuth app's secret changed. Keeping it would fail the same way on every
+            # request, so drop it and answer 401 -- which the Connect page already turns
+            # into a "Connect GitHub" link -- instead of crashing with a 500.
+            owner.github_token = None
+            db.commit()
+            raise HTTPException(
+                http_status.HTTP_401_UNAUTHORIZED,
+                "Your GitHub connection has expired. Connect GitHub again to continue.",
+            ) from exc
+        raise HTTPException(
+            http_status.HTTP_502_BAD_GATEWAY, "GitHub could not list your repositories right now."
+        ) from exc
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            http_status.HTTP_502_BAD_GATEWAY, "GitHub could not be reached. Try again in a moment."
+        ) from exc
     for payload in github_repos:
         repo_id = int(payload["id"])
         repo = db.get(Repo, repo_id)
