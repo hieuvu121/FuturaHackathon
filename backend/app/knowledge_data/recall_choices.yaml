@@ -1,0 +1,293 @@
+# Multiple-choice options for the concept drills in recall_bank.yaml.
+#
+# Keyed by question id. THE FIRST OPTION IS THE CORRECT ONE; the loader shuffles
+# them (the same way every time for a given question) before they reach the
+# browser, so position gives nothing away. Keep the wrong options plausible and
+# about as long as the right one -- "the longest answer is correct" is a tell.
+#
+# A concept question with no entry here stays a free-text question, graded
+# against its key points as before. Coding drills never get choices.
+
+choices:
+  # --- Python ---------------------------------------------------------------
+  python_l1_mutable_default:
+    - "The default list is created once, so every call shares and mutates it."
+    - "A fresh empty list is created on each call, so calls never affect one another."
+    - "Python raises a TypeError because default values must be immutable."
+    - "The list is copied on each call, which is safe but slow for large defaults."
+  python_l2_generator:
+    - "A function that yields values lazily; use it for large or partly-used sequences."
+    - "A list that is built in a background thread; use it when building the list would block the program."
+    - "A cached list that is computed once and reused; use it when the same values are read many times."
+    - "A compiled loop that runs faster than a list comprehension; use it for CPU-heavy numeric work."
+  python_l3_gil:
+    - "The GIL lets only one thread run Python bytecode at a time; use multiprocessing for CPU-bound work."
+    - "Threads are scheduled on a single core by the operating system; raise the process priority instead."
+    - "Thread start-up cost outweighs the work; reuse threads from a ThreadPoolExecutor instead."
+    - "Python threads are green threads with no real parallelism for I/O or CPU; use asyncio for both."
+
+  # --- Async ----------------------------------------------------------------
+  async_l1_await:
+    - "It suspends the function and returns control to the event loop until ready."
+    - "It blocks the whole thread until the awaited result is ready, then continues."
+    - "It starts the awaited call on a new thread and continues immediately without the result."
+    - "It marks the call as optional, so the function continues if the result takes too long."
+  async_l2_event_loop:
+    - "A single-threaded scheduler that runs each ready task until it awaits, then switches to the next one."
+    - "A pool of worker threads that each run one coroutine to completion in parallel."
+    - "A timer that interrupts every coroutine at fixed intervals to give the others a turn."
+    - "A queue that runs coroutines strictly in the order they were created, one after another."
+  async_l3_blocking_call:
+    - "It blocks the event loop, so all other tasks stall; use an async client."
+    - "It raises a RuntimeError, because synchronous I/O is not allowed inside a coroutine."
+    - "Only that one handler is slow; the loop keeps serving other requests in the meantime."
+    - "The response is truncated, because the loop cancels calls that do not await."
+
+  # --- Data modelling / SQL -------------------------------------------------
+  data_modelling_l1_normalisation:
+    - "Duplicated data and the update anomalies it causes, by storing each fact in exactly one place."
+    - "Slow reads, by combining related tables into one wide table that needs no joins."
+    - "Large tables, by compressing repeated values so that they take less disk space."
+    - "Concurrent writes, by locking related rows together so that updates cannot interleave."
+  data_modelling_l2_natural_key:
+    - "When the value can change or carries business meaning, as references break."
+    - "When the table is small, since a natural key adds a join that a small table does not need."
+    - "When the value is numeric, since only text columns can safely identify a row."
+    - "When the column is already indexed, since a primary key would duplicate that index."
+  data_modelling_l3_scoping:
+    - "Make the key a composite of repository id and path, with a unique constraint."
+    - "Hash the file path so that equal paths in different repositories get different keys."
+    - "Store each repository in its own database so that the paths can never meet."
+    - "Keep the path as the key and overwrite the older row whenever a collision happens."
+  sql_l1_join:
+    - "INNER keeps only matching rows; LEFT keeps every left row, with NULLs for gaps."
+    - "INNER keeps every row from both tables; LEFT keeps only the rows that match on the left."
+    - "INNER joins on the primary key only; LEFT can join on any column."
+    - "They return the same rows; LEFT simply puts the left table's columns first."
+  sql_l2_nplus1:
+    - "One extra query runs per fetched row; look for a query in a loop, and join or eager load."
+    - "A query returns one row more than expected; you spot it in row counts, and fix it with DISTINCT."
+    - "A table is scanned N times per query; you spot it in the plan, and fix it with an index."
+    - "N transactions wait on one lock; you spot it as timeouts, and fix it with shorter transactions."
+  sql_l3_index:
+    - "A composite index on (status, created_at), so matches come out already sorted."
+    - "A composite index on (created_at, status), sort column first, so the sort never has to happen."
+    - "Two separate indexes, one per column, so the planner can pick whichever is cheaper."
+    - "An index on status alone, since sorting a filtered result is always cheap."
+  postgresql_l3_transaction:
+    - "Non-repeatable and phantom reads, so the same query can return different results within one transaction."
+    - "Dirty reads, so a transaction can see rows that another transaction has not committed yet."
+    - "Lost connections, so a transaction can be left half-applied after a network failure."
+    - "Deadlocks, so two transactions can wait on each other until one of them times out."
+  postgresql_l1_why:
+    - "Every row has a unique, non-null value that identifies it."
+    - "Rows are physically stored in key order and can never be reordered."
+    - "Every row has a number that increases in the order rows were inserted."
+    - "No two rows in the table can be identical in all of their columns."
+
+  # --- Testing --------------------------------------------------------------
+  testing_unit_l1_what:
+    - "It exercises one unit in isolation, with no external dependencies."
+    - "It is written by the developer rather than by a separate QA team."
+    - "It checks one assertion per test function rather than several."
+    - "It runs on every commit rather than only before a release."
+  testing_unit_l2_brittle:
+    - "It couples the test to implementation details, so a refactor breaks it even when behaviour is unchanged."
+    - "It makes the test slow, because progress values take longer to compute than results."
+    - "It hides failures, because exact comparisons pass too easily on floating-point values."
+    - "It makes the test flaky, because progress labels change between operating systems."
+  testing_integration_l1_what:
+    - "Two or more real components and the wiring between them."
+    - "A single function and mocked versions of everything that it calls."
+    - "The user interface and a person clicking through it by hand."
+    - "The test suite itself and the CI server that runs it."
+  testing_integration_l2_boundary:
+    - "The seams between components: real wiring and matching contracts."
+    - "Every branch inside a function, including the ones that are hard to reach."
+    - "The speed of individual functions under a realistic load."
+    - "Private helpers that a unit test cannot import directly."
+  testing_integration_l3_isolation:
+    - "Shared state, such as leftover database rows from another test."
+    - "Too many tests running at once for the machine's available memory."
+    - "Assertions that are too strict for the integration level."
+    - "Test files being discovered in a different order than they were written."
+
+  # --- Clean code / debugging -----------------------------------------------
+  clean_code_l1_naming:
+    - "It says what the function does, so nobody has to read the body."
+    - "It is as short as possible, so that call sites stay on one line."
+    - "It includes the types of its arguments, so that callers pass the right ones."
+    - "It matches the file name, so that the function is easy to locate."
+  clean_code_l2_single_responsibility:
+    - "It has several reasons to change, which makes it hard to test and reuse; split it by responsibility."
+    - "It runs slower, because one module cannot be loaded in parallel; split it for speed."
+    - "It uses more memory, because all three results are kept together; split it to free them."
+    - "Nothing significant, as long as the module has tests and stays under a few hundred lines."
+  clean_code_l3_flag_argument:
+    - "It hides two functions in one, and `f(x, True)` tells a reader nothing; split it."
+    - "Booleans are slower to pass than enums, so the call costs more than two separate functions would."
+    - "It prevents the function from being type-checked, because a bool accepts any truthy value."
+    - "It forces callers to pass the flag by keyword, which makes every call site longer."
+  debugging_l1_reproduce:
+    - "Reproduce it, ideally as a minimal case, to confirm it is real before changing any code."
+    - "Read the code around the reported line and fix whatever looks wrong there."
+    - "Add logging everywhere and wait for it to happen again in production."
+    - "Ask the reporter to upgrade to the latest version and close the report."
+  debugging_l2_bisect:
+    - "git bisect between a good and a bad commit, running the test each step."
+    - "git blame on the test file, then revert the most recent commit that touched it."
+    - "git log, then read every commit message since last week looking for something suspicious."
+    - "git stash the current work, then rerun the test on a clean checkout of main."
+  debugging_l3_silent_failure:
+    - "It hides the fault and carries bad state forward, so the failure shows up far away from its cause."
+    - "It wastes CPU, because the code keeps running work that will be thrown away."
+    - "It makes the logs longer, because every later step reports the same problem."
+    - "It is not worse: continuing keeps the service available, which matters more than correctness."
+  secure_coding_l1_input:
+    - "The client can be bypassed and requests forged, so only server checks count."
+    - "Frontend code has more bugs than backend code, so its checks are less reliable."
+    - "Browsers cache form values, so stale input may be sent after the rules have changed."
+    - "Users make typing mistakes, so the server must correct the input before storing it."
+  secure_coding_l2_decode:
+    - "A binary file makes the decode raise, so an upload can crash the handler; validate the content type first."
+    - "The file is stored at twice its size, because UTF-8 uses two bytes for every character."
+    - "The text loses its line endings, because decoding normalises them on every platform."
+    - "Nothing can go wrong: decoding as UTF-8 silently ignores any bytes it cannot read."
+
+  # --- Git --------------------------------------------------------------------
+  git_l1_staging:
+    - "The staging area, where `git add` chooses what goes into a commit."
+    - "The stash, where changes wait until you are ready to commit them."
+    - "The remote, where changes are pushed before they become a commit."
+    - "The reflog, where every edit is recorded before it becomes a commit."
+  git_l2_rebase_merge:
+    - "Rebase unshared work for linear history; never a pushed branch, as hashes are rewritten."
+    - "Rebase whenever there are conflicts, since it resolves them automatically; never merge a branch with conflicts."
+    - "Rebase shared branches to keep everyone in sync; never rebase local work, since it cannot be undone."
+    - "Rebase only to delete commits; merging is the only way to bring in changes from another branch."
+  git_l3_revert:
+    - "git revert, which adds a new commit undoing it and keeps shared history intact."
+    - "git reset --hard to the previous commit, then force-push main so everyone gets the fix."
+    - "git commit --amend to replace the bad commit, then push normally."
+    - "Delete main and recreate it from the last good commit, then ask everyone to re-clone."
+
+  # --- Data structures / algorithms -------------------------------------------
+  data_structures_l1_dict:
+    - "The key is hashed straight to its bucket in roughly constant time, whereas a list is checked item by item."
+    - "A dict keeps its keys sorted, so it can binary-search them, whereas a list is unsorted."
+    - "A dict is stored in faster memory than a list, so each comparison costs less."
+    - "A dict only holds strings, which compare faster than the mixed objects a list allows."
+  data_structures_l2_choose:
+    - "A deque with maxlen=100 -- O(1) appends, and the oldest drops out itself."
+    - "A list, deleting index 0 on each append -- simple, and deletion from the front is O(1)."
+    - "A dict keyed by timestamp -- lookups are O(1) and the oldest key is easy to find."
+    - "A set -- it rejects duplicates and removes the oldest element when it is full."
+  algorithms_l1_bigo:
+    - "How the work grows as the input grows, not the actual running time."
+    - "The exact number of seconds the algorithm takes for an input of size n."
+    - "The amount of memory the algorithm needs for an input of size n."
+    - "The best case, when the algorithm finds its answer on the first step."
+  algorithms_l2_complexity:
+    - "O(n*m), quadratic; converting the inner list to a set first brings it down to O(n+m)."
+    - "O(n+m), linear; each list is only walked once, so there is nothing to improve."
+    - "O(log n); `in` on a list uses binary search, so the loop is already efficient."
+    - "O(n*m), quadratic; sorting both lists first brings it down to O(1) per check."
+
+  # --- JavaScript / TypeScript / React / CSS ----------------------------------
+  javascript_l1_equality:
+    - "`==` coerces types before comparing; `===` compares without converting."
+    - "`==` compares values; `===` compares object identity, so it is only for objects."
+    - "`==` is for numbers and `===` is for strings; mixing them up throws a TypeError."
+    - "They behave the same; `===` is simply the newer spelling that linters prefer."
+  javascript_l2_event_loop:
+    - "It runs the call stack to empty, then drains all microtasks, then takes the next task from the queue."
+    - "It runs timers first, then promises, then whatever synchronous code is left over."
+    - "It gives each callback a fixed time slice and interrupts it when the slice runs out."
+    - "It runs callbacks on separate threads and merges their results in order of completion."
+  typescript_l1_why:
+    - "Types checked before the code runs, then erased from the output entirely."
+    - "Types checked while the code runs, throwing an error when a value has the wrong type."
+    - "Faster execution, because the compiler uses the types to optimise the generated JavaScript."
+    - "New runtime features, such as classes and modules, that JavaScript does not have."
+  typescript_l2_unknown_any:
+    - "`any` switches type checking off, while `unknown` forces you to narrow the value before using it."
+    - "`unknown` is checked at runtime, while `any` is only checked by the compiler."
+    - "`any` only accepts objects, while `unknown` also accepts primitives and null."
+    - "They check the same things; `unknown` just makes the intent clearer to readers."
+  react_l1_state:
+    - "Props come from the parent, read-only; state is owned by the component."
+    - "Props are for strings and numbers; state is for objects and arrays."
+    - "Props persist between page loads; state is reset every time the component renders."
+    - "Props can be changed by the child; state can only be changed by the parent."
+  react_l2_key:
+    - "Keys identify items across renders; with the index, a reorder reuses the wrong state."
+    - "Keys set the order items are drawn in; with the index as key, the list renders in reverse."
+    - "Keys are used for CSS targeting; with the index as key, styles are applied to the wrong row."
+    - "Keys make lists render faster; with the index as key, React falls back to rendering one row at a time."
+  react_l3_effect:
+    - "A dependency is recreated each render, or it sets state without a guard."
+    - "The component is missing a key, so React remounts it after every fetch."
+    - "The fetch is not awaited, so React retries it until the promise resolves."
+    - "The dependency array is empty, so React runs the effect after every render."
+  css_l1_specificity:
+    - "The id wins on specificity; order only breaks ties between equals."
+    - "The class wins, because classes are more specific than ids."
+    - "Whichever rule comes last in the stylesheet wins, regardless of the selector."
+    - "Whichever rule has more declarations wins, since it is the more detailed one."
+  css_l2_box:
+    - "Padding and border are counted inside the declared width, instead of being added on top of it."
+    - "Margin is counted inside the declared width, instead of being added outside it."
+    - "The width is measured from the parent's border, instead of from the parent's content."
+    - "The element becomes a block box, so it takes the full width of its parent."
+  css_l3_stacking:
+    - "An ancestor created a stacking context, and z-index only competes inside it."
+    - "z-index values above 100 are clamped by the browser, so 999 behaves the same as 100."
+    - "The element is missing `display: block`, and z-index only applies to block elements."
+    - "The other element appears later in the HTML, and source order always beats z-index."
+
+  # --- Docker / CI / REST -----------------------------------------------------
+  docker_l1_image:
+    - "An image is the immutable template; a container is a running instance of it, and one image can start many."
+    - "An image is a running process; a container is the saved snapshot it was started from."
+    - "An image holds the application code; a container holds the operating system it runs on."
+    - "They are the same thing; \"image\" is the name used before it has been pushed to a registry."
+  docker_l2_layers:
+    - "Any source change invalidates the cache, so dependencies reinstall each build."
+    - "Docker compresses source files before installing, so a larger copy step delays the install."
+    - "Dependencies are installed once per source file, so more files mean more installs."
+    - "The install step scans the copied source for imports, which takes longer than reading a manifest."
+  docker_l3_size:
+    - "A full base image instead of slim, and build tools left in the final image."
+    - "Too many environment variables, and exposing more ports than the application needs."
+    - "Using COPY instead of ADD, and naming the image with a long tag."
+    - "Running the container as root, and setting a large memory limit."
+  ci_cd_l1_what:
+    - "Merging to main often, with an automated build and tests on each push."
+    - "Deploying to production automatically every time a commit lands on main."
+    - "Keeping long-lived feature branches and integrating them together before each release."
+    - "Running the full test suite by hand before opening a pull request."
+  ci_cd_l2_purpose:
+    - "Block on failing tests and builds; only warn on noisier signals, so people keep trusting a red pipeline."
+    - "Block on everything, including style warnings, so that main stays perfectly clean."
+    - "Warn on failing tests but block on coverage drops, since coverage matters more over time."
+    - "Block on nothing; CI should report results and leave the decision to the reviewer."
+  ci_cd_l3_flaky:
+    - "It trains people to ignore red builds, so a real failure gets retried away."
+    - "It slows the pipeline down, since the test has to be run ten times to pass once."
+    - "It lowers the coverage figure, since a failed run does not count towards coverage."
+    - "It is not worse: a test that passes nine times in ten still catches most regressions."
+  rest_api_design_l1_verbs:
+    - "POST creates a resource; PUT replaces one; PATCH updates part of one."
+    - "PUT creates a resource; POST replaces one entirely, and PATCH deletes a field."
+    - "GET creates a resource when given a body; PUT replaces one, and POST updates it partially."
+    - "POST both creates and replaces; PUT exists only for file uploads."
+  rest_api_design_l2_idempotent:
+    - "GET, PUT and DELETE -- repeating them gives the same result, so a client can safely retry; POST is not."
+    - "POST and PATCH -- they change data, so the server must make sure they run only once."
+    - "Only GET -- every method that writes data produces a new result each time by definition."
+    - "All of them -- HTTP requires every method to be safe to repeat after a timeout."
+  rest_api_design_l3_status:
+    - "Often 404, since 403 confirms that it exists; it depends on the threat model."
+    - "Always 403, since 404 is reserved for URLs that the router does not recognise."
+    - "Always 401, since the client has not proven who it is."
+    - "Always 200 with an empty body, since error codes leak more than an empty result does."

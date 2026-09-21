@@ -51,3 +51,12 @@ data/jobs_raw/*
 
 ### IDE ###
 .idea/
+
+### Playwright ###
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+frontend/.cache/
+
+### Local e2e artefacts ###
+backend/cache/e2e.db

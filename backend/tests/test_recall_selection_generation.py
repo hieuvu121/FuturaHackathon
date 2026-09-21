@@ -8,7 +8,7 @@ from app.models.db import Analysis, Base, QuestionRow, Repo, User
 from app.routers import recall as recall_router
 from app.schemas.findings import Finding
 from app.schemas.repo_map import FunctionNode, RepoMap
-from app.schemas.recall import QuestionType
+from app.schemas.recall import GENERATED_TYPES, QuestionType
 from app.services.recall.generator import MAX_CONTEXT_CHARS, build_context, generate
 from app.services.recall.selector import select_targets
 from sqlalchemy import create_engine, select
@@ -90,7 +90,7 @@ def test_generator_emits_five_stable_typed_questions(tmp_path: Path):
     first = generate(settings, tmp_path, _repo(targets), targets)
     second = generate(settings, tmp_path, _repo(targets), targets)
 
-    assert [item.type for item in first] == list(QuestionType)
+    assert [item.type for item in first] == list(GENERATED_TYPES)
     assert [item.id for item in first] == [item.id for item in second]
     assert all(item.skill_ids[0] == "python" for item in first)
     assert "testing_unit" in first[-1].skill_ids

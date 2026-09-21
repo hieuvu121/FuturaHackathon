@@ -114,6 +114,27 @@ def complete_analysis(
     db.commit()
 
 
+INTERRUPTED = "The analysis was interrupted by a server restart. Run it again."
+
+
+def fail_interrupted_analyses(db: Session) -> int:
+    """Close every analysis a previous process left unfinished. Returns how many.
+
+    The pipeline runs as a BackgroundTask, which dies with the process. A row
+    still marked queued / cloning / scanning at STARTUP therefore has nobody
+    working on it and never will -- but it would keep the status endpoint
+    reporting "running", and keep `analyze` refusing a new run with 409, for
+    ever. Only call this at startup: later on, a running row is genuinely running.
+    """
+    rows = db.scalars(select(Analysis).where(Analysis.stage.not_in(("done", "failed")))).all()
+    for analysis in rows:
+        analysis.stage = "failed"
+        analysis.error = INTERRUPTED
+    if rows:
+        db.commit()
+    return len(rows)
+
+
 def fail_analysis(db: Session, analysis: Analysis, error: Exception | str) -> None:
     """Make failures visible to polling clients without exposing tracebacks."""
     analysis.stage = "failed"

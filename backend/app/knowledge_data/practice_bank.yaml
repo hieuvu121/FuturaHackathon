@@ -1,0 +1,211 @@
+# Practice bank: recall a topic by doing it, three ways.
+#
+# Unlike recall_bank.yaml, nothing here feeds the roadmap. The evaluation finds
+# your level; this is where you go afterwards to work on it. Each topic is a
+# skill id from skills.yaml and carries the same three kinds of question:
+#
+#   concept   multiple choice. THE FIRST CHOICE IS THE CORRECT ONE; the loader
+#             shuffles them (the same way every time) before they reach the browser.
+#   coding    write it. Graded against key_points, with `solution` shown afterwards.
+#   explain   read `code` and say what it does and why. Graded against key_points,
+#             with `solution` (a model explanation) shown afterwards.
+#
+# key_points and solutions never reach the browser before an answer is graded.
+# To add a topic, copy one of the two below: nothing in the code names them.
+
+topics:
+  - skill_id: python
+    name: Python
+    summary: The language itself -- how its data model, iteration and functions actually behave.
+    questions:
+      - id: practice_python_mc_is_vs_eq
+        type: concept
+        level: 1
+        prompt: "What is the difference between `is` and `==` in Python?"
+        choices:
+          - "`is` compares identity (the same object); `==` compares value."
+          - "`is` compares value; `==` compares identity (the same object)."
+          - "They are the same, but `is` is faster for strings and numbers."
+          - "`is` works on any type, while `==` only works on numbers."
+        key_points: [identity, same object, equality, value]
+
+      - id: practice_python_mc_comprehension_scope
+        type: concept
+        level: 2
+        prompt: "Why is `[x for x in data if x]` usually preferred over building the list with a loop and `append`?"
+        choices:
+          - "It states the result in one expression and avoids repeated method lookups."
+          - "It runs on a separate thread, so large inputs do not block the program."
+          - "It is lazy, so nothing is computed until the list is first read."
+          - "It checks the element types, so mixed lists raise an error earlier."
+        key_points: [one expression, readable, avoids append lookups, builds a list eagerly]
+
+      - id: practice_python_code_group_by
+        type: coding
+        level: 2
+        prompt: "Write `group_by(items, key)` that returns a dict mapping each `key(item)` to the list of items with that key, preserving the order items arrived in."
+        starter: "def group_by(items, key):\n    "
+        key_points: [dict of lists, setdefault or defaultdict, calls key once per item, preserves order]
+        solution: |
+          def group_by(items, key):
+              groups = {}
+              for item in items:
+                  groups.setdefault(key(item), []).append(item)
+              return groups
+
+      - id: practice_python_code_retry
+        type: coding
+        level: 3
+        prompt: "Write a decorator `retry(times)` that calls the wrapped function again when it raises, up to `times` attempts in total, and re-raises the last exception if every attempt fails."
+        starter: "import functools\n\ndef retry(times):\n    "
+        key_points: [decorator factory, functools.wraps, loop over attempts, re-raise the last exception, returns the result on success]
+        solution: |
+          import functools
+
+          def retry(times):
+              def decorator(function):
+                  @functools.wraps(function)
+                  def wrapper(*args, **kwargs):
+                      for attempt in range(times):
+                          try:
+                              return function(*args, **kwargs)
+                          except Exception:
+                              if attempt == times - 1:
+                                  raise
+                  return wrapper
+              return decorator
+
+      - id: practice_python_explain_generator
+        type: explain
+        level: 2
+        prompt: "Explain what this function does, and what would change if `yield` were replaced by appending to a list and returning it."
+        code: |
+          def read_records(path):
+              with open(path) as handle:
+                  for line in handle:
+                      line = line.strip()
+                      if line and not line.startswith("#"):
+                          yield line.split(",")
+        key_points: [skips blank and comment lines, splits each line on commas, generator yields one record at a time, lazy so memory stays constant, file stays open while iterating, a list would load everything at once]
+        solution: |
+          It reads a file line by line, skips blank lines and lines starting with "#",
+          and yields each remaining line split on commas. Because it is a generator it
+          is lazy: one record exists at a time, so memory stays flat however large the
+          file is, and the file stays open until iteration finishes. Returning a list
+          instead would read the whole file up front -- simpler to reuse, but the
+          memory cost grows with the file.
+
+      - id: practice_python_explain_default_cache
+        type: explain
+        level: 3
+        prompt: "Explain what this code prints and why. Is the behaviour a bug or a feature here?"
+        code: |
+          def lookup(key, cache={}):
+              if key not in cache:
+                  cache[key] = expensive(key)
+              return cache[key]
+
+          lookup("a")
+          lookup("a")
+        key_points: [default dict is created once at definition time, shared across calls, acts as a cache so expensive runs once, deliberate here but hidden, clearer as functools.lru_cache or an explicit cache]
+        solution: |
+          The default `cache={}` is created once, when the function is defined, so every
+          call shares the same dict. The second `lookup("a")` finds the key and never
+          calls `expensive` again. Here the sharing is doing useful work as a memo, but
+          it is hidden state that surprises readers and cannot be cleared; the honest
+          version is `functools.lru_cache` or a cache passed in explicitly.
+
+  - skill_id: fastapi
+    name: FastAPI
+    summary: Building HTTP APIs with FastAPI -- routing, validation, dependencies and async handlers.
+    questions:
+      - id: practice_fastapi_mc_pydantic
+        type: concept
+        level: 1
+        prompt: "What happens when a request body does not match the Pydantic model a FastAPI route declares?"
+        choices:
+          - "FastAPI returns a 422 response describing the invalid fields, and the handler never runs."
+          - "The handler runs with the missing fields set to None, and must check them itself."
+          - "FastAPI returns a 500 response, because validation errors are unhandled exceptions."
+          - "The request is accepted, and the mismatch is only logged as a warning."
+        key_points: [422, validation before the handler, error details per field]
+
+      - id: practice_fastapi_mc_depends
+        type: concept
+        level: 2
+        prompt: "What is `Depends` for in FastAPI?"
+        choices:
+          - "Declaring something a route needs, such as a database session, so FastAPI builds it and passes it in."
+          - "Marking a route as depending on another route, so they are called in order."
+          - "Importing a module lazily, so that start-up stays fast."
+          - "Making a query parameter required instead of optional."
+        key_points: [dependency injection, shared setup such as db session or current user, resolved per request, easy to override in tests]
+
+      - id: practice_fastapi_code_get_item
+        type: coding
+        level: 2
+        prompt: "Write a `GET /items/{item_id}` route that returns the item from the `ITEMS` dict, or a 404 with a clear message when it does not exist."
+        starter: "from fastapi import FastAPI, HTTPException\n\napp = FastAPI()\nITEMS = {1: {\"name\": \"keyboard\"}}\n\n"
+        key_points: [path parameter typed as int, looks the item up, raises HTTPException 404 when missing, returns the item]
+        solution: |
+          @app.get("/items/{item_id}")
+          def get_item(item_id: int):
+              item = ITEMS.get(item_id)
+              if item is None:
+                  raise HTTPException(status_code=404, detail="Item not found")
+              return item
+
+      - id: practice_fastapi_code_create_item
+        type: coding
+        level: 3
+        prompt: "Write a `POST /items` route that accepts a JSON body with `name` (non-empty) and `price` (greater than zero), validated by a Pydantic model, and responds with 201."
+        starter: "from fastapi import FastAPI\nfrom pydantic import BaseModel, Field\n\napp = FastAPI()\n\n"
+        key_points: [pydantic model for the body, Field constraints min_length and gt, status_code 201, returns the created item]
+        solution: |
+          class ItemIn(BaseModel):
+              name: str = Field(min_length=1)
+              price: float = Field(gt=0)
+
+          @app.post("/items", status_code=201)
+          def create_item(item: ItemIn):
+              return item
+
+      - id: practice_fastapi_explain_dependency
+        type: explain
+        level: 2
+        prompt: "Explain what `get_db` does, why it uses `yield` rather than `return`, and what the route receives."
+        code: |
+          def get_db():
+              db = SessionLocal()
+              try:
+                  yield db
+              finally:
+                  db.close()
+
+          @app.get("/users/{user_id}")
+          def read_user(user_id: int, db: Session = Depends(get_db)):
+              return db.get(User, user_id)
+        key_points: [opens one session per request, yield hands the session to the route, code after yield runs when the request ends, finally closes it even on error, the route receives the session not the generator]
+        solution: |
+          `get_db` is a dependency with teardown. FastAPI calls it for each request,
+          takes the session it yields and passes that session to `read_user` as `db`.
+          When the response is done, FastAPI resumes the generator, so the `finally`
+          block closes the session -- including when the route raised. With `return`
+          there would be no place to put the close, and sessions would leak.
+
+      - id: practice_fastapi_explain_blocking
+        type: explain
+        level: 3
+        prompt: "Explain the problem with this handler under load, and how you would fix it."
+        code: |
+          @app.get("/report")
+          async def report():
+              data = requests.get("https://slow.example.com/data").json()
+              return summarise(data)
+        key_points: [async handler runs on the event loop, requests.get is blocking, blocks every other request while it waits, use an async client such as httpx.AsyncClient with await, or make the handler a plain def so it runs in the thread pool]
+        solution: |
+          The handler is `async def`, so it runs on the event loop -- but `requests.get`
+          is a blocking call. While it waits on the slow server, the loop can do nothing
+          else, so every other request stalls. Fix it either by awaiting an async client
+          (`httpx.AsyncClient`), or by declaring the handler with plain `def`, which
+          makes FastAPI run it in a thread pool where blocking is harmless.

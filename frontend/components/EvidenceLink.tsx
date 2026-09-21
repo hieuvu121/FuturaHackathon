@@ -1,25 +1,30 @@
-import Link from "next/link";
-
-import type { Evidence } from "@/lib/types";
+import type { Evidence, Finding } from "@/lib/types";
+import { useEvidenceViewer } from "./EvidenceViewer";
 import { ExternalIcon } from "./Icons";
 
 export interface EvidenceLinkProps {
   evidence: Evidence;
   onOpen?: (evidence: Evidence) => void;
-  findingId?: string;
+  finding?: Finding;
+  /** Show only the file name. The full path stays in the tooltip. */
+  compact?: boolean;
 }
-export default function EvidenceLink({ evidence, onOpen, findingId }: EvidenceLinkProps) {
-  const label = `${evidence.file}:${evidence.lines[0]}-${evidence.lines[1]}`;
-  const content = <><span>{label}</span><ExternalIcon width="15" height="15" /></>;
-  const className = "evidence-link";
 
-  if (onOpen) {
-    return <button type="button" className={className} onClick={() => onOpen(evidence)}>{content}</button>;
-  }
+export default function EvidenceLink({ evidence, onOpen, finding, compact }: EvidenceLinkProps) {
+  const openViewer = useEvidenceViewer();
+  const range = `${evidence.lines[0]}-${evidence.lines[1]}`;
+  const full = `${evidence.file}:${range}`;
+  const label = compact ? `${evidence.file.split("/").pop()}:${range}` : full;
 
-  const href = findingId
-    ? { pathname: "/profile", query: { ev: findingId } }
-    : { pathname: "/profile", query: { repo: evidence.repo_id ?? undefined, file: evidence.file, from: evidence.lines[0], to: evidence.lines[1], commit: evidence.commit ?? undefined } };
-
-  return <Link className={className} href={href}>{content}</Link>;
+  return (
+    <button
+      type="button"
+      className="evidence-link"
+      title={full}
+      onClick={() => (onOpen ? onOpen(evidence) : openViewer?.({ evidence, finding }))}
+    >
+      <span>{label}</span>
+      <ExternalIcon width="15" height="15" />
+    </button>
+  );
 }

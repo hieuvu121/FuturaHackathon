@@ -87,6 +87,121 @@ class AnswerRow(Base):
     feedback: Mapped[str | None] = mapped_column(Text, default=None)
 
 
+class RecallAttemptRow(Base):
+    """One graded answer in the adaptive drill, in the order it happened.
+
+    The loop's state is derived from this log rather than stored separately, so
+    there is no session row to go stale or to reset by hand.
+    """
+
+    __tablename__ = "recall_attempts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    question_id: Mapped[str] = mapped_column(String(128))
+    skill_id: Mapped[str] = mapped_column(String(64), index=True)
+    level: Mapped[int] = mapped_column(default=2)
+    passed: Mapped[bool] = mapped_column(default=False)
+    score: Mapped[float] = mapped_column(Float, default=0.0)
+    submission: Mapped[str] = mapped_column(Text, default="")
+
+
+class LearnerProfileRow(Base):
+    """How a person came in, when it was not through their repositories.
+
+    `path` is "survey" for someone who answered the onboarding survey. `role` is
+    an id from knowledge_data/role_paths.yaml, and `known_skills` is what they
+    SAID they have used -- a claim, which is why those skills are only ever
+    "basics" until recall has checked them.
+    """
+
+    __tablename__ = "learner_profiles"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    path: Mapped[str] = mapped_column(String(16), default="survey")
+    role: Mapped[str | None] = mapped_column(String(64), default=None)
+    known_skills: Mapped[list] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+
+
+class RoadmapReviewRow(Base):
+    """Where one user stands with their roadmap: shown, accepted, or being redone.
+
+    `recall_floor` is the id of the last recall attempt BEFORE the current
+    session. Redoing the test raises it, so old answers stop counting without
+    being deleted. `hidden_skills` is the user's own tailoring of the roadmap.
+    """
+
+    __tablename__ = "roadmap_reviews"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    status: Mapped[str] = mapped_column(String(16), default="pending")
+    recall_floor: Mapped[int] = mapped_column(Integer, default=0)
+    hidden_skills: Mapped[list] = mapped_column(JSON, default=list)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+
+
+class CapstoneSubmissionRow(Base):
+    """One final-project submission and the review it received.
+
+    The brief is stored with it: a review is against the requirements the user
+    was given at the time, even if their roadmap has since moved on.
+    """
+
+    __tablename__ = "capstone_submissions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    repo_url: Mapped[str] = mapped_column(Text)
+    notes: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(16), default="reviewing")
+    error: Mapped[str | None] = mapped_column(Text, default=None)
+    brief: Mapped[dict] = mapped_column(JSON)
+    review: Mapped[dict | None] = mapped_column(JSON, default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+
+
+class CommunityRoadmapRow(Base):
+    """A roadmap shared with the community, as it stood when it was shared.
+
+    `stages` is a snapshot -- step titles, concept names and mastery only. No
+    evidence, findings or file paths: sharing a roadmap must not publish code.
+    `user_id` is null for the seeded samples, which carry `author_name` instead.
+    """
+
+    __tablename__ = "community_roadmaps"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), index=True, default=None)
+    author_name: Mapped[str | None] = mapped_column(String(128), default=None)
+    title: Mapped[str] = mapped_column(String(160))
+    summary: Mapped[str] = mapped_column(Text, default="")
+    stages: Mapped[list] = mapped_column(JSON, default=list)
+    overall: Mapped[float] = mapped_column(Float, default=0.0)
+    is_sample: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+
+
+class CommunityCommentRow(Base):
+    """A review of a shared roadmap.
+
+    `standing` is stamped when the comment is written, from what the author had
+    earned at that moment, so a badge shown beside an old review stays true to
+    the review rather than drifting with the author's later progress.
+    """
+
+    __tablename__ = "community_comments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    roadmap_id: Mapped[int] = mapped_column(ForeignKey("community_roadmaps.id"), index=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), index=True, default=None)
+    author_name: Mapped[str | None] = mapped_column(String(128), default=None)
+    standing: Mapped[str] = mapped_column(String(16), default="member")
+    verdict: Mapped[str] = mapped_column(String(16), default="comment")
+    body: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+
+
 class SkillStatusRow(Base):
     __tablename__ = "skill_status"
 

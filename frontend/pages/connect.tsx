@@ -36,6 +36,11 @@ export default function ConnectPage() {
   const [selectionNotice, setSelectionNotice] = useState("");
   const [needsLogin, setNeedsLogin] = useState(false);
   const [page, setPage] = useState(0);
+  // Set when a run stops short, so the page can offer to run it again instead of
+  // sitting on "Analysing your work" with nothing behind it.
+  const [failed, setFailed] = useState(false);
+  // The pop-up shown when a run finishes WHILE the user is watching it.
+  const [finished, setFinished] = useState(false);
 
   const loadRepositories = useCallback(async () => {
     try {
@@ -69,12 +74,14 @@ export default function ConnectPage() {
       try {
         const statuses = await Promise.all([...selected].map(getStatus));
         if (cancelled) return;
-        const failed = statuses.find((status) => status.stage === "failed");
-        if (failed) {
-          setLoadError(failed.error || "Repository analysis failed.");
+        const stopped = statuses.find((status) => status.stage === "failed");
+        if (stopped) {
+          setLoadError(stopped.error || "Repository analysis failed.");
+          setFailed(true);
           return;
         }
         const allDone = statuses.every((status) => status.done);
+        if (allDone) setFinished(true);
         const average = statuses.reduce((sum, status) => sum + status.progress, 0) / statuses.length;
         setCurrentStep(allDone ? PIPELINE.length : Math.min(PIPELINE.length - 1, Math.floor((average / 100) * PIPELINE.length)));
         if (!allDone) window.setTimeout(() => { if (!cancelled) void poll(); }, 900);
@@ -120,6 +127,8 @@ export default function ConnectPage() {
   async function analyse() {
     if (selectedCount < 3) return;
     setLoadError("");
+    setFailed(false);
+    setFinished(false);
     setDirection(1);
     setCurrentStep(0);
     setPanel("pipeline");
@@ -147,8 +156,20 @@ export default function ConnectPage() {
         <p className="page-copy">Choose 3 to 5. Dependencies, generated code, build output, and forks with no original commits are filtered out before anything is scored.</p>
       </motion.header>
 
-      {loadError && <div className="error-state" role="alert">{loadError}{needsLogin && <> <a href={loginUrl}>Connect GitHub</a></>}</div>}
+      {loadError && !needsLogin && <div className="error-state" role="alert">{loadError}</div>}
 
+      {needsLogin && (
+        <section className="empty-state surface reconnect" role="alert" data-testid="reconnect-github">
+          <h2>Connect GitHub to continue</h2>
+          <p>{loadError || "Your repositories are listed from GitHub, so you need to be signed in there."}</p>
+          <div className="question-actions empty-actions">
+            <a className="primary-button" href={loginUrl} data-testid="reconnect-button">Connect GitHub <ArrowRightIcon width="19" height="19" /></a>
+            <button type="button" className="ghost-button" onClick={() => void router.push("/start")}>I have no repositories</button>
+          </div>
+        </section>
+      )}
+
+      {!needsLogin && (
       <motion.div variants={item}>
         <AnimatePresence mode="popLayout" initial={false} custom={direction}>
           {panel === "select" ? (
@@ -222,13 +243,20 @@ export default function ConnectPage() {
               transition={{ duration: reduceMotion ? 0 : .5, ease: [.77, 0, .18, 1] }}
             >
               <aside className="pipeline-summary surface">
-                <h2>{currentStep >= PIPELINE.length ? "Analysis complete" : "Analysing your work"}</h2>
+                <h2>
+                  {failed ? "Analysis stopped" : currentStep >= PIPELINE.length ? "Analysis complete" : "Analysing your work"}
+                </h2>
                 <div className="pipeline-progress"><motion.span animate={{ scaleX: Math.max(0.03, currentStep / PIPELINE.length) }} /></div>
                 <p>Ingest is deterministic: tree-sitter and git only. The model joins at the scan step, and every finding must point at a valid file and line range.</p>
                 <div className="pipeline-actions">
                   <button type="button" className="secondary-button" onClick={goBack}>Back</button>
-                  {currentStep >= PIPELINE.length && (
-                    <button type="button" className="primary-button" onClick={() => void router.push("/profile")}>Open profile <ArrowRightIcon width="19" height="19" /></button>
+                  {failed && (
+                    <button type="button" className="primary-button" data-testid="retry-analysis" onClick={() => void analyse()}>
+                      Run it again <ArrowRightIcon width="19" height="19" />
+                    </button>
+                  )}
+                  {!failed && currentStep >= PIPELINE.length && (
+                    <button type="button" className="primary-button" onClick={() => void router.push("/recall")}>Start recall <ArrowRightIcon width="19" height="19" /></button>
                   )}
                 </div>
               </aside>
@@ -241,7 +269,7 @@ export default function ConnectPage() {
                       <span className={done ? "step-dot done" : running ? "step-dot running" : "step-dot"}>{done && <CheckIcon width="13" height="13" />}</span>
                       <strong>{label}</strong>
                       <em>{stage}</em>
-                      <small>{done ? "Done" : running ? "Running" : "Waiting"}</small>
+                      <small>{done ? "Done" : running ? (failed ? "Stopped" : "Running") : "Waiting"}</small>
                     </li>
                   );
                 })}
@@ -250,6 +278,38 @@ export default function ConnectPage() {
           )}
         </AnimatePresence>
       </motion.div>
+      )}
+      {finished && (
+        <div className="modal-backdrop" data-testid="analysis-complete">
+          <motion.section
+            className="modal-card surface"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="analysis-complete-title"
+            initial={reduceMotion ? false : { opacity: 0, y: 18, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.2, 0.8, 0.2, 1] }}
+          >
+            <span className="modal-badge" aria-hidden="true"><CheckIcon width="24" height="24" /></span>
+            <p className="eyebrow">Connect</p>
+            <h2 id="analysis-complete-title">Analysis complete</h2>
+            <p>
+              Your {selectedCount} repositories have been read and scored. Next, five short questions
+              check what you actually understand, and your roadmap is built from both.
+            </p>
+            <button
+              type="button"
+              className="primary-button"
+              data-testid="go-to-recall"
+              autoFocus
+              onClick={() => void router.push("/recall")}
+            >
+              Start recall <ArrowRightIcon width="19" height="19" />
+            </button>
+            <button type="button" className="ghost-button" onClick={() => setFinished(false)}>Stay here</button>
+          </motion.section>
+        </div>
+      )}
     </motion.main>
   );
 }

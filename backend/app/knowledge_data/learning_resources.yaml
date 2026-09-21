@@ -1,0 +1,261 @@
+# External study resources, shown beside each skill on the roadmap.
+#
+# Keyed by skill id from skills.yaml. A skill with no entry inherits from its
+# nearest taxonomy ancestor, so every root concept below has an entry and no
+# skill is ever left without somewhere to go.
+#
+# Rules for adding one: link the primary source (official docs, the standard,
+# the book's own site) or a free, well-established course. No paywalled
+# content, no link shorteners, no blog posts that will be gone next year.
+# `kind` is one of: docs | guide | course | practice | reference.
+# tests/test_learning_resources.py checks the shape; check that links resolve
+# before committing a new one.
+
+resources:
+  # --- Roots: the fallback for everything beneath them -----------------------
+  programming_languages:
+    - {title: "Exercism: practice tracks with mentoring", url: "https://exercism.org/tracks", kind: practice}
+    - {title: "Developer roadmaps by language", url: "https://roadmap.sh/roadmaps", kind: guide}
+  programming_concepts:
+    - {title: "Structure and Interpretation of Computer Programs", url: "https://mitp-content-server.mit.edu/books/content/sectbyfn/books_pres_0/6515/sicp.zip/index.html", kind: guide}
+    - {title: "Computer science roadmap", url: "https://roadmap.sh/computer-science", kind: guide}
+  backend:
+    - {title: "Backend developer roadmap", url: "https://roadmap.sh/backend", kind: guide}
+    - {title: "The Twelve-Factor App", url: "https://12factor.net/", kind: guide}
+  frontend:
+    - {title: "MDN: Learn web development", url: "https://developer.mozilla.org/en-US/docs/Learn_web_development", kind: course}
+    - {title: "Frontend developer roadmap", url: "https://roadmap.sh/frontend", kind: guide}
+  mobile:
+    - {title: "Android developer guides", url: "https://developer.android.com/guide", kind: docs}
+    - {title: "Flutter documentation", url: "https://docs.flutter.dev/", kind: docs}
+  data:
+    - {title: "Use The Index, Luke: SQL performance explained", url: "https://use-the-index-luke.com/", kind: guide}
+    - {title: "PostgreSQL tutorial (official)", url: "https://www.postgresql.org/docs/current/tutorial.html", kind: docs}
+  testing:
+    - {title: "pytest: getting started", url: "https://docs.pytest.org/en/stable/getting-started.html", kind: docs}
+    - {title: "Martin Fowler: The Practical Test Pyramid", url: "https://martinfowler.com/articles/practical-test-pyramid.html", kind: guide}
+  devops:
+    - {title: "DevOps roadmap", url: "https://roadmap.sh/devops", kind: guide}
+    - {title: "Google SRE book (free online)", url: "https://sre.google/sre-book/table-of-contents/", kind: guide}
+  cloud:
+    - {title: "AWS: getting started", url: "https://aws.amazon.com/getting-started/", kind: course}
+    - {title: "Google Cloud: architecture framework", url: "https://cloud.google.com/architecture/framework", kind: guide}
+  security:
+    - {title: "OWASP Top Ten", url: "https://owasp.org/www-project-top-ten/", kind: reference}
+    - {title: "OWASP Cheat Sheet Series", url: "https://cheatsheetseries.owasp.org/", kind: reference}
+  api_design:
+    - {title: "Microsoft REST API guidelines", url: "https://github.com/microsoft/api-guidelines", kind: guide}
+    - {title: "OpenAPI specification", url: "https://spec.openapis.org/oas/latest.html", kind: reference}
+  version_control:
+    - {title: "Pro Git (free book)", url: "https://git-scm.com/book/en/v2", kind: guide}
+    - {title: "Learn Git Branching (interactive)", url: "https://learngitbranching.js.org/", kind: practice}
+  collaboration:
+    - {title: "Google engineering practices: code review", url: "https://google.github.io/eng-practices/review/", kind: guide}
+    - {title: "Google technical writing courses", url: "https://developers.google.com/tech-writing", kind: course}
+
+  # --- Languages ---------------------------------------------------------------
+  python:
+    - {title: "The Python Tutorial (official)", url: "https://docs.python.org/3/tutorial/", kind: docs}
+    - {title: "Exercism: Python track", url: "https://exercism.org/tracks/python", kind: practice}
+  javascript:
+    - {title: "The Modern JavaScript Tutorial", url: "https://javascript.info/", kind: course}
+    - {title: "MDN: JavaScript guide", url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide", kind: docs}
+  typescript:
+    - {title: "The TypeScript Handbook", url: "https://www.typescriptlang.org/docs/handbook/intro.html", kind: docs}
+    - {title: "Type challenges (practice)", url: "https://github.com/type-challenges/type-challenges", kind: practice}
+  java:
+    - {title: "dev.java: Learn Java", url: "https://dev.java/learn/", kind: course}
+  go:
+    - {title: "A Tour of Go", url: "https://go.dev/tour/", kind: course}
+    - {title: "Effective Go", url: "https://go.dev/doc/effective_go", kind: guide}
+  rust:
+    - {title: "The Rust Programming Language (the book)", url: "https://doc.rust-lang.org/book/", kind: guide}
+  csharp:
+    - {title: "Microsoft Learn: C# documentation", url: "https://learn.microsoft.com/en-us/dotnet/csharp/", kind: docs}
+  fastapi:
+    - {title: "FastAPI tutorial (official)", url: "https://fastapi.tiangolo.com/tutorial/", kind: docs}
+  django:
+    - {title: "Django: writing your first app", url: "https://docs.djangoproject.com/en/stable/intro/tutorial01/", kind: docs}
+  flask:
+    - {title: "Flask tutorial (official)", url: "https://flask.palletsprojects.com/en/stable/tutorial/", kind: docs}
+  nodejs:
+    - {title: "Node.js: learn", url: "https://nodejs.org/en/learn/getting-started/introduction-to-nodejs", kind: docs}
+  expressjs:
+    - {title: "Express: guide to routing and middleware", url: "https://expressjs.com/en/guide/routing.html", kind: docs}
+  spring_boot:
+    - {title: "Spring guides", url: "https://spring.io/guides", kind: docs}
+
+  # --- Programming concepts ------------------------------------------------------
+  async_programming:
+    - {title: "Python asyncio: coroutines and tasks", url: "https://docs.python.org/3/library/asyncio-task.html", kind: docs}
+    - {title: "MDN: asynchronous JavaScript", url: "https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Async_JS", kind: course}
+  concurrency:
+    - {title: "Python: concurrent execution", url: "https://docs.python.org/3/library/concurrency.html", kind: docs}
+  data_structures:
+    - {title: "Python: data structures", url: "https://docs.python.org/3/tutorial/datastructures.html", kind: docs}
+    - {title: "NeetCode roadmap (practice by structure)", url: "https://neetcode.io/roadmap", kind: practice}
+  algorithms:
+    - {title: "Khan Academy: algorithms", url: "https://www.khanacademy.org/computing/computer-science/algorithms", kind: course}
+    - {title: "NeetCode roadmap (practice by pattern)", url: "https://neetcode.io/roadmap", kind: practice}
+  design_patterns:
+    - {title: "Refactoring.Guru: design patterns", url: "https://refactoring.guru/design-patterns", kind: guide}
+  clean_code:
+    - {title: "Refactoring.Guru: code smells and refactorings", url: "https://refactoring.guru/refactoring", kind: guide}
+    - {title: "Google Python style guide", url: "https://google.github.io/styleguide/pyguide.html", kind: reference}
+  debugging:
+    - {title: "Python debugger (pdb)", url: "https://docs.python.org/3/library/pdb.html", kind: docs}
+    - {title: "MIT Missing Semester: debugging and profiling", url: "https://missing.csail.mit.edu/2020/debugging-profiling/", kind: course}
+  performance_profiling:
+    - {title: "Python profilers", url: "https://docs.python.org/3/library/profile.html", kind: docs}
+    - {title: "MIT Missing Semester: debugging and profiling", url: "https://missing.csail.mit.edu/2020/debugging-profiling/", kind: course}
+  object_oriented_programming:
+    - {title: "Python tutorial: classes", url: "https://docs.python.org/3/tutorial/classes.html", kind: docs}
+  functional_programming:
+    - {title: "Python: functional programming HOWTO", url: "https://docs.python.org/3/howto/functional.html", kind: guide}
+
+  # --- Frontend ------------------------------------------------------------------
+  html:
+    - {title: "MDN: structuring content with HTML", url: "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Structuring_content", kind: course}
+  css:
+    - {title: "MDN: CSS styling basics", url: "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics", kind: course}
+    - {title: "web.dev: Learn CSS", url: "https://web.dev/learn/css", kind: course}
+  react:
+    - {title: "React: Learn (official)", url: "https://react.dev/learn", kind: docs}
+  nextjs:
+    - {title: "Next.js: Learn (official course)", url: "https://nextjs.org/learn", kind: course}
+  vue:
+    - {title: "Vue: tutorial (official)", url: "https://vuejs.org/tutorial/", kind: docs}
+  angular:
+    - {title: "Angular: tutorials", url: "https://angular.dev/tutorials", kind: docs}
+  state_management:
+    - {title: "React: managing state", url: "https://react.dev/learn/managing-state", kind: docs}
+  web_accessibility:
+    - {title: "web.dev: Learn accessibility", url: "https://web.dev/learn/accessibility", kind: course}
+    - {title: "WAI-ARIA authoring practices", url: "https://www.w3.org/WAI/ARIA/apg/", kind: reference}
+  responsive_design:
+    - {title: "web.dev: Learn responsive design", url: "https://web.dev/learn/design", kind: course}
+  web_performance:
+    - {title: "web.dev: Learn performance", url: "https://web.dev/learn/performance", kind: course}
+  frontend_testing:
+    - {title: "Testing Library: guiding principles", url: "https://testing-library.com/docs/guiding-principles", kind: docs}
+    - {title: "Playwright: writing tests", url: "https://playwright.dev/docs/writing-tests", kind: docs}
+
+  # --- Data ----------------------------------------------------------------------
+  sql:
+    - {title: "SQLBolt: interactive SQL lessons", url: "https://sqlbolt.com/", kind: practice}
+    - {title: "Use The Index, Luke", url: "https://use-the-index-luke.com/", kind: guide}
+  postgresql:
+    - {title: "PostgreSQL tutorial (official)", url: "https://www.postgresql.org/docs/current/tutorial.html", kind: docs}
+    - {title: "PostgreSQL: transaction isolation", url: "https://www.postgresql.org/docs/current/transaction-iso.html", kind: docs}
+  sqlite:
+    - {title: "SQLite documentation", url: "https://www.sqlite.org/docs.html", kind: docs}
+  mongodb:
+    - {title: "MongoDB: data modeling", url: "https://www.mongodb.com/docs/manual/data-modeling/", kind: docs}
+  redis:
+    - {title: "Redis: data types", url: "https://redis.io/docs/latest/develop/data-types/", kind: docs}
+  orm:
+    - {title: "SQLAlchemy unified tutorial", url: "https://docs.sqlalchemy.org/en/20/tutorial/", kind: docs}
+  database_design:
+    - {title: "PostgreSQL: constraints", url: "https://www.postgresql.org/docs/current/ddl-constraints.html", kind: docs}
+    - {title: "Use The Index, Luke", url: "https://use-the-index-luke.com/", kind: guide}
+  data_modelling:
+    - {title: "PostgreSQL: constraints and keys", url: "https://www.postgresql.org/docs/current/ddl-constraints.html", kind: docs}
+    - {title: "SQLAlchemy: working with related objects", url: "https://docs.sqlalchemy.org/en/20/tutorial/orm_related_objects.html", kind: docs}
+
+  # --- Testing -------------------------------------------------------------------
+  testing_unit:
+    - {title: "pytest: how to write and run tests", url: "https://docs.pytest.org/en/stable/how-to/index.html", kind: docs}
+    - {title: "Martin Fowler: unit test", url: "https://martinfowler.com/bliki/UnitTest.html", kind: guide}
+  testing_integration:
+    - {title: "Martin Fowler: The Practical Test Pyramid", url: "https://martinfowler.com/articles/practical-test-pyramid.html", kind: guide}
+    - {title: "FastAPI: testing", url: "https://fastapi.tiangolo.com/tutorial/testing/", kind: docs}
+  testing_e2e:
+    - {title: "Playwright: getting started", url: "https://playwright.dev/docs/intro", kind: docs}
+  test_driven_development:
+    - {title: "Martin Fowler: test-driven development", url: "https://martinfowler.com/bliki/TestDrivenDevelopment.html", kind: guide}
+  mocking:
+    - {title: "Python unittest.mock", url: "https://docs.python.org/3/library/unittest.mock.html", kind: docs}
+    - {title: "Martin Fowler: mocks aren't stubs", url: "https://martinfowler.com/articles/mocksArentStubs.html", kind: guide}
+  property_testing:
+    - {title: "Hypothesis: quick start", url: "https://hypothesis.readthedocs.io/en/latest/quickstart.html", kind: docs}
+  load_testing:
+    - {title: "Locust documentation", url: "https://docs.locust.io/en/stable/", kind: docs}
+
+  # --- Version control / collaboration ---------------------------------------------
+  git:
+    - {title: "Pro Git (free book)", url: "https://git-scm.com/book/en/v2", kind: guide}
+    - {title: "Learn Git Branching (interactive)", url: "https://learngitbranching.js.org/", kind: practice}
+  code_review:
+    - {title: "Google engineering practices: code review", url: "https://google.github.io/eng-practices/review/", kind: guide}
+  technical_writing:
+    - {title: "Google technical writing courses", url: "https://developers.google.com/tech-writing", kind: course}
+
+  # --- DevOps / cloud ------------------------------------------------------------
+  docker:
+    - {title: "Docker: get started", url: "https://docs.docker.com/get-started/", kind: docs}
+    - {title: "Docker: building best practices", url: "https://docs.docker.com/build/building/best-practices/", kind: guide}
+  kubernetes:
+    - {title: "Kubernetes: learn the basics", url: "https://kubernetes.io/docs/tutorials/kubernetes-basics/", kind: docs}
+  ci_cd:
+    - {title: "GitHub Actions: quickstart", url: "https://docs.github.com/en/actions/writing-workflows/quickstart", kind: docs}
+    - {title: "Martin Fowler: continuous integration", url: "https://martinfowler.com/articles/continuousIntegration.html", kind: guide}
+  linux:
+    - {title: "MIT Missing Semester", url: "https://missing.csail.mit.edu/", kind: course}
+  shell_scripting:
+    - {title: "MIT Missing Semester: shell tools and scripting", url: "https://missing.csail.mit.edu/2020/shell-tools/", kind: course}
+  terraform:
+    - {title: "Terraform tutorials", url: "https://developer.hashicorp.com/terraform/tutorials", kind: docs}
+  observability:
+    - {title: "OpenTelemetry: observability primer", url: "https://opentelemetry.io/docs/concepts/observability-primer/", kind: docs}
+    - {title: "Google SRE book: monitoring distributed systems", url: "https://sre.google/sre-book/monitoring-distributed-systems/", kind: guide}
+  networking:
+    - {title: "MDN: an overview of HTTP", url: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview", kind: docs}
+  aws:
+    - {title: "AWS: getting started", url: "https://aws.amazon.com/getting-started/", kind: course}
+  azure:
+    - {title: "Microsoft Learn: Azure fundamentals", url: "https://learn.microsoft.com/en-us/training/paths/microsoft-azure-fundamentals-describe-cloud-concepts/", kind: course}
+  gcp:
+    - {title: "Google Cloud: get started", url: "https://cloud.google.com/docs/get-started", kind: docs}
+
+  # --- Security ------------------------------------------------------------------
+  secure_coding:
+    - {title: "OWASP Cheat Sheet: input validation", url: "https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html", kind: reference}
+    - {title: "OWASP Top Ten", url: "https://owasp.org/www-project-top-ten/", kind: reference}
+  owasp:
+    - {title: "OWASP Top Ten", url: "https://owasp.org/www-project-top-ten/", kind: reference}
+  authentication:
+    - {title: "OWASP Cheat Sheet: authentication", url: "https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html", kind: reference}
+  oauth:
+    - {title: "OAuth 2.0 simplified", url: "https://www.oauth.com/", kind: guide}
+  cryptography:
+    - {title: "OWASP Cheat Sheet: cryptographic storage", url: "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html", kind: reference}
+  secrets_management:
+    - {title: "OWASP Cheat Sheet: secrets management", url: "https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html", kind: reference}
+  threat_modelling:
+    - {title: "OWASP Cheat Sheet: threat modeling", url: "https://cheatsheetseries.owasp.org/cheatsheets/Threat_Modeling_Cheat_Sheet.html", kind: reference}
+  dependency_security:
+    - {title: "OWASP Cheat Sheet: vulnerable dependency management", url: "https://cheatsheetseries.owasp.org/cheatsheets/Vulnerable_Dependency_Management_Cheat_Sheet.html", kind: reference}
+
+  # --- Backend architecture / APIs ---------------------------------------------------
+  rest_api_design:
+    - {title: "Microsoft: web API design best practices", url: "https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design", kind: guide}
+    - {title: "MDN: HTTP request methods", url: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods", kind: reference}
+  microservices:
+    - {title: "Martin Fowler: microservices", url: "https://martinfowler.com/articles/microservices.html", kind: guide}
+  event_driven_architecture:
+    - {title: "Martin Fowler: what do you mean by event-driven?", url: "https://martinfowler.com/articles/201701-event-driven.html", kind: guide}
+  message_queues:
+    - {title: "RabbitMQ tutorials", url: "https://www.rabbitmq.com/tutorials", kind: docs}
+  distributed_systems:
+    - {title: "MIT 6.5840: distributed systems (lectures and labs)", url: "https://pdos.csail.mit.edu/6.824/", kind: course}
+  system_design:
+    - {title: "The System Design Primer", url: "https://github.com/donnemartin/system-design-primer", kind: guide}
+  caching:
+    - {title: "MDN: HTTP caching", url: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching", kind: docs}
+    - {title: "AWS: caching best practices", url: "https://aws.amazon.com/caching/best-practices/", kind: guide}
+  graphql:
+    - {title: "GraphQL: learn (official)", url: "https://graphql.org/learn/", kind: docs}
+  grpc:
+    - {title: "gRPC: introduction", url: "https://grpc.io/docs/what-is-grpc/introduction/", kind: docs}
+  openapi:
+    - {title: "OpenAPI: getting started", url: "https://learn.openapis.org/", kind: docs}

@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-import AnalysisStatusBanner from "./AnalysisStatusBanner";
 import Sidebar from "./Sidebar";
 
 export default function AppShell({ children }: { children: ReactNode }) {
@@ -13,7 +12,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <span className="blob blob-peach" />
       </div>
       <Sidebar />
-      <div id="main-content" className="app-content" tabIndex={-1}><AnalysisStatusBanner />{children}</div>
+      <div id="main-content" className="app-content" tabIndex={-1}>{children}</div>
     </div>
   );
 }

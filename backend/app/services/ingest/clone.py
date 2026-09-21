@@ -2,7 +2,9 @@
 
 import base64
 from dataclasses import dataclass
+import os
 import shutil
+import stat
 from pathlib import Path
 
 from git import Repo
@@ -138,10 +140,17 @@ def sync(settings: Settings, user: str, repo_full_name: str, token: str) -> Sync
         raise
 
 
+def _force_remove(function, path, _exc) -> None:
+    """Git marks its pack files read-only, and Windows refuses to delete a
+    read-only file. Clear the bit and try once more; a second failure is real."""
+    os.chmod(path, stat.S_IWRITE)
+    function(path)
+
+
 def cleanup(settings: Settings, user: str, repo_id: str) -> None:
     destination = _cache_path(settings, user, repo_id)
     if destination.exists():
-        shutil.rmtree(destination)
+        shutil.rmtree(destination, onexc=_force_remove)
 
 
 def cleanup_repo(settings: Settings, user: str, repo_full_name: str) -> None:

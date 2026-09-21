@@ -1,8 +1,509 @@
 [
-  {"skill_id": "python", "frequency": 0.62, "role": "backend", "region": "AU", "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.6, "sample_size": 400, "collected_at": "2026-09-01"}},
-  {"skill_id": "sql", "frequency": 0.58, "role": "backend", "region": "AU", "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.6, "sample_size": 400, "collected_at": "2026-09-01"}},
-  {"skill_id": "docker", "frequency": 0.47, "role": "backend", "region": "AU", "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.6, "sample_size": 400, "collected_at": "2026-09-01"}},
-  {"skill_id": "testing_unit", "frequency": 0.41, "role": "backend", "region": "AU", "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.6, "sample_size": 400, "collected_at": "2026-09-01"}},
-  {"skill_id": "rest_api_design", "frequency": 0.39, "role": "backend", "region": "AU", "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.6, "sample_size": 400, "collected_at": "2026-09-01"}},
-  {"skill_id": "async_programming", "frequency": null, "role": "backend", "region": "AU", "provenance": {"source_kind": "seeded", "source_name": "seeded demand table v1", "confidence": 0.3, "sample_size": null, "collected_at": "2026-09-01"}}
+  {
+    "skill_id": "python",
+    "frequency": 0.62,
+    "role": "backend",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "sql",
+    "frequency": 0.58,
+    "role": "backend",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "docker",
+    "frequency": 0.47,
+    "role": "backend",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "testing_unit",
+    "frequency": 0.41,
+    "role": "backend",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "rest_api_design",
+    "frequency": 0.39,
+    "role": "backend",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "async_programming",
+    "frequency": null,
+    "role": "backend",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.3,
+      "sample_size": null,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "git",
+    "frequency": 0.61,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "python",
+    "frequency": 0.58,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "javascript",
+    "frequency": 0.52,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "sql",
+    "frequency": 0.49,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "rest_api_design",
+    "frequency": 0.47,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "testing_unit",
+    "frequency": 0.45,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "typescript",
+    "frequency": 0.44,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "docker",
+    "frequency": 0.43,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "react",
+    "frequency": 0.41,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "aws",
+    "frequency": 0.4,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "ci_cd",
+    "frequency": 0.38,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "java",
+    "frequency": 0.35,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "postgresql",
+    "frequency": 0.34,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "system_design",
+    "frequency": 0.33,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "linux",
+    "frequency": 0.31,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "html",
+    "frequency": 0.3,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "css",
+    "frequency": 0.3,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "algorithms",
+    "frequency": 0.3,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "microservices",
+    "frequency": 0.29,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "code_review",
+    "frequency": 0.28,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "data_structures",
+    "frequency": 0.28,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "testing_integration",
+    "frequency": 0.27,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "debugging",
+    "frequency": 0.26,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "kubernetes",
+    "frequency": 0.26,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "agile_delivery",
+    "frequency": 0.25,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "design_patterns",
+    "frequency": 0.24,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "authentication",
+    "frequency": 0.24,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "database_design",
+    "frequency": 0.22,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "test_driven_development",
+    "frequency": 0.21,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "secure_coding",
+    "frequency": 0.19,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "openapi",
+    "frequency": 0.18,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "graphql",
+    "frequency": 0.17,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  },
+  {
+    "skill_id": "technical_writing",
+    "frequency": 0.16,
+    "role": "software_engineer",
+    "region": "AU",
+    "provenance": {
+      "source_kind": "seeded",
+      "source_name": "seeded demand table v1",
+      "confidence": 0.6,
+      "sample_size": 400,
+      "collected_at": "2026-09-01"
+    }
+  }
 ]

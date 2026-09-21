@@ -1,0 +1,634 @@
+# Seeded recall bank. Owner: Track B.
+#
+# Short, precise drills used by the adaptive loop in services/recall/adaptive.py.
+# Every question is tagged with the skill it probes and a level 1-4:
+#
+#   1  can you name it
+#   2  can you explain how it works
+#   3  can you reason about trade-offs and failure modes
+#   4  can you design or optimise with it under pressure
+#
+# The loop starts a skill at level 2 and moves up on a pass, down on a fail, so
+# the bank needs at least levels 1-3 for any skill it is worth asking about.
+#
+# key_points are the rubric. They never reach the browser -- the grader keeps
+# them server-side, exactly as the generated questions keep their references.
+
+questions:
+  # --- Python ---------------------------------------------------------------
+  - id: python_l1_mutable_default
+    skill_id: python
+    level: 1
+    type: concept
+    prompt: "What happens when you use a mutable default argument, like `def f(x=[])`?"
+    key_points: [evaluated once, shared across calls, accumulates, use None]
+
+  - id: python_l2_generator
+    skill_id: python
+    level: 2
+    type: concept
+    prompt: "What is a generator, and when would you choose one over a list?"
+    key_points: [yield, lazy, one at a time, memory, large or infinite sequences]
+
+  - id: python_l2_dedupe
+    skill_id: python
+    level: 2
+    type: coding
+    prompt: "Write `dedupe(items)` that removes duplicates while keeping the original order."
+    starter: "def dedupe(items):\n    "
+    key_points: [set for seen, single pass, preserves order, append when unseen]
+    solution: |
+      def dedupe(items):
+          seen = set()
+          out = []
+          for item in items:
+              if item not in seen:
+                  seen.add(item)
+                  out.append(item)
+          return out
+
+  - id: python_l3_gil
+    skill_id: python
+    level: 3
+    type: concept
+    prompt: "Why does threading not speed up CPU-bound Python, and what does?"
+    key_points: [GIL, one thread executes bytecode, threads help I/O, multiprocessing]
+
+  - id: python_l4_context_manager
+    skill_id: python
+    level: 4
+    type: coding
+    prompt: "Write a context manager `timed(label)` that prints how long its block took, even if the block raises."
+    starter: "from contextlib import contextmanager\n\n@contextmanager\ndef timed(label):\n    "
+    key_points: [try finally, yield, time before and after, runs on exception]
+    solution: |
+      @contextmanager
+      def timed(label):
+          start = time.perf_counter()
+          try:
+              yield
+          finally:
+              print(label, time.perf_counter() - start)
+
+  # --- Asynchronous programming --------------------------------------------
+  - id: async_l1_await
+    skill_id: async_programming
+    level: 1
+    type: concept
+    prompt: "What does `await` actually do to the function it appears in?"
+    key_points: [suspends, yields control, resumes later, does not block]
+
+  - id: async_l2_event_loop
+    skill_id: async_programming
+    level: 2
+    type: concept
+    prompt: "What is the event loop and how does it run your async code?"
+    key_points: [single thread, queue of ready tasks, runs until it awaits, non-blocking I/O]
+
+  - id: async_l3_blocking_call
+    skill_id: async_programming
+    level: 3
+    type: concept
+    prompt: "You put a blocking `requests.get` inside an async handler. What breaks, and why?"
+    key_points: [blocks the loop, all other tasks stall, no concurrency, use async client or thread pool]
+
+  # --- Data modelling and SQL ----------------------------------------------
+  - id: data_modelling_l1_normalisation
+    skill_id: data_modelling
+    level: 1
+    type: concept
+    prompt: "What problem does normalising a schema solve?"
+    key_points: [duplication, update anomalies, one fact one place, consistency]
+
+  - id: data_modelling_l2_natural_key
+    skill_id: data_modelling
+    level: 2
+    type: concept
+    prompt: "When is a natural key a bad choice for a primary key?"
+    key_points: [can change, business meaning, wide, surrogate key is stable]
+
+  - id: data_modelling_l3_scoping
+    skill_id: data_modelling
+    level: 3
+    type: concept
+    prompt: "A lookup keyed only on file path collides across repositories. How do you fix the model?"
+    key_points: [composite key, include repo id, unique constraint, scope the identity]
+
+  - id: sql_l1_join
+    skill_id: sql
+    level: 1
+    type: concept
+    prompt: "What is the difference between an INNER JOIN and a LEFT JOIN?"
+    key_points: [inner keeps matches only, left keeps all left rows, nulls for missing]
+
+  - id: sql_l2_nplus1
+    skill_id: sql
+    level: 2
+    type: concept
+    prompt: "What is an N+1 query problem, and how do you spot one?"
+    key_points: [one query per row, loop issuing queries, join or eager load, batch]
+
+  - id: sql_l3_index
+    skill_id: sql
+    level: 3
+    type: concept
+    prompt: "A query filters on `status` and sorts by `created_at`. What index helps, and why that order?"
+    key_points: [composite index, equality column first, sort column second, avoids a sort]
+
+  - id: postgresql_l2_upsert
+    skill_id: postgresql
+    level: 2
+    type: coding
+    prompt: "Write the Postgres statement that inserts a row and updates it instead if `(repo_id, path)` already exists."
+    starter: "INSERT INTO indexed_file (repo_id, path, content_hash)\n"
+    key_points: [ON CONFLICT, target columns, DO UPDATE SET, EXCLUDED]
+    solution: |
+      INSERT INTO indexed_file (repo_id, path, content_hash)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (repo_id, path)
+      DO UPDATE SET content_hash = EXCLUDED.content_hash;
+
+  - id: postgresql_l3_transaction
+    skill_id: postgresql
+    level: 3
+    type: concept
+    prompt: "What does READ COMMITTED not protect you from?"
+    key_points: [non-repeatable read, phantom read, same query different results, needs repeatable read or serializable]
+
+  # --- Testing --------------------------------------------------------------
+  - id: testing_unit_l1_what
+    skill_id: testing_unit
+    level: 1
+    type: concept
+    prompt: "What makes a test a unit test rather than an integration test?"
+    key_points: [one unit, no external dependencies, fast, isolated]
+
+  - id: testing_unit_l2_brittle
+    skill_id: testing_unit
+    level: 2
+    type: concept
+    prompt: "Your test asserts exact internal progress labels and percentages. Why is that a problem?"
+    key_points: [couples to implementation, breaks on refactor, tests behaviour not internals, brittle]
+
+  - id: testing_unit_l3_arrange
+    skill_id: testing_unit
+    level: 3
+    type: coding
+    prompt: "Write a test for `dedupe` that would catch an implementation that sorts the output."
+    starter: "def test_dedupe_preserves_order():\n    "
+    key_points: [unsorted input, assert exact order, would fail if sorted]
+    solution: |
+      def test_dedupe_preserves_order():
+          assert dedupe([3, 1, 3, 2]) == [3, 1, 2]
+
+  - id: testing_integration_l2_boundary
+    skill_id: testing_integration
+    level: 2
+    type: concept
+    prompt: "What should an integration test cover that a unit test cannot?"
+    key_points: [the seam between components, real dependency, wiring, contract]
+
+  # --- Clean code and structure --------------------------------------------
+  - id: clean_code_l1_naming
+    skill_id: clean_code
+    level: 1
+    type: concept
+    prompt: "What makes a function name good?"
+    key_points: [says what it does, no surprise, verb, no need to read the body]
+
+  - id: clean_code_l2_single_responsibility
+    skill_id: clean_code
+    level: 2
+    type: concept
+    prompt: "A module computes metrics, maps tests and detects smells. What is the cost of leaving it that way?"
+    key_points: [one reason to change, hard to test, hard to reuse, split by responsibility]
+
+  - id: clean_code_l3_flag_argument
+    skill_id: clean_code
+    level: 3
+    type: concept
+    prompt: "Why is a boolean flag argument that switches a function's behaviour a smell?"
+    key_points: [two functions in one, caller cannot read it, split into two, hidden branch]
+
+  # --- Debugging ------------------------------------------------------------
+  - id: debugging_l1_reproduce
+    skill_id: debugging
+    level: 1
+    type: concept
+    prompt: "What is the first thing to do with a bug report?"
+    key_points: [reproduce it, minimal case, confirm it is real, before changing code]
+
+  - id: debugging_l2_bisect
+    skill_id: debugging
+    level: 2
+    type: concept
+    prompt: "A test passed last week and fails now. How do you find the commit that broke it?"
+    key_points: [git bisect, binary search, good and bad commit, run the test at each step]
+
+  - id: debugging_l3_silent_failure
+    skill_id: debugging
+    level: 3
+    type: concept
+    prompt: "Code silently continues when a lookup fails. Why is that worse than crashing?"
+    key_points: [hides the fault, corrupt state, fails far from cause, log or raise]
+
+  # --- Security -------------------------------------------------------------
+  - id: secure_coding_l1_input
+    skill_id: secure_coding
+    level: 1
+    type: concept
+    prompt: "Why must input from a user never be trusted, even from your own frontend?"
+    key_points: [client can be bypassed, requests can be forged, validate on the server]
+
+  - id: secure_coding_l2_decode
+    skill_id: secure_coding
+    level: 2
+    type: concept
+    prompt: "An upload is decoded as UTF-8 text without checking its type. What can go wrong?"
+    key_points: [crashes on binary, unicode error, denial of service, validate content type]
+
+  - id: secure_coding_l3_path_traversal
+    skill_id: secure_coding
+    level: 3
+    type: coding
+    prompt: "Write the check that stops `../../etc/passwd` escaping a repository root."
+    starter: "def safe_path(root: Path, requested: str) -> Path:\n    "
+    key_points: [resolve, is_relative_to or commonpath, raise on escape, compare against root]
+    solution: |
+      def safe_path(root: Path, requested: str) -> Path:
+          candidate = (root / requested).resolve()
+          if not candidate.is_relative_to(root.resolve()):
+              raise ValueError("path escapes the repository root")
+          return candidate
+
+  # --- Version control ------------------------------------------------------
+  - id: git_l1_staging
+    skill_id: git
+    level: 1
+    type: concept
+    prompt: "What sits between your working tree and a commit?"
+    key_points: [staging area, index, git add, choose what goes in]
+
+  - id: git_l2_rebase_merge
+    skill_id: git
+    level: 2
+    type: concept
+    prompt: "When would you rebase instead of merge, and when must you not?"
+    key_points: [linear history, before sharing, never on pushed shared branches, rewrites hashes]
+
+  - id: git_l3_revert
+    skill_id: git
+    level: 3
+    type: concept
+    prompt: "A bad commit is already on main and others have pulled it. How do you undo it safely?"
+    key_points: [git revert, new commit, do not reset shared history, keeps history intact]
+
+  # --- Algorithms and data structures --------------------------------------
+  - id: data_structures_l1_dict
+    skill_id: data_structures
+    level: 1
+    type: concept
+    prompt: "Why is a lookup in a dict faster than scanning a list?"
+    key_points: [hash, constant time, list is linear, direct bucket]
+
+  - id: data_structures_l2_choose
+    skill_id: data_structures
+    level: 2
+    type: concept
+    prompt: "You need to keep the last 100 events and drop the oldest. What structure, and why?"
+    key_points: [deque, maxlen, ring buffer, O(1) at both ends]
+
+  - id: algorithms_l2_complexity
+    skill_id: algorithms
+    level: 2
+    type: concept
+    prompt: "What is the complexity of checking membership in a list inside a loop over another list?"
+    key_points: [O(n*m), quadratic, convert to a set, O(n+m)]
+
+  - id: algorithms_l3_two_sum
+    skill_id: algorithms
+    level: 3
+    type: coding
+    prompt: "Write `two_sum(nums, target)` returning the indices of two numbers that add to target, in one pass."
+    starter: "def two_sum(nums, target):\n    "
+    key_points: [dict of seen values, complement, single loop, return indices]
+    solution: |
+      def two_sum(nums, target):
+          seen = {}
+          for index, value in enumerate(nums):
+              if target - value in seen:
+                  return [seen[target - value], index]
+              seen[value] = index
+          return []
+
+  # --- JavaScript and TypeScript -------------------------------------------
+  - id: javascript_l1_equality
+    skill_id: javascript
+    level: 1
+    type: concept
+    prompt: "What is the difference between `==` and `===`?"
+    key_points: [type coercion, strict comparison, no conversion, prefer triple equals]
+
+  - id: javascript_l2_event_loop
+    skill_id: javascript
+    level: 2
+    type: concept
+    prompt: "What is the event loop, and how does it decide what runs next?"
+    key_points: [call stack, task queue, microtasks first, non-blocking]
+
+  - id: javascript_l3_closure
+    skill_id: javascript
+    level: 3
+    type: coding
+    prompt: "Write `counter()` that returns a function incrementing a private count each call."
+    starter: "function counter() {\n  "
+    key_points: [closure, variable in outer scope, returns a function, state survives]
+    solution: |
+      function counter() {
+        let count = 0;
+        return () => ++count;
+      }
+
+  - id: typescript_l2_unknown_any
+    skill_id: typescript
+    level: 2
+    type: concept
+    prompt: "Why prefer `unknown` over `any` for a value you have not validated?"
+    key_points: [any disables checking, unknown forces a narrowing check, safer, must assert first]
+
+  # --- Frontend -------------------------------------------------------------
+  - id: react_l1_state
+    skill_id: react
+    level: 1
+    type: concept
+    prompt: "What is the difference between props and state?"
+    key_points: [props come from the parent, state is owned by the component, props are read-only]
+
+  - id: react_l2_key
+    skill_id: react
+    level: 2
+    type: concept
+    prompt: "Why does React need a stable `key` on a list, and what breaks if you use the array index?"
+    key_points: [identify items across renders, reorder, wrong state reused, unnecessary remounts]
+
+  - id: css_l2_box
+    skill_id: css
+    level: 2
+    type: concept
+    prompt: "What does `box-sizing: border-box` change about how width is calculated?"
+    key_points: [padding and border inside the width, content-box adds them, predictable layout]
+
+  # --- Platform -------------------------------------------------------------
+  - id: docker_l1_image
+    skill_id: docker
+    level: 1
+    type: concept
+    prompt: "What is the difference between an image and a container?"
+    key_points: [image is the template, container is a running instance, immutable, many from one]
+
+  - id: docker_l2_layers
+    skill_id: docker
+    level: 2
+    type: concept
+    prompt: "Why does copying your source before installing dependencies make builds slower?"
+    key_points: [layer cache, invalidated by any source change, reinstalls every time, copy manifest first]
+
+  - id: ci_cd_l2_purpose
+    skill_id: ci_cd
+    level: 2
+    type: concept
+    prompt: "What should a CI pipeline block a merge on, and what should it only warn about?"
+    key_points: [tests and build must pass, security or lint may warn, fast feedback, do not block on noise]
+
+  - id: rest_api_design_l2_idempotent
+    skill_id: rest_api_design
+    level: 2
+    type: concept
+    prompt: "Which HTTP methods must be idempotent, and why does it matter?"
+    key_points: [GET PUT DELETE, same result when repeated, safe to retry, POST is not]
+
+  - id: rest_api_design_l3_status
+    skill_id: rest_api_design
+    level: 3
+    type: concept
+    prompt: "A client asks for a resource it is not allowed to see. 403 or 404, and why?"
+    key_points: [404 hides existence, 403 confirms it exists, information disclosure, depends on threat model]
+
+  # --- Levels added so every started skill can also step down ---------------
+  - id: typescript_l1_why
+    skill_id: typescript
+    level: 1
+    type: concept
+    prompt: "What does TypeScript give you that JavaScript does not?"
+    key_points: [types checked before running, catches errors at compile time, editor autocomplete, erased at runtime]
+
+  - id: typescript_l3_narrowing
+    skill_id: typescript
+    level: 3
+    type: coding
+    prompt: "Write a type guard `isError(value: unknown): value is Error`."
+    starter: "function isError(value: unknown): value is Error {\n  "
+    key_points: [instanceof Error, return boolean, value is Error predicate]
+    solution: |
+      function isError(value: unknown): value is Error {
+        return value instanceof Error;
+      }
+
+  - id: css_l1_specificity
+    skill_id: css
+    level: 1
+    type: concept
+    prompt: "Which wins when two rules target the same element: a class or an id?"
+    key_points: [id wins, higher specificity, order breaks ties at equal specificity]
+
+  - id: css_l3_stacking
+    skill_id: css
+    level: 3
+    type: concept
+    prompt: "Your `z-index: 999` element still sits behind another. What is the likely cause?"
+    key_points: [stacking context, ancestor with transform or opacity, z-index is scoped to its context]
+
+  - id: testing_integration_l1_what
+    skill_id: testing_integration
+    level: 1
+    type: concept
+    prompt: "What does an integration test actually integrate?"
+    key_points: [two or more components, real dependency, the wiring between them]
+
+  - id: testing_integration_l3_isolation
+    skill_id: testing_integration
+    level: 3
+    type: concept
+    prompt: "Integration tests pass alone but fail when run together. What is usually wrong?"
+    key_points: [shared state, leftover database rows, ordering dependency, no cleanup between tests]
+
+  - id: ci_cd_l1_what
+    skill_id: ci_cd
+    level: 1
+    type: concept
+    prompt: "What does continuous integration mean in practice?"
+    key_points: [merge to main often, automated build and tests on every push, catch breakage early]
+
+  - id: ci_cd_l3_flaky
+    skill_id: ci_cd
+    level: 3
+    type: concept
+    prompt: "A test fails roughly one run in ten. Why is leaving it worse than deleting it?"
+    key_points: [trains people to ignore red, hides real failures, retries mask the bug, quarantine or fix]
+
+  - id: algorithms_l1_bigo
+    skill_id: algorithms
+    level: 1
+    type: concept
+    prompt: "What does O(n) describe about an algorithm?"
+    key_points: [growth as input grows, not actual time, upper bound, doubling input doubles work]
+
+  - id: postgresql_l1_why
+    skill_id: postgresql
+    level: 1
+    type: concept
+    prompt: "What does a primary key guarantee about a table?"
+    key_points: [unique, not null, identifies one row, indexed]
+
+  - id: rest_api_design_l1_verbs
+    skill_id: rest_api_design
+    level: 1
+    type: concept
+    prompt: "Which HTTP method creates a resource, and which replaces one?"
+    key_points: [POST creates, PUT replaces, PATCH partial update]
+
+  - id: data_structures_l3_cache
+    skill_id: data_structures
+    level: 3
+    type: coding
+    prompt: "Write `lru(capacity)` returning get/put functions that evict the least recently used key."
+    starter: "from collections import OrderedDict\n\ndef lru(capacity):\n    "
+    key_points: [OrderedDict, move_to_end on access, popitem last False, evict when over capacity]
+    solution: |
+      def lru(capacity):
+          store = OrderedDict()
+          def get(key):
+              if key not in store:
+                  return None
+              store.move_to_end(key)
+              return store[key]
+          def put(key, value):
+              store[key] = value
+              store.move_to_end(key)
+              if len(store) > capacity:
+                  store.popitem(last=False)
+          return get, put
+
+  - id: docker_l3_size
+    skill_id: docker
+    level: 3
+    type: concept
+    prompt: "Your image is 1.8GB. Name two things that most often cause that."
+    key_points: [full base image instead of slim, build tools left in, no multi-stage build, cache and artifacts copied in]
+
+  - id: react_l3_effect
+    skill_id: react
+    level: 3
+    type: concept
+    prompt: "A `useEffect` that fetches data runs in an endless loop. What is the usual cause?"
+    key_points: [dependency recreated each render, object or function in deps, setState inside without guard, memoise or narrow deps]
+
+  # --- Explain this code ------------------------------------------------------
+  # Reading is a different skill from writing. `code` is shown with the prompt;
+  # the answer is graded on whether it names the key points, and `solution` is
+  # the model explanation shown afterwards.
+  - id: python_l2_explain_enumerate
+    skill_id: python
+    level: 2
+    type: explain
+    prompt: "Explain what this function returns, and why it uses `enumerate` and a dict rather than `list.index`."
+    code: |
+      def positions(words):
+          first_seen = {}
+          for index, word in enumerate(words):
+              first_seen.setdefault(word, index)
+          return first_seen
+    key_points: [maps each word to its first position, setdefault keeps the first index, single pass, list.index would rescan and be quadratic]
+    solution: |
+      It returns a dict mapping each distinct word to the index where it first
+      appears. `setdefault` only writes a key that is not there yet, so later
+      repeats do not overwrite the first position. It is one pass over the list;
+      calling `words.index(word)` for every word would rescan from the start each
+      time, which is quadratic.
+
+  - id: clean_code_l2_explain_flags
+    skill_id: clean_code
+    level: 2
+    type: explain
+    prompt: "Explain what is hard to maintain about this function, and how you would reshape it."
+    code: |
+      def export(rows, csv=False, compress=False, header=True):
+          if csv:
+              data = to_csv(rows, header)
+          else:
+              data = to_json(rows)
+          if compress:
+              data = gzip(data)
+          return data
+    key_points: [boolean flags select behaviour, caller cannot read export(rows True False), header only applies to csv, split into named functions or pass a format]
+    solution: |
+      Three boolean flags pick between behaviours, so a call such as
+      `export(rows, True, False)` says nothing to a reader, and `header` silently
+      does nothing unless `csv` is set. Splitting it into `export_csv` and
+      `export_json`, with compression as a separate step, makes each call say
+      what it does and removes the invalid combinations.
+
+  - id: testing_unit_l2_explain_mock
+    skill_id: testing_unit
+    level: 2
+    type: explain
+    prompt: "Explain what this test actually proves, and what it would miss."
+    code: |
+      def test_send_welcome(monkeypatch):
+          sent = []
+          monkeypatch.setattr(mailer, "send", lambda to, body: sent.append(to))
+          register("ana@example.com")
+          assert sent == ["ana@example.com"]
+    key_points: [replaces the real mailer with a fake, proves register calls send with the address, does not check the body, would not catch a broken real mailer, fast and isolated]
+    solution: |
+      It swaps the real `mailer.send` for a fake that records the recipient, so it
+      proves `register` asks for a mail to the right address, quickly and without
+      a mail server. It says nothing about the body of the message, and it cannot
+      notice that the real mailer is broken -- that needs an integration test.
+
+  - id: sql_l2_explain_left_join
+    skill_id: sql
+    level: 2
+    type: explain
+    prompt: "Explain what this query returns, and which users would disappear if LEFT JOIN became INNER JOIN."
+    code: |
+      SELECT u.name, COUNT(o.id) AS orders
+      FROM users u
+      LEFT JOIN orders o ON o.user_id = u.id
+      GROUP BY u.id, u.name;
+    key_points: [one row per user with their order count, left join keeps users with no orders, count of o.id gives zero for them, inner join would drop users without orders]
+    solution: |
+      One row per user with how many orders they have. The LEFT JOIN keeps users
+      who have no orders; for them `o.id` is NULL, and `COUNT(o.id)` ignores NULLs,
+      so they show 0. With an INNER JOIN those users would vanish from the result
+      altogether.
+
+  - id: debugging_l2_explain_swallow
+    skill_id: debugging
+    level: 2
+    type: explain
+    prompt: "Explain why a failure in this code would be hard to track down, and what you would change."
+    code: |
+      def load_settings(path):
+          try:
+              return json.load(open(path))
+          except Exception:
+              return {}
+    key_points: [catches every exception, returns an empty dict silently, a missing or malformed file looks like valid empty settings, the failure surfaces later and elsewhere, catch specific errors and log or raise]
+    solution: |
+      Any failure -- a missing file, bad JSON, a permissions error -- is caught and
+      turned into `{}`, which looks exactly like a valid empty configuration. The
+      program carries on and breaks later, far from the cause, with no trace of
+      what went wrong. Catch only the errors you can handle, log them, and let the
+      rest raise. (The file is also never closed; use `with`.)
+

@@ -119,3 +119,70 @@ def test_list_repos_normalises_github_fields(monkeypatch):
         }
     ]
     assert client.gets[0][1]["params"]["per_page"] == 100
+
+
+def _repos_db(monkeypatch):
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    from app.config import Settings
+    from app.models.db import Base, User
+    from app.routers import repos as repos_router
+
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    monkeypatch.setattr(repos_router, "get_settings", lambda: Settings(mock_mode=False))
+    monkeypatch.setattr(repos_router, "init_db", lambda: None)
+    db = Session(engine)
+    db.add(User(id=1, github_login="dev", github_token="stale-token"))
+    db.commit()
+    return db, repos_router
+
+
+def test_an_expired_github_token_asks_the_user_to_reconnect_instead_of_crashing(monkeypatch):
+    import httpx
+
+    db, repos_router = _repos_db(monkeypatch)
+
+    def rejected(token):
+        request = httpx.Request("GET", "https://api.github.com/user/repos")
+        raise httpx.HTTPStatusError("401", request=request, response=httpx.Response(401, request=request))
+
+    monkeypatch.setattr(repos_router, "list_github_repos", rejected)
+
+    try:
+        repos_router.list_repos("dev", db)
+    except Exception as exc:
+        assert getattr(exc, "status_code", None) == 401
+        assert "Connect GitHub again" in exc.detail
+        assert "stale-token" not in exc.detail
+    else:
+        raise AssertionError("an expired token must not list repositories")
+
+    # The dead token is dropped, so the next request says "not connected" at once.
+    from app.models.db import User
+
+    assert db.get(User, 1).github_token is None
+
+
+def test_github_being_down_is_a_502_and_keeps_the_token(monkeypatch):
+    import httpx
+
+    db, repos_router = _repos_db(monkeypatch)
+
+    def unreachable(token):
+        raise httpx.ConnectError("no route to host")
+
+    monkeypatch.setattr(repos_router, "list_github_repos", unreachable)
+
+    try:
+        repos_router.list_repos("dev", db)
+    except Exception as exc:
+        assert getattr(exc, "status_code", None) == 502
+    else:
+        raise AssertionError("an unreachable GitHub must not look like success")
+
+    from app.models.db import User
+
+    assert db.get(User, 1).github_token == "stale-token"
+

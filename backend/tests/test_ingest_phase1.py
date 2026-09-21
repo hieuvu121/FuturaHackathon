@@ -140,3 +140,23 @@ def test_safe_source_path_rejects_traversal_and_symlink_escape(tmp_path: Path):
     with pytest.raises(HTTPException) as symlink:
         _safe_path_from_root(root, "linked.py")
     assert symlink.value.status_code == 400
+
+
+def test_cleanup_removes_read_only_files(tmp_path):
+    """Git writes its pack files read-only, which Windows will not delete as they are."""
+    import os
+    import stat
+
+    from app.config import Settings
+    from app.services.ingest.clone import cache_path, cleanup_repo
+
+    settings = Settings(cache_dir=tmp_path)
+    pack = cache_path(settings, "dev", "dev/project") / ".git" / "objects" / "pack"
+    pack.mkdir(parents=True)
+    locked = pack / "pack-1.idx"
+    locked.write_bytes(b"idx")
+    os.chmod(locked, stat.S_IREAD)
+
+    cleanup_repo(settings, "dev", "dev/project")
+
+    assert not cache_path(settings, "dev", "dev/project").exists()

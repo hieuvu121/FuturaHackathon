@@ -12,20 +12,7 @@ import roadmapMock from "../../backend/mock/roadmap.json";
 import scoresMock from "../../backend/mock/scores.json";
 
 import type {
-  AnalysisStatus,
-  Answer,
-  Buckets,
-  CodeSlice,
-  Finding,
-  GradeResult,
-  CurrentUser,
-  Evidence,
-  PortfolioProfile,
-  PortfolioSelection,
-  Question,
-  Repo,
-  RepoMap,
-  Scores,
+  AdaptiveGrade, AnalysisStatus, Answer, Buckets, CapstoneState, CodeSlice, CommunityRoadmap, CommunityRoadmapDetail, CommunityVerdict, CurrentUser, Evidence, Finding, GradeResult, LearnerProfile, NextQuestion, PortfolioProfile, PortfolioSelection, PracticeGrade, PracticeTopic, Question, QuestionType, Repo, RepoMap, RoadmapGraph, RoadmapReview, RolePath, Scores,
 } from "./types";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -130,7 +117,8 @@ export async function getQuestions(repoId: string): Promise<Question[]> {
 
 export async function getPortfolioQuestions(): Promise<Question[]> {
   if (USE_MOCK) return clone(questionsMock as Question[]).map((question) => ({
-    ...question, target: withMockRepo(question.target),
+    // Seeded drills carry no target; only code-derived questions have one.
+    ...question, target: question.target ? withMockRepo(question.target) : null,
   }));
   return request<Question[]>("/repos/portfolio/questions");
 }
@@ -147,6 +135,81 @@ export async function getRoadmap(repoId: string, role = "backend", region = "AU"
 export async function getPortfolioRoadmap(role = "backend", region = "AU"): Promise<Buckets> {
   if (USE_MOCK) return getRoadmap("orders-api", role, region);
   return request<Buckets>(`/repos/portfolio/roadmap?role=${encodeURIComponent(role)}&region=${encodeURIComponent(region)}`);
+}
+
+export async function getRoadmapReview(): Promise<RoadmapReview> {
+  return request<RoadmapReview>("/repos/portfolio/roadmap/review");
+}
+
+export async function acceptRoadmap(): Promise<RoadmapReview> {
+  return request<RoadmapReview>("/repos/portfolio/roadmap/review/accept", { method: "POST" });
+}
+
+/** Dispute by retesting: starts a fresh five-question recall session. */
+export async function redoRecall(): Promise<RoadmapReview> {
+  return request<RoadmapReview>("/repos/portfolio/roadmap/review/redo", { method: "POST" });
+}
+
+/** Dispute by editing: replaces the set of skills removed from the roadmap. */
+export async function tailorRoadmap(hiddenSkills: string[]): Promise<RoadmapReview> {
+  return request<RoadmapReview>("/repos/portfolio/roadmap/review/tailor", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ hidden_skills: hiddenSkills }),
+  });
+}
+
+export async function getRoadmapGraph(
+  role = "software_engineer",
+  region = "AU",
+  includeHidden = false,
+): Promise<RoadmapGraph> {
+  // Always served by the API, in both modes. Grouping skills into concepts needs
+  // the taxonomy in skills.yaml, which only the backend has -- and the backend
+  // has its own mock mode, so this still works with no database behind it.
+  const query = new URLSearchParams({ role, region, include_hidden: String(includeHidden) });
+  return request<RoadmapGraph>(`/repos/portfolio/roadmap/graph?${query}`);
+}
+
+export async function getCapstone(): Promise<CapstoneState> {
+  return request<CapstoneState>("/repos/portfolio/capstone");
+}
+
+export async function submitCapstone(repoUrl: string, notes: string): Promise<CapstoneState> {
+  return request<CapstoneState>("/repos/portfolio/capstone/submit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ repo_url: repoUrl, notes }),
+  });
+}
+
+export async function getPracticeTopics(): Promise<PracticeTopic[]> {
+  return request<PracticeTopic[]>("/recall/practice/topics");
+}
+
+export async function getPracticeQuestions(skillId: string, kind?: QuestionType): Promise<Question[]> {
+  const query = kind ? `?kind=${encodeURIComponent(kind)}` : "";
+  return request<Question[]>(`/recall/practice/${encodeURIComponent(skillId)}/questions${query}`);
+}
+
+export async function answerPractice(answer: Answer): Promise<PracticeGrade> {
+  return request<PracticeGrade>("/recall/practice/answer", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(answer),
+  });
+}
+
+export async function getNextDrill(): Promise<NextQuestion> {
+  return request<NextQuestion>("/recall/next");
+}
+
+export async function answerDrill(answer: Answer): Promise<AdaptiveGrade> {
+  return request<AdaptiveGrade>("/recall/answer", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(answer),
+  });
 }
 
 export async function getCode(repoId: string, file: string, start: number, end: number): Promise<CodeSlice> {
@@ -223,3 +286,58 @@ export async function submitAnswer(answer: Answer): Promise<GradeResult> {
 }
 
 export const dataMode = USE_MOCK ? "mock" : "live";
+
+/* --- Community ---------------------------------------------------------------- */
+
+export async function getCommunityRoadmaps(): Promise<CommunityRoadmap[]> {
+  return request<CommunityRoadmap[]>("/community/roadmaps");
+}
+
+export async function getCommunityRoadmap(id: number): Promise<CommunityRoadmapDetail> {
+  return request<CommunityRoadmapDetail>(`/community/roadmaps/${id}`);
+}
+
+/** Shares a snapshot of the caller's roadmap under a role title. */
+export async function shareRoadmap(title: string, summary: string): Promise<CommunityRoadmapDetail> {
+  return request<CommunityRoadmapDetail>("/community/roadmaps", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, summary }),
+  });
+}
+
+export async function commentOnRoadmap(
+  id: number, body: string, verdict: CommunityVerdict,
+): Promise<CommunityRoadmapDetail> {
+  return request<CommunityRoadmapDetail>(`/community/roadmaps/${id}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ body, verdict }),
+  });
+}
+
+export async function deleteCommunityRoadmap(id: number): Promise<void> {
+  const response = await fetch(`${API}/community/roadmaps/${id}`, { method: "DELETE", credentials: "include" });
+  if (!response.ok) throw new ApiError(response.status, response.statusText);
+}
+
+/* --- Onboarding ---------------------------------------------------------------- */
+
+export async function getRolePaths(): Promise<RolePath[]> {
+  return request<RolePath[]>("/onboarding/roles");
+}
+
+/** Never a 401: a visitor who has not chosen yet simply has no path. */
+export async function getLearnerProfile(): Promise<LearnerProfile> {
+  return request<LearnerProfile>("/onboarding/profile");
+}
+
+/** Saves the survey. Without a session this also signs the visitor in as a guest. */
+export async function submitSurvey(role: string, knownSkills: string[]): Promise<LearnerProfile> {
+  return request<LearnerProfile>("/onboarding/survey", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ role, known_skills: knownSkills }),
+  });
+}
+

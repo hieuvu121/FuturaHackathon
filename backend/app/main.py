@@ -10,7 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from .config import get_settings
-from .routers import analysis, auth, code, recall, repos, roadmap
+from .models.db import SessionLocal, init_db
+from .routers import analysis, auth, code, community, drills, onboarding, recall, repos, roadmap
+from .services.storage import fail_interrupted_analyses
 
 settings = get_settings()
 
@@ -33,8 +35,28 @@ app.include_router(auth.router)
 app.include_router(repos.router)
 app.include_router(analysis.router)
 app.include_router(recall.router)
+app.include_router(drills.router)
 app.include_router(roadmap.router)
 app.include_router(code.router)
+app.include_router(community.router)
+app.include_router(onboarding.router)
+
+
+@app.on_event("startup")
+def _create_schema() -> None:
+    """Ensure the tables exist before the first request touches them.
+
+    init_db() used to run only from the OAuth callback and the repo sync, so a
+    fresh database 500ed on any other endpoint until one of those happened to
+    be hit first. It is idempotent, so running it here costs nothing.
+
+    Analyses a previous process left half-done are closed here too. Nothing is
+    running yet at this point, so any row that claims to be is an orphan.
+    """
+    init_db()
+    if not settings.mock_mode:
+        with SessionLocal() as db:
+            fail_interrupted_analyses(db)
 
 
 @app.get("/health", tags=["meta"])

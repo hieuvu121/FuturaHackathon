@@ -1,0 +1,56 @@
+# Role paths: what someone aiming at a role should learn, when there is no code to read.
+#
+# The repository path builds a roadmap from evidence. Someone who has no
+# repositories yet has no evidence, so they answer a short survey instead and
+# their roadmap starts from one of these paths. Each is an ordered list of skill
+# ids from skills.yaml, most important first -- the order becomes the priority,
+# and the learning stages come from the same tiering every roadmap uses.
+#
+# A path is a starting point, not a measurement. Skills the person says they
+# have used are marked "basics" and asked about first in recall, because a
+# belief nobody has checked is exactly what recall is for.
+#
+# To add a role, add an entry. tests/test_onboarding.py checks every skill id.
+
+roles:
+  - id: backend
+    name: Backend engineer
+    summary: APIs, data and the services behind an application.
+    skills: [python, git, sql, rest_api_design, data_modelling, testing_unit, clean_code,
+             debugging, postgresql, async_programming, fastapi, docker, secure_coding,
+             testing_integration, ci_cd, data_structures, caching, authentication]
+
+  - id: frontend
+    name: Frontend developer
+    summary: What people see and touch -- interfaces that are fast, accessible and tested.
+    skills: [javascript, git, html, css, typescript, react, clean_code, debugging,
+             state_management, responsive_design, web_accessibility, frontend_testing,
+             rest_api_design, web_performance, nextjs, ci_cd]
+
+  - id: fullstack
+    name: Full-stack developer
+    summary: Both halves -- an interface, the API behind it, and the data under that.
+    skills: [javascript, python, git, html, css, sql, react, typescript, rest_api_design,
+             data_modelling, testing_unit, clean_code, debugging, fastapi, postgresql,
+             docker, secure_coding, ci_cd]
+
+  - id: data
+    name: Data engineer
+    summary: Moving, shaping and storing data so that other people can trust it.
+    skills: [python, sql, git, data_modelling, postgresql, database_design, data_structures,
+             algorithms, etl, testing_unit, clean_code, debugging, docker, data_analytics,
+             ci_cd, aws]
+
+  - id: devops
+    name: DevOps / platform engineer
+    summary: Building, shipping and running software reliably.
+    skills: [linux, git, shell_scripting, docker, ci_cd, python, networking, kubernetes,
+             aws, terraform, observability, secure_coding, secrets_management, debugging,
+             incident_response]
+
+  - id: mobile
+    name: Mobile developer
+    summary: Apps for phones -- native or cross-platform, online and off.
+    skills: [javascript, git, typescript, react, react_native, clean_code, debugging,
+             state_management, rest_api_design, testing_unit, responsive_design,
+             web_accessibility, ci_cd, kotlin, swift]
